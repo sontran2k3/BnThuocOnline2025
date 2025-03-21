@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Trang Thanh Toán</title>
+    <link rel="stylesheet" href="" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="main-box">
+    <!-- Trang Success -->
+    <div th:if="${page == 'success'}" class="success-box">
+        <div class="success-icon">✔</div>
+        <h4 class="payment-title">Thanh toán thành công!</h4>
+        <p class="success-message">Cảm ơn bạn đã mua hàng tại BnThuocOnline2025. Đơn hàng của bạn đã được xử lý thành công.</p>
+        <p class="support-info">Nếu có thắc mắc, vui lòng liên hệ qua email: <a href="mailto:support@bnthoconline.vn">support@bnthoconline.vn</a></p>
+        <a href="/cart" id="return-page-btn">Quay lại giỏ hàng</a>
+    </div>
+
+    <!-- Trang Cancel -->
+    <div th:if="${page == 'cancel'}">
+        <h4 class="payment-title">Thanh toán thất bại</h4>
+        <p>Nếu có bất kỳ câu hỏi nào, hãy gửi email tới <a href="mailto:support@bnthoconline.vn">support@bnthoconline.vn</a></p>
+        <a href="/cart" id="return-page-btn1">Quay lại giỏ hàng</a>
+    </div>
+</div>
+<script th:if="${page != 'index'}" src="/script.js"></script>
+</body>
+</html>

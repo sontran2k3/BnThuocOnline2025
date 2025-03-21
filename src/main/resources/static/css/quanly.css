@@ -1,0 +1,240 @@
+
+body {
+    font-family: Arial, sans-serif;
+}
+.sidebar {
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    background-color: #343a40;
+    padding-top: 20px;
+    transition: width 0.3s;
+}
+.sidebar.collapsed {
+    width: 70px;
+}
+.sidebar.collapsed a span {
+    display: none;
+}
+.sidebar a {
+    color: white;
+    padding: 15px;
+    display: block;
+    text-decoration: none;
+}
+.sidebar a:hover {
+    background-color: #495057;
+}
+.sidebar a.active {
+    background-color: #495057;
+}
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: margin-left 0.3s;
+}
+.main-content.expanded {
+    margin-left: 70px;
+}
+.navbar-brand img {
+    width: 40px;
+    height: 40px;
+}
+.table-responsive {
+    overflow-x: auto;
+}
+.filter-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+    }
+    .main-content {
+        margin-left: 70px;
+    }
+    .sidebar a span {
+        display: none;
+    }
+    .chart-container {
+        height: 250px;
+        max-width: 100%;
+    }
+}
+.modal-xl {
+    max-width: 900px;
+}
+h6 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+.image-row, .unit-row {
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.unit-input-section {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.form-control, .form-select {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.table-light {
+    background-color: #f8f9fa;
+}
+
+.image-input-section {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.image-preview {
+    margin-top: 10px;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table img {
+    max-width: 50px;
+    max-height: 50px;
+    border-radius: 5px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    transition: background-color 0.3s;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+}
+/* Styling for warehouse table */
+#warehouse-table th, #warehouse-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+#warehouse-table .badge {
+    font-size: 0.9em;
+    padding: 5px 10px;
+}
+
+#warehouse-table .badge-success {
+    background-color: #28a745;
+}
+
+#warehouse-table .badge-warning {
+    background-color: #ffc107;
+}
+
+#warehouse-table .badge-danger {
+    background-color: #dc3545;
+}
+
+#warehouse-table .sort-icon {
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+#warehouse-table .sort-icon:hover {
+    color: #007bff;
+}
+
+#warehouse-table .btn-sm {
+    padding: 5px 10px;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #search-warehouse, #filter-warehouse-type, #filter-warehouse-status {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+
+    .modal-xl {
+        max-width: 95%;
+    }
+}
+
+.inventory-status-valid {
+    color: green;
+    font-weight: bold;
+}
+.inventory-status-near-expiry {
+    color: orange;
+    font-weight: bold;
+}
+.inventory-status-expired {
+    color: red;
+    font-weight: bold;
+}
+
+.modal-body .form-control[readonly],
+.modal-body .form-select[disabled] {
+    background-color: #f8f9fa;
+    opacity: 1;
+    border-color: #ced4da;
+}
+
+.modal-body .form-control:focus:not([readonly]),
+.modal-body .form-select:focus:not([disabled]) {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.table .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+

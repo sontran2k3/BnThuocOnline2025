@@ -1,0 +1,240 @@
+<div th:fragment="hero-section">
+    <style>
+        /* Reset mặc định */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .hero-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch; /* Đảm bảo các phần tử có chiều cao bằng nhau */
+            gap: 25px;
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            border-radius: 15px;
+            flex-grow: 1;
+            width: 70%;
+            min-width: 350px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center; /* Căn giữa nội dung */
+        }
+
+        .discount-section {
+            width: 30%;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Căn đều các card */
+        }
+
+
+        .carousel-inner img {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: fill;
+            border-radius: 15px;
+            transition: transform 0.5s ease;
+        }
+
+
+
+        .discount-section .card {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-radius: 15px; /* Vòng bo nhẹ */
+            padding: 20px;
+            margin-bottom: 15px; /* Khoảng cách giữa các card */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #ddd; /* Viền nhẹ để làm nổi bật bo góc */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Hiệu ứng nổi nhẹ */
+        }
+
+        .discount-section .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .discount-section h5 {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .discount-section h3 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .discount-section a {
+            color: #007bff;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .discount-section a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        /* Feature Box */
+        .feature-box {
+            text-align: center;
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: scale(1.1);
+        }
+
+        .feature-box img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+
+        .feature-box p {
+            color: #343a40;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .hero-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .hero, .discount-section {
+                width: 90%;
+            }
+            .carousel-inner img {
+                max-height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero, .discount-section {
+                width: 100%;
+            }
+            .carousel-inner img {
+                max-height: 300px;
+            }
+            .discount-section .card {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 412px) {
+            .carousel-inner img {
+                max-height: 250px;
+            }
+            .feature-box img {
+                width: 35px;
+                height: 35px;
+            }
+            .feature-box p {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .carousel-inner img {
+                max-height: 200px;
+            }
+        }
+    </style>
+
+    <div class="container-fluid mt-5">
+        <div class="hero-container">
+            <!-- Hero Section -->
+            <div id="carouselExampleDark" class="carousel carousel-dark slide hero" style=" box-shadow: none;">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="/image/img.png" class="d-block w-100" alt="Slide 1">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="/image/img_1.png" class="d-block w-100" alt="Slide 2">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="/image/img_2.png" class="d-block w-100" alt="Slide 3">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Section -->
+            <div class="discount-section">
+                <div class="row">
+                    <div class="col-12 " style="margin-bottom: 25px">
+                        <div class="card">
+                            <h5>20% Off</h5>
+                            <h3>Fruits & Vegetables</h3>
+                            <a href="#">Shop Collection →</a>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card">
+                            <h5>15% Off</h5>
+                            <h3>Baked Products</h3>
+                            <a href="#">Shop Collection →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Section -->
+        <div class="container mt-5">
+            <div class="row justify-content-center bg-light py-4 rounded-3">
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/doctor.png" alt="Dược Sỹ">
+                        <p class="fw-bold">Tư vấn với<br>Dược Sỹ</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/medical.png" alt="Mua thuốc">
+                        <p class="fw-bold">Cần mua<br>thuốc</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/home.png" alt="Tìm nhà thuốc">
+                        <p class="fw-bold">Tìm nhà<br>thuốc</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/medical-prescription.png" alt="Đơn thuốc">
+                        <p class="fw-bold">Đơn của<br>tôi</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/injection.png" alt="Tiêm vắc xin">
+                        <p class="fw-bold">Tiêm vắc<br>xin</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 mb-3">
+                    <div class="feature-box">
+                        <img src="/image/health-check.png" alt="Kiểm tra sức khỏe">
+                        <p class="fw-bold">Kiểm tra<br>sức khỏe</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="" th:href="@{/css/home.css}">
+
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 bg-white">
+        <h1 class="text-primary">Dashboard</h1>
+        <p class="fw-bold">Welcome, <span th:text="${name}"></span>!</p>
+        <p>Email: <span th:text="${email != null ? email : 'Không có email'}"></span></p>
+        <img th:src="${picture}" class="profile-img mt-3" alt="Profile Picture" th:if="${picture}"/>
+        <form th:action="@{/logout}" method="post" class="mt-4">
+            <button type="submit" class="btn btn-logout">Logout</button>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

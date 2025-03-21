@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Trang chủ</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script> <!-- Thêm SweetAlert2 -->
+    <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" href="" th:href="@{/css/trangchu.css}">
+
+</head>
+
+<body>
+<div th:replace="~{part/header :: header}"></div>
+<div th:replace="~{part/dropdowns :: dropdowns}"></div>
+<div th:replace="~{part/hero-section :: hero-section}"></div>
+
+<main>
+    <div style="display: flex; justify-content: center; margin-top: 20px">
+        <img src="/image/sanphambanchay.png" alt="FoodMart Logo" class="me-2" style="width: 100%; max-width: 400px; height: auto;">
+    </div>
+
+    <div class="container mt-4">
+        <div class="product-scroll-container">
+            <div th:each="row, rowStat : ${#numbers.sequence(0, (products.size() - 1) / 6)}">
+                <div class="product-list" th:id="'product-row-' + ${rowStat.index}">
+                    <!-- Loại bỏ thẻ <a> bao quanh toàn bộ product-card -->
+                    <div class="product-card"
+                         th:each="product, iterStat : ${products}"
+                         th:if="${iterStat.index >= rowStat.index * 6 and iterStat.index < (rowStat.index + 1) * 6}">
+                        <div class="card border rounded shadow-sm d-flex flex-column h-100">
+                        <span class="badge bg-danger position-absolute discount-badge"
+                              th:id="'discount-badge-' + ${product.id}"
+                              th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                              th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
+                            <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" class="card-img-top" th:alt="${product.tenSanPham}">
+                            <div class="card-body text-center d-flex flex-column">
+                                <!-- Chỉ giữ liên kết cho tiêu đề sản phẩm -->
+                                <a th:href="@{/sanpham(id=${product.id})}" class="card-title text-decoration-none">
+                                    <h6 th:text="${product.tenSanPham}"></h6>
+                                </a>
+                                <div class="price-section">
+                                    <div th:if="${not #lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
+                                        <button th:each="dvt : ${product.donViTinhList}"
+                                                th:id="'unit-btn-' + ${product.id} + '-' + ${dvt.id}"
+                                                th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
+                                                th:onclick="'updatePrice(' + ${product.id} + ',' + ${dvt.id} + ')'"
+                                                th:text="${dvt.donViTinh}"></button>
+                                    </div>
+                                    <div th:id="'discounted-price-' + ${product.id}" class="discounted-price"
+                                         th:data-price="${product.discountedPrice}"
+                                         th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                         th:text="${#numbers.formatDecimal(product.discountedPrice, 0, 0)} + 'đ'"></div>
+                                    <div th:id="'original-price-' + ${product.id}" class="original-price"
+                                         th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                         th:data-price="${product.getDefaultDonViTinh().gia}"
+                                         th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                         th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></div>
+                                    <div class="unit-info" th:text="${product.quyCach}"></div>
+                                </div>
+                                <!-- Nút "Chọn mua" với sự kiện thêm vào giỏ hàng -->
+                                <button class="btn btn-primary w-100 mt-auto"
+                                        th:onclick="'addToCart(' + ${product.id} + ')'">
+                                    Chọn mua
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <h5 class="fw-bold"><i class="bi bi-people" style="font-size: 33px"></i> Sản phẩm theo đối tượng</h5>
+        <div class="d-flex gap-2 mb-3" id="category-buttons">
+            <button th:each="doiTuong, iterStat : ${doiTuongList}"
+                    th:classappend="${iterStat.first} ? 'category-btn active' : 'category-btn'"
+                    th:data-doituong-id="${doiTuong.id}"
+                    th:data-image-max="${doiTuong.imageMax}"
+                    th:data-image-min="${doiTuong.imageMin}"
+                    th:text="${doiTuong.tenDoiTuong}"
+                    onclick="loadProductsByDoiTuong(this)"></button>
+        </div>
+        <div class="row" id="category-product-row">
+            <div class="col-md-3 col-lg-2 mb-4 category-image-container">
+                <picture>
+                    <source media="(max-width: 960px)" th:srcset="${doiTuongList[0].imageMin}">
+                    <source media="(min-width: 961px)" th:srcset="${doiTuongList[0].imageMax}">
+                    <img id="category-image" th:src="${doiTuongList[0].imageMax}" class="img-fluid rounded category-img" alt="Đối tượng">
+                </picture>
+            </div>
+            <div id="product-by-doituong-container" class="col-md-9 col-lg-10">
+                <div th:fragment="product-by-doituong-fragment" class="product-list active">
+                    <!-- Loại bỏ thẻ <a> bao quanh toàn bộ product-card -->
+                    <div class="card border rounded shadow-sm product-card" th:each="product : ${products}">
+                    <span class="badge bg-danger position-absolute discount-badge"
+                          th:id="'doituong-discount-badge-' + ${product.id}"
+                          th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                          th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
+                        <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
+                             class="card-img-top" th:alt="${product.tenSanPham}">
+                        <div class="card-body text-center d-flex flex-column">
+                            <!-- Chỉ giữ liên kết cho tiêu đề sản phẩm -->
+                            <a th:href="@{/sanpham(id=${product.id})}" class="card-title text-decoration-none">
+                                <h6 th:text="${product.tenSanPham}"></h6>
+                            </a>
+                            <div class="price-section">
+                                <div th:if="${not #lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
+                                    <button th:each="dvt : ${product.donViTinhList}"
+                                            th:id="'doituong-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
+                                            th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
+                                            th:onclick="'updatePriceDoiTuong(' + ${product.id} + ',' + ${dvt.id} + ')'"
+                                            th:text="${dvt.donViTinh}"></button>
+                                </div>
+                                <div th:if="${#lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
+                                    <span>Không có đơn vị tính</span>
+                                </div>
+                                <div th:id="'doituong-discounted-price-' + ${product.id}" class="discounted-price"
+                                     th:data-price="${product.discountedPrice}"
+                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                     th:text="${#numbers.formatDecimal(product.discountedPrice, 0, 0)} + 'đ'"></div>
+                                <div th:id="'doituong-original-price-' + ${product.id}" class="original-price"
+                                     th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                     th:data-price="${product.getDefaultDonViTinh().gia}"
+                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                     th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></div>
+                                <div class="unit-info" th:text="${product.quyCach}"></div>
+                            </div>
+                            <!-- Thay <a> bằng <button> cho "Chọn mua" -->
+                            <button class="btn btn-primary w-100 mt-auto"
+                                    th:onclick="'addToCart(' + ${product.id} + ')'">
+                                Chọn mua
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mt-4">
+        <div class="d-flex align-items-center mb-3">
+            <img src="/image/img_15.png" height="32px" width="32px" alt="Icon">
+            <h4 class="ms-2 mb-0">Thương hiệu yêu thích</h4>
+        </div>
+        <div class="brand-scroll-container">
+            <div class="brand-list">
+                <div class="brand-card">
+                    <img src="/image/img_4.png" alt="JapanWell">
+                    <div class="brand-logo">
+                        <img src="/image/img_10.png" alt="JapanWell Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 35%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_5.png" alt="Omexxel">
+                    <div class="brand-logo">
+                        <img src="/image/img_14.png" alt="Omexxel Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 30%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_4.png" alt="JapanWell">
+                    <div class="brand-logo">
+                        <img src="/image/img_10.png" alt="JapanWell Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 35%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_6.png" alt="Kaki Ekisu">
+                    <div class="brand-logo">
+                        <img src="/image/img_13.png" alt="Kaki Ekisu Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 20%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_4.png" alt="JapanWell">
+                    <div class="brand-logo">
+                        <img src="/image/img_10.png" alt="JapanWell Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 35%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_7.png" alt="Vitabiotics">
+                    <div class="brand-logo">
+                        <img src="/image/img_12.png" alt="Vitabiotics Logo">
+                    </div>
+                    <p class="text-primary">Voucher giảm đến 30%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_4.png" alt="JapanWell">
+                    <div class="brand-logo">
+                        <img src="/image/img_10.png" alt="JapanWell Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 35%</p>
+                </div>
+                <div class="brand-card">
+                    <img src="/image/img_8.png" alt="Brauer">
+                    <div class="brand-logo">
+                        <img src="/image/img_11.png" alt="Brauer Logo">
+                    </div>
+                    <p class="text-primary">Giảm đến 20%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="d-flex align-items-center" style="margin: 10px">
+            <h3 class="fw-bold">
+                <img src="/image/iconbook.png" class="icon-img me-2" height="32px" width="32px" alt="Icon">
+                <h4 class="mb-0 title-text">Góc sức khỏe</h4>
+                <a href="#" class="fs-6" style="margin-left: 10px">Xem tất cả ></a>
+            </h3>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card border-0">
+                    <img src="/image/img_16.png" class="card-img rounded-img" alt="Bữa ăn lành mạnh">
+                    <div class="card-body">
+                        <span class="badge bg-secondary" style="width: 110px">Kiến thức y khoa</span>
+                        <h3 class="card-title mt-2">5 sai lầm khi ăn nhiều protein để giảm cân mà bạn cần tránh</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex">
+                        <img src="/image/img_17.png" class="me-2 rounded-img" width="160" height="100" alt="Viêm ruột thừa">
+                        <div>
+                            <span class="badge bg-secondary">Kiến thức y khoa</span>
+                            <p class="mb-0">Viêm ruột thừa ở trẻ em: Nguyên nhân, triệu chứng và cách điều trị hiệu quả</p>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex">
+                        <img src="/image/img_18.png" class="me-2 rounded-img" width="160" height="100" alt="Sùi mào gà">
+                        <div>
+                            <span class="badge bg-primary">Phòng & chữa bệnh</span>
+                            <p class="mb-0">Sùi mào gà âm đạo là gì? Mức độ nguy hiểm của bệnh lý này ra sao?</p>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex">
+                        <img src="/image/img_19.png" class="me-2 rounded-img" width="160" height="100" alt="Vòng lưng">
+                        <div>
+                            <span class="badge bg-primary">Phòng & chữa bệnh</span>
+                            <p class="mb-0">Bệnh vòng lưng có chữa được không? Cách chữa vòng lưng</p>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex">
+                        <img src="/image/img_20.png" class="me-2 rounded-img" width="160" height="100" alt="Dị ứng paracetamol">
+                        <div>
+                            <span class="badge bg-secondary">Kiến thức y khoa</span>
+                            <p class="mb-0">Dị ứng paracetamol thì uống thuốc gì thay thế? Biểu hiện dị ứng paracetamol</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{part/footer :: footer}"></div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function loadProductsByDoiTuong(element) {
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+
+        var doiTuongId = element.getAttribute('data-doituong-id');
+        var imageMax = element.getAttribute('data-image-max');
+        var imageMin = element.getAttribute('data-image-min');
+
+        var pictureElement = document.querySelector('#category-image').parentElement;
+        pictureElement.innerHTML = '<source media="(max-width: 960px)" srcset="' + imageMin + '">' +
+            '<source media="(min-width: 961px)" srcset="' + imageMax + '">' +
+            '<img id="category-image" src="' + imageMax + '" class="img-fluid rounded category-img" alt="Đối tượng">';
+
+        $.ajax({
+            url: '/products-by-doituong',
+            type: 'GET',
+            data: { doiTuongId: doiTuongId },
+            success: function(response) {
+                $('#product-by-doituong-container').html(response);
+                $('#product-by-doituong-container .product-list').addClass('active');
+                initializeUnitButtonsDoiTuong();
+                formatPricesDoiTuong();
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi tải sản phẩm:', error);
+                $('#product-by-doituong-container').html('<p>Lỗi khi tải sản phẩm!</p>');
+            }
+        });
+    }
+
+    function updatePrice(productId, donViTinhId) {
+        var productCard = document.querySelector('#unit-btn-' + productId + '-' + donViTinhId)?.closest('.product-card');
+        if (!productCard) return;
+
+        productCard.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
+        var selectedBtn = document.querySelector('#unit-btn-' + productId + '-' + donViTinhId);
+        if (selectedBtn) selectedBtn.classList.add('active');
+
+        $.ajax({
+            url: '/update-price',
+            type: 'GET',
+            data: { productId: productId, donViTinhId: donViTinhId },
+            success: function(response) {
+                var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
+                var gia = Number(response.gia).toLocaleString('vi-VN');
+                var discountPercent = response.discount ? Number(response.discount) : 0;
+                var unit = response.donViTinh;
+
+                $('#discounted-price-' + productId).text(discountedPrice + 'đ/' + unit);
+                if (response.hasDiscount) {
+                    $('#original-price-' + productId).text(gia + 'đ/' + unit).show();
+                    $('#discount-badge-' + productId).text('-' + discountPercent + '%').show();
+                } else {
+                    $('#original-price-' + productId).hide();
+                    $('#discount-badge-' + productId).hide();
+                }
+
+                var unitInfo = productCard.querySelector('.unit-info');
+                if (unitInfo) {
+                    unitInfo.textContent = response.quyCach;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi cập nhật giá:', error);
+            }
+        });
+    }
+
+    function updatePriceDoiTuong(productId, donViTinhId) {
+        var productCard = document.querySelector('#doituong-unit-btn-' + productId + '-' + donViTinhId)?.closest('.product-card');
+        if (!productCard) return;
+
+        productCard.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
+        var selectedBtn = document.querySelector('#doituong-unit-btn-' + productId + '-' + donViTinhId);
+        if (selectedBtn) selectedBtn.classList.add('active');
+
+        $.ajax({
+            url: '/update-price',
+            type: 'GET',
+            data: { productId: productId, donViTinhId: donViTinhId },
+            success: function(response) {
+                var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
+                var gia = Number(response.gia).toLocaleString('vi-VN');
+                var discountPercent = response.discount ? Number(response.discount) : 0;
+                var unit = response.donViTinh;
+
+                $('#doituong-discounted-price-' + productId).text(discountedPrice + 'đ/' + unit);
+                if (response.hasDiscount) {
+                    $('#doituong-original-price-' + productId).text(gia + 'đ/' + unit).show();
+                    $('#doituong-discount-badge-' + productId).text('-' + discountPercent + '%').show();
+                } else {
+                    $('#doituong-original-price-' + productId).hide();
+                    $('#doituong-discount-badge-' + productId).hide();
+                }
+
+                var unitInfo = productCard.querySelector('.unit-info');
+                if (unitInfo) {
+                    unitInfo.textContent = response.quyCach;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi cập nhật giá:', error);
+            }
+        });
+    }
+
+    function formatPrices() {
+        $('.product-scroll-container .product-card').each(function() {
+            var discountedPriceElement = $(this).find('.discounted-price');
+            var originalPriceElement = $(this).find('.original-price');
+            var activeUnit = $(this).find('.unit-btn.active').text() || $(this).find('.unit-btn').first().text() || $(this).find('.discounted-price').data('unit');
+
+            var discountedPrice = discountedPriceElement.data('price');
+            var originalPrice = originalPriceElement.data('price');
+
+            if (discountedPrice !== undefined) {
+                discountedPriceElement.text(Number(discountedPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+            if (originalPrice !== undefined) {
+                originalPriceElement.text(Number(originalPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+        });
+    }
+
+    function formatPricesDoiTuong() {
+        $('#product-by-doituong-container .product-card').each(function() {
+            var discountedPriceElement = $(this).find('.discounted-price');
+            var originalPriceElement = $(this).find('.original-price');
+            var activeUnit = $(this).find('.unit-btn.active').text() || $(this).find('.unit-btn').first().text() || $(this).find('.discounted-price').data('unit');
+
+            var discountedPrice = discountedPriceElement.data('price');
+            var originalPrice = originalPriceElement.data('price');
+
+            if (discountedPrice !== undefined) {
+                discountedPriceElement.text(Number(discountedPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+            if (originalPrice !== undefined) {
+                originalPriceElement.text(Number(originalPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+        });
+    }
+
+    function initializeUnitButtons() {
+        $('.product-scroll-container .product-card').each(function() {
+            var activeButton = $(this).find('.unit-btn.active');
+            if (activeButton.length > 0) {
+                var ids = activeButton.attr('id').split('-');
+                var productId = ids[2];
+                var donViTinhId = ids[3];
+                if (productId && donViTinhId) {
+                    updatePrice(productId, donViTinhId);
+                }
+            } else {
+                var firstButton = $(this).find('.unit-btn').first();
+                if (firstButton.length > 0) {
+                    var ids = firstButton.attr('id').split('-');
+                    var productId = ids[2];
+                    var donViTinhId = ids[3];
+                    if (productId && donViTinhId) {
+                        firstButton.addClass('active');
+                        updatePrice(productId, donViTinhId);
+                    }
+                }
+            }
+        });
+        formatPrices();
+    }
+
+    function initializeUnitButtonsDoiTuong() {
+        $('#product-by-doituong-container .product-card').each(function() {
+            var activeButton = $(this).find('.unit-btn.active');
+            if (activeButton.length > 0) {
+                var ids = activeButton.attr('id').split('-');
+                var productId = ids[2];
+                var donViTinhId = ids[3];
+                if (productId && donViTinhId) {
+                    updatePriceDoiTuong(productId, donViTinhId);
+                }
+            } else {
+                var firstButton = $(this).find('.unit-btn').first();
+                if (firstButton.length > 0) {
+                    var ids = firstButton.attr('id').split('-');
+                    var productId = ids[2];
+                    var donViTinhId = ids[3];
+                    if (productId && donViTinhId) {
+                        firstButton.addClass('active');
+                        updatePriceDoiTuong(productId, donViTinhId);
+                    }
+                }
+            }
+        });
+        formatPricesDoiTuong();
+    }
+
+    function addToCart(productId) {
+        var activeUnitBtn = document.querySelector(`[id^='unit-btn-${productId}-'].active`) ||
+            document.querySelector(`[id^='doituong-unit-btn-${productId}-'].active`);
+        var donViTinhId = activeUnitBtn ? activeUnitBtn.id.split('-').pop() : null;
+
+        if (!donViTinhId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cảnh báo',
+                text: 'Vui lòng chọn đơn vị tính trước khi thêm vào giỏ hàng!',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        var token = $("meta[name='_csrf']").attr("content");
+        var header = $("meta[name='_csrf_header']").attr("content");
+
+        $.ajax({
+            url: '/cart/add',
+            type: 'POST',
+            data: {
+                productId: parseInt(productId),
+                donViTinhId: parseInt(donViTinhId),
+                quantity: 1
+            },
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader(header, token);
+            },
+            success: function(response) {
+                if (response && response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công',
+                        text: 'Sản phẩm đã được thêm vào giỏ hàng!',
+                        confirmButtonText: 'OK',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Reload trang sau khi thêm sản phẩm thành công
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Không thể thêm sản phẩm: ' + (response.message || 'Lỗi không xác định'),
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Đã xảy ra lỗi: ' + (xhr.responseJSON?.message || 'Lỗi server'),
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+
+
+
+
+
+    function refreshCartDropdown() {
+        $.ajax({
+            url: '/cart/items',
+            type: 'GET',
+            success: function(response) {
+                console.log('Cart items:', response);
+                var cartItemsHtml = '';
+                response.forEach(item => {
+                    cartItemsHtml += `
+                    <li class="cart-item d-flex align-items-start">
+                        <div class="cart-item-details flex-grow-1">
+                            <strong>${item.productName}</strong>
+                            <div class="cart-item-info d-flex justify-content-between align-items-center">
+                                <p class="cart-item-price mb-0">${Number(item.price).toLocaleString('vi-VN')}đ</p>
+                                <span class="cart-item-quantity">x${item.quantity} ${item.donViTinh}</span>
+                            </div>
+                        </div>
+                        <a href="#" class="delete-item align-self-center" onclick="removeFromCart(${item.id}); return false;">
+                            <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#trash"></use></svg>
+                        </a>
+                    </li>`;
+                });
+                if (cartItemsHtml === '') {
+                    cartItemsHtml = '<li>Giỏ hàng trống</li>';
+                }
+                $('.cart-dropdown .cart-items').html(cartItemsHtml);
+                // Không gọi updateCartCount ở đây để tránh ghi đè số lượng từ response của addToCart
+            },
+            error: function(xhr, status, error) {
+                console.error('Error refreshing cart:', error);
+            }
+        });
+    }
+
+    function updateCartCount(count) {
+        var cartCountElement = $('.cart-count');
+        if (cartCountElement.length) {
+            cartCountElement.text(count); // Cập nhật số lượng giỏ hàng trên biểu tượng
+        }
+    }
+
+    $(document).ready(function() {
+        var firstButton = document.querySelector('.category-btn.active');
+        if (firstButton) {
+            loadProductsByDoiTuong(firstButton);
+        }
+
+        initializeUnitButtons();
+        formatPricesDoiTuong();
+    });
+</script>
+
+
+</body>
+</html>

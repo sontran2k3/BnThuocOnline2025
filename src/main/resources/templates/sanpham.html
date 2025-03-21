@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport">
+    <title>Danh sách sản phẩm</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" defer></script>
+    <script src="/js/quanly/sanpham.js"></script>
+    <link rel="stylesheet" href="" th:href="@{/css/sanpham.css}">
+    <link rel="icon" type="logonew/png" th:href="@{/logonewT.png}">
+
+</head>
+<body>
+<div th:insert="~{part/header :: header}"></div>
+<div th:insert="~{part/dropdowns :: dropdowns}"></div>
+
+<main>
+    <div class="container mt-4">
+        <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" style="text-decoration: none;">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Thực phẩm chức năng</a></li>
+                <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Hỗ trợ tiêu hóa</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Dạ dày tá tràng</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Thông tin sản phẩm -->
+    <div class="container mt-4" style="background-color: #f8f9fa; border-radius: 10px">
+        <div class="row">
+            <div class="col-md-6" style="margin-top: 50px;">
+                <div class="d-flex flex-column h-100 justify-content-between align-items-center">
+                    <img id="mainImage" th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" class="img-fluid rounded" th:alt="${product.tenSanPham}" style="height: 800px; object-fit: contain;">
+                    <div class="d-flex product-thumbnails justify-content-center" style="margin-bottom: 200px">
+                        <div class="thumbnail-container me-2" th:each="image : ${images}">
+                            <img th:src="${image.imageUrl}"
+                                 class="img-thumbnail"
+                                 th:alt="'Thumbnail ' + ${image.id}"
+                                 th:data-image-url="${image.imageUrl}"
+                                 onclick="changeImage(this.getAttribute('data-image-url'), this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" style="margin-top: 20px">
+                <h5 class="text-primary" th:text="'Thương hiệu: ' + ${product.thuongHieu ?: 'Không xác định'}"></h5>
+                <h2 class="product-title" th:text="${product.tenSanPham}"></h2>
+                <p class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}"></p>
+                <h3 class="product-price">
+                    <span th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ'"></span>
+                    <small class="old-price" th:if="${product.hasDiscount()}"
+                           th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></small>
+                </h3>
+
+                <div class="mt-3 d-flex align-items-center">
+                    <label class="fw-bold me-3">Chọn đơn vị tính:</label>
+                    <div class="btn-group" role="group" aria-label="Chọn đơn vị tính">
+                        <th:block th:each="dvt : ${product.donViTinhList}">
+                            <input type="radio" class="btn-check" name="unit"
+                                   th:id="'option' + ${dvt.id}"
+                                   th:attr="data-dvt-id=${dvt.id}"
+                                   autocomplete="off"
+                                   th:checked="${dvt.id == product.defaultDonViTinh.id}">
+                            <label class="btn btn-outline-primary" th:for="'option' + ${dvt.id}"
+                                   th:text="${dvt.donViTinh}"></label>
+                        </th:block>
+                    </div>
+                </div>
+
+
+
+                <div class="mt-3 row">
+                    <div class="col-4">
+                        <p class="text-muted">Danh mục</p>
+                        <p class="text-muted">Dạng bào chế</p>
+                        <p class="text-muted">Quy cách</p>
+                        <p class="text-muted">Xuất xứ thương hiệu</p>
+                        <p class="text-muted">Nhà sản xuất</p>
+                        <p class="text-muted">Nước sản xuất</p>
+                        <p class="text-muted">Thành phần</p>
+                        <p class="text-muted">Mô tả ngắn</p>
+                        <p class="text-muted">Số đăng ký</p>
+                    </div>
+                    <div class="col-8">
+                        <p class="text-muted" th:text="${product.danhMuc != null ? product.danhMuc.tenDanhMuc : 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.dangBaoChe ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.quyCach ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.xuatXuThuongHieu ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.nhaSanXuat ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.nuocSanXuat ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.thanhPhan ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.moTaNgan ?: 'Không xác định'}"></p>
+                        <p class="text-muted" th:text="${product.soDangKy ?: 'Không xác định'}"></p>
+                    </div>
+                </div>
+
+                <div class="container mt-5 mb-5">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="quantity-container d-flex align-items-center">
+                            <label class="mb-0 me-2">Chọn số lượng:</label>
+                            <div class="quantity-selector">
+                                <button id="decrease">−</button>
+                                <input type="text" id="quantity" value="1" readonly>
+                                <button id="increase">+</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="max-width: 300px;">Thêm vào giỏ hàng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5 product-details" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 20px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); padding: 30px;">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-2">
+                <nav id="navbar-example3" class="h-100 flex-column align-items-stretch pe-4 border-end" style="position: sticky; top: 30px;">
+                    <div class="nav nav-pills flex-column">
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-1">Mô tả sản phẩm</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-2">Thành phần</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-3">Công dụng</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-4">Cách dùng</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-5">Tác dụng phụ</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-6">Lưu ý</a>
+                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-7">Bảo quản</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div data-bs-spy="scroll" data-bs-target="#navbar-example3" data-bs-smooth-scroll="true" class="scrollspy-example p-4" style="background-color: #ffffff; border-radius: 15px; max-height: 500px; overflow-y: auto; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);" tabindex="0">
+                    <div id="item-1" class="mb-5">
+                        <h4 class="section-title">Mô tả sản phẩm</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.moTaChiTiet : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-2" class="mb-5">
+                        <h4 class="section-title">Thành phần</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.thanhPhanChiTiet : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-3" class="mb-5">
+                        <h4 class="section-title">Công dụng</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.congDungChiTiet : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-4" class="mb-5">
+                        <h4 class="section-title">Cách dùng</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.cachDungChiTiet : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-5" class="mb-5">
+                        <h4 class="section-title">Tác dụng phụ</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.tacDungPhu : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-6" class="mb-5">
+                        <h4 class="section-title">Lưu ý</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.luuY : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                    <div id="item-7" class="mb-5">
+                        <h4 class="section-title">Bảo quản</h4>
+                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.baoQuan : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sản phẩm liên quan -->
+    <div class="container mt-4">
+        <h4 class="mb-3">Sản phẩm liên quan</h4>
+        <div class="product-scroll-container">
+            <div class="product-list">
+                <div class="product-card" th:each="product : ${products}">
+                    <div class="card border rounded shadow-sm d-flex flex-column h-100" th:href="@{/sanpham(id=${product.id})}">
+                        <!-- Hiển thị badge giảm giá -->
+                        <span class="badge bg-danger position-absolute discount-badge"
+                              th:id="'related-discount-badge-' + ${product.id}"
+                              th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                              th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
+                        <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
+                             class="card-img-top"
+                             th:alt="${product.tenSanPham}">
+                        <div class="card-body text-center d-flex flex-column">
+                            <h6 class="card-title" th:text="${product.tenSanPham}" style="font-size: 1rem;"></h6>
+                            <!-- Thanh lựa chọn đơn vị tính được cố định vị trí -->
+                            <div class="unit-btn-group-wrapper" th:if="${not #lists.isEmpty(product.donViTinhList)}">
+                                <div class="unit-btn-group">
+                                    <button th:each="dvt : ${product.donViTinhList}"
+                                            th:id="'related-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
+                                            th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
+                                            th:onclick="'updatePriceRelated(' + ${product.id} + ',' + ${dvt.id} + ')'"
+                                            th:text="${dvt.donViTinh}"
+                                            style="padding: 5px 10px; font-size: 14px;"></button>
+                                </div>
+                            </div>
+                            <!-- Phần giá và quy cách -->
+                            <div class="price-section">
+                                <!-- Giá giảm và giá gốc -->
+                                <div th:id="'related-discounted-price-' + ${product.id}" class="discounted-price"
+                                     th:data-price="${product.getDiscountedPrice()}"
+                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                     th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
+                                <div th:id="'related-original-price-' + ${product.id}" class="original-price"
+                                     th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                     th:data-price="${product.getDefaultDonViTinh().gia}"
+                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                     th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
+                                <!-- Quy cách -->
+                                <div class="unit-info" th:text="${product.quyCach ?: ''}"></div>
+                            </div>
+                            <a th:href="@{/sanpham(id=${product.id})}" class="btn btn-primary w-100 mt-auto" style="border-radius: 5px; padding: 8px 20px;">Chọn mua</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hiển thị thông báo nếu không có sản phẩm liên quan -->
+                <div class="text-center text-muted" th:unless="${products != null and not #lists.isEmpty(products)}">
+                    Hiện tại chưa có sản phẩm liên quan nào.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Câu hỏi thường gặp</h4>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item" th:each="faq, iterStat : ${cauHoiLienQuan}">
+                        <h2 class="accordion-header" th:id="'heading' + ${iterStat.count}">
+                            <button class="accordion-button" th:classappend="${iterStat.first} ? '' : 'collapsed'" type="button"
+                                    data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.count}">
+                                <i class="bi bi-question-circle me-2"></i>
+                                <span th:utext="${faq.cauHoi}"></span>
+                            </button>
+                        </h2>
+                        <div th:id="'collapse' + ${iterStat.count}"
+                             class="accordion-collapse collapse"
+                             th:classappend="${iterStat.first} ? 'show' : ''"
+                             data-bs-parent="#faqAccordion">
+                            <div class="accordion-body" th:utext="${faq.cauTraLoi}"></div>
+                        </div>
+                    </div>
+                    <!-- Hiển thị thông báo nếu không có câu hỏi -->
+                    <div class="accordion-item" th:unless="${cauHoiLienQuan != null and not #lists.isEmpty(cauHoiLienQuan)}">
+                        <div class="accordion-body">
+                            Hiện tại chưa có câu hỏi thường gặp nào cho sản phẩm này.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4" style="height: 20px"></div>
+</main>
+<div th:insert="~{part/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script th:inline="javascript">
+    $(document).ready(function() {
+        // Xử lý khi chọn đơn vị tính cho sản phẩm chính
+        $('input[name="unit"]').on('change', function() {
+            var productId = /*[[${product?.id}]]*/ null;
+            var donViTinhId = $(this).attr('data-dvt-id');
+
+            if (productId === null) {
+                console.error('Không tìm thấy productId');
+                return;
+            }
+
+            $.ajax({
+                url: '/update-price',
+                type: 'GET',
+                data: { productId: productId, donViTinhId: donViTinhId },
+                success: function(response) {
+                    $('.product-price span').text(Number(response.discountedPrice).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ');
+                    if (response.hasDiscount) {
+                        $('.old-price').text(Number(response.gia).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ').show();
+                    } else {
+                        $('.old-price').hide();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi cập nhật giá:', error);
+                }
+            });
+        });
+
+        // Kích hoạt sự kiện change cho đơn vị tính mặc định của sản phẩm chính khi load trang
+        var checkedUnit = $('input[name="unit"]:checked');
+        if (checkedUnit.length === 0) {
+            var firstUnit = $('input[name="unit"]').first();
+            if (firstUnit.length > 0) {
+                firstUnit.prop('checked', true);
+                firstUnit.trigger('change');
+            } else {
+                console.error('Không có đơn vị tính nào để chọn');
+            }
+        } else {
+            checkedUnit.trigger('change');
+        }
+
+        // Xử lý tăng/giảm số lượng
+        $('#increase').click(function() {
+            let qty = parseInt($('#quantity').val());
+            $('#quantity').val(qty + 1);
+        });
+        $('#decrease').click(function() {
+            let qty = parseInt($('#quantity').val());
+            if (qty > 1) $('#quantity').val(qty - 1);
+        });
+
+        // Hàm cập nhật giá cho "Sản phẩm liên quan"
+        window.updatePriceRelated = function(productId, donViTinhId) {
+            var productCard = $('#related-unit-btn-' + productId + '-' + donViTinhId).closest('.card');
+            if (!productCard.length) return;
+
+            productCard.find('.unit-btn').removeClass('active');
+            $('#related-unit-btn-' + productId + '-' + donViTinhId).addClass('active');
+
+            $.ajax({
+                url: '/update-price',
+                type: 'GET',
+                data: { productId: productId, donViTinhId: donViTinhId },
+                success: function(response) {
+                    var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
+                    var gia = Number(response.gia).toLocaleString('vi-VN');
+                    var discountPercent = response.discount ? Number(response.discount) : 0;
+                    var unit = response.donViTinh;
+
+                    $('#related-discounted-price-' + productId).text(discountedPrice + 'đ/' + unit);
+                    if (response.hasDiscount) {
+                        $('#related-original-price-' + productId).text(gia + 'đ/' + unit).show();
+                        $('#related-discount-badge-' + productId).text('-' + discountPercent + '%').show();
+                    } else {
+                        $('#related-original-price-' + productId).hide();
+                        $('#related-discount-badge-' + productId).hide();
+                    }
+
+                    var unitInfo = productCard.find('.unit-info');
+                    if (unitInfo.length) {
+                        unitInfo.text(response.quyCach || '');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi cập nhật giá:', error);
+                }
+            });
+        };
+
+        // Khởi tạo trạng thái đơn vị tính cho "Sản phẩm liên quan"
+        function initializeRelatedUnitButtons() {
+            $('.product-card .card').each(function() {
+                var firstButton = $(this).find('.unit-btn').first();
+
+                if (firstButton.length > 0) {
+                    var ids = firstButton.attr('id').split('-');
+                    var productId = ids[2];
+                    var donViTinhId = ids[3];
+                    if (productId && donViTinhId) {
+                        // Xóa tất cả trạng thái active hiện tại
+                        $(this).find('.unit-btn').removeClass('active');
+                        // Active nút đầu tiên
+                        firstButton.addClass('active');
+                        // Kích hoạt sự kiện click để cập nhật giá
+                        firstButton.trigger('click');
+                    }
+                }
+            });
+        }
+
+        // Gọi hàm khởi tạo khi trang load
+        initializeRelatedUnitButtons();
+    });
+
+    // Hàm thay đổi hình ảnh chính khi click vào thumbnail
+    function changeImage(imageUrl, element) {
+        var mainImage = document.getElementById('mainImage');
+        if (mainImage) {
+            mainImage.style.opacity = '0';
+            setTimeout(function() {
+                mainImage.src = imageUrl;
+                mainImage.style.opacity = '1';
+            }, 300);
+
+            // Xóa lớp active khỏi tất cả các thumbnail
+            var thumbnails = document.querySelectorAll('.product-thumbnails img');
+            thumbnails.forEach(function(thumb) {
+                thumb.classList.remove('active');
+            });
+
+            // Thêm lớp active cho thumbnail được click
+            element.classList.add('active');
+        }
+    }
+
+    // Đặt thumbnail đầu tiên làm active khi trang load
+    $(document).ready(function() {
+        var firstThumbnail = $('.product-thumbnails img').first();
+        if (firstThumbnail.length > 0) {
+            firstThumbnail.addClass('active');
+            changeImage(firstThumbnail.attr('data-image-url'), firstThumbnail[0]);
+        }
+    });
+</script>
+</body>
+</html>

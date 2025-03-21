@@ -1,0 +1,391 @@
+<div th:fragment="dropdowns">
+    <style>
+        /* Navbar tổng thể */
+        .navbar {
+            background: #ffffff; /* Màu trắng sạch sẽ */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Bóng nhẹ */
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0; /* Viền dưới nhẹ */
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: #333333; /* Màu chữ tối hơn, dễ đọc */
+            font-size: 15px;
+            font-weight: 500; /* Font vừa phải */
+            padding: 8px 12px;
+            transition: color 0.2s ease; /* Hiệu ứng chuyển màu nhẹ */
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover,
+        .navbar-light .navbar-nav .nav-link:focus {
+            color: #007bff; /* Màu xanh dương nhẹ nhàng khi hover */
+            background: none; /* Bỏ nền khi hover để đơn giản */
+        }
+
+        .navbar-light .navbar-nav .nav-link.dropdown-toggle::after {
+            border-top: 0.3em solid #333333; /* Mũi tên màu tối */
+            border-right: 0.3em solid transparent;
+            border-left: 0.3em solid transparent;
+            transition: transform 0.2s ease;
+        }
+
+        .navbar-light .navbar-nav .nav-link.dropdown-toggle:hover::after {
+            transform: rotate(180deg);
+        }
+
+        .navbar-light .navbar-nav .nav-item {
+            margin-right: 8px; /* Khoảng cách hợp lý giữa các mục */
+        }
+
+        /* Dropdown menu */
+        .navbar-nav .nav-item .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            width: 900px; /* Giảm kích thước để gọn hơn */
+            padding: 20px;
+            background: #ffffff; /* Màu trắng đơn giản */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Bóng nhẹ */
+            border: 1px solid #f0f0f0;
+            flex-direction: row;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .navbar-nav .nav-item:hover .dropdown-menu {
+            display: flex;
+            opacity: 1;
+        }
+
+        .menu-left, .menu-right {
+            padding: 15px;
+        }
+
+        .menu-left {
+            width: 30%; /* Thu gọn một chút */
+            border-right: 1px solid #e8ecef; /* Viền nhẹ */
+        }
+
+        .menu-left .menu-category {
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .menu-left a {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            padding: 10px 12px;
+            text-decoration: none;
+            color: #333333;
+            transition: color 0.2s ease, background 0.2s ease;
+            border-radius: 5px;
+        }
+
+        .menu-left a:hover {
+            background-color: #f8f9fa; /* Nền nhẹ khi hover */
+            color: #007bff; /* Màu xanh dương */
+        }
+
+        .menu-left a img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .menu-right {
+            width: 70%;
+        }
+
+        .menu-right .menu-category {
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .product-grid {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .product-grid::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .product-grid::-webkit-scrollbar-thumb {
+            background: #007bff;
+            border-radius: 3px;
+        }
+
+        .product-grid .product {
+            text-align: center;
+            font-size: 13px;
+            max-width: 130px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .product-grid .product:hover {
+            transform: translateY(-3px);
+        }
+
+        .product-grid img {
+            width: 100px;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+
+        .product-grid .product div {
+            color: #333333;
+            font-weight: 500;
+        }
+    </style>
+
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Thực phẩm chức năng</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="product-list">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Dược mỹ phẩm</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="duocmipham">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Thuốc</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="thuoc">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Chăm sóc cá nhân</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="chamsoccanhan">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Thiết bị y tế</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="thietbiyte">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Tiêm chủng</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="tiemchung">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Bệnh</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="benh">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Góc sức khỏe</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="gocsuckhoe">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button">Hệ thống nhà thuốc</a>
+                        <div class="dropdown-menu">
+                            <div class="menu-left">
+                                <div class="menu-category">Danh mục</div>
+                                <a data-category="vitamin" href="#"><img src="/image/vitamins.png" alt=""> Vitamin & Khoáng chất</a>
+                                <a data-category="sinhly" href="#"><img src="/image/human.png" alt=""> Sinh lý - Nội tiết tố</a>
+                                <a data-category="caitien" href="#"><img src="/image/energy.png" alt=""> Cải thiện tăng cường chức năng</a>
+                                <a data-category="hotro" href="#"><img src="/image/home-care.png" alt=""> Hỗ trợ điều trị</a>
+                                <a data-category="tieuhoa" href="#"><img src="/image/bloating-relief.png" alt=""> Hỗ trợ tiêu hóa</a>
+                                <a data-category="timmach" href="#"><img src="/image/cardiovascular.png" alt=""> Sức khỏe tim mạch</a>
+                            </div>
+                            <div class="menu-right">
+                                <div class="menu-category">Sản phẩm nổi bật</div>
+                                <div class="product-grid" id="hethongnhathuoc">
+                                    <div class="product"><img src="/image/img_21.png" alt=""><div>Siro Canxi D3-K2<br>105.000đ / Hộp</div></div>
+                                    <div class="product"><img src="/image/img_22.png" alt=""><div>Si rô Brauer Kids D3+K2<br>396.000đ / Hộp</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        const productData = {
+            vitamin: [
+                { img: "/image/img_21.png", name: "Siro Canxi D3-K2", price: "105.000đ / Hộp" },
+                { img: "/image/img_22.png", name: "Si rô Brauer Kids D3+K2", price: "396.000đ / Hộp" }
+            ],
+            sinhly: [
+                { img: "/image/img_21.png", name: "Omega 3-6-9", price: "570.000đ / Hộp" },
+                { img: "/image/img_24.png", name: "Viên uống Alisha Biotic For Women Happy Life", price: "183.200đ/ Hộp" }
+            ],
+            caitien: [
+                { img: "/image/img_23.png", name: "Siro Bổ Phế Lábebé", price: "75.000/ Hộp" }
+            ],
+            hotro: [
+                { img: "/image/img_25.png", name: "Viên uống Golex Ocavill", price: "495.000đ / Tuýp" },
+                { img: "/image/img_26.png", name: "Viên nhai Borne Mineral New Nordic", price: "508.000đ / Tuýp" }
+            ],
+            tieuhoa: [
+                { img: "/image/img_27.png", name: "Bào tử lợi khuẩn Livespo DIA 30", price: "270.000đ / Hộp" }
+            ],
+            timmach: [
+                { img: "/image/img_28.png", name: "Viên uống Co Enzyme Q10 & Evening primrose", price: "141.000đ / Hộp" }
+            ]
+        };
+
+        document.querySelectorAll(".menu-left a").forEach(item => {
+            item.addEventListener("mouseover", function() {
+                const category = this.getAttribute("data-category");
+                const productList = this.closest(".dropdown-menu").querySelector(".product-grid");
+                productList.innerHTML = productData[category].map(p =>
+                    `<div class='product'><img src='${p.img}' alt=''><div>${p.name}<br>${p.price}</div></div>`
+                ).join("");
+            });
+        });
+    </script>
+</div>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Home Page</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="" th:href="@{/css/thongtincanhan.css}">
+    <link rel="icon" type="logonew/png" th:href="@{/logonewT.png}" >
+</head>
+<body>
+
+<div th:replace="~{part/header :: header}"></div>
+<div th:replace="~{part/dropdowns :: dropdowns}"></div>
+<main>
+    <div class="container mt-4" >
+        <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" style="text-decoration: none;">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Cá nhân</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Thông tin cá nhân</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="container mt-4">
+        <div class="row align-items-start">
+            <div class="col-md-3">
+                <div class="profile-card">
+                    <div class="profile-img" ></div>
+                    <h5 class="mt-2" > <span th:text="${name}"></span></h5>
+<!--                    <p class="mb-0" >0325005057</p>-->
+                    <p> <span th:text="${phoneNumber != null ? phoneNumber : 'Không có phoneNumber'}"></span></p>
+                </div>
+                <div class="sidebar">
+                    <ul class="list-group list-group-flush" id="sidebar-menu">
+                        <li class="list-group-item menu-item active" data-section="personal"><i class="bi bi-person"></i> Thông tin cá nhân</li>
+                        <li class="list-group-item menu-item" data-section="orders"><i class="bi bi-box"></i> Đơn hàng của tôi</li>
+                        <li class="list-group-item menu-item" data-section="addresses"><i class="bi bi-geo-alt"></i> Quản lý số địa chỉ</li>
+                        <li class="list-group-item menu-item" data-section="appointments"><i class="bi bi-calendar-check"></i> Lịch hẹn tiêm chủng</li>
+                        <li class="list-group-item menu-item" data-section="vaccination-orders"><i class="bi bi-shield"></i> Đơn hàng tiêm chủng</li>
+                        <li class="list-group-item menu-item" data-section="prescriptions"><i class="bi bi-capsule"></i> Đơn thuốc của tôi</li>
+                        <li class="list-group-item text-danger menu-item" data-section="logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div id="content-area" class="content-card">
+                    <!-- Thông tin cá nhân (Updated to match the screenshot) -->
+                    <div class="card-content personal-content" id="personal-content">
+                        <h4 class="mb-3">Thông tin cá nhân</h4>
+
+                        <!-- Chế độ hiển thị thông tin -->
+                        <div id="personal-display">
+                            <div class="profile-img" style="width: 80px; height: 80px; margin: 0 auto 20px;"></div>
+                            <table class="table personal-table">
+                                <tr>
+                                    <th>Họ và tên</th>
+                                    <td style="text-align: right"> <span th:text="${name}">Trần Khắc Sơn</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Số điện thoại</th>
+                                    <td style="text-align: right"> <span th:text="${phoneNumber != null ? phoneNumber : 'Không có phoneNumber'}"></span></td>
+                                </tr>
+                                <tr>
+                                    <th>Giới tính</th>
+                                    <td style="text-align: right"><a href="#" class="text-primary">Thêm thông tin</a></td>
+                                </tr>
+                                <tr>
+                                    <th>Ngày sinh</th>
+                                    <td style="text-align: right"><a href="#" class="text-primary">Thêm thông tin</a></td>
+                                </tr>
+                            </table>
+                            <button class="btn btn-edit mt-4" onclick="showEditForm()">Chỉnh sửa thông tin</button>
+                        </div>
+
+                        <!-- Chế độ chỉnh sửa thông tin -->
+                        <div id="personal-edit" style="display: none;">
+                            <div class="profile-img-container">
+                                <div class="profile-img"></div>
+                            </div>
+                            <form id="update-personal-info" th:action="@{/updatePersonalInfo}" method="POST">
+                                <div class="mb-3 form-group-centered">
+                                    <label for="fullName" class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control custom-input" id="fullName" name="fullName" th:value="${name}" placeholder="Trần Khắc Sơn">
+                                </div>
+                                <div class="mb-3 form-group-centered">
+                                    <label for="phoneNumber" class="form-label">Số điện thoại</label>
+                                    <input type="text" class="form-control custom-input" id="phoneNumber" name="phoneNumber" th:value="${phoneNumber != null ? phoneNumber : ''}" placeholder="0325005057" readonly style="background-color: #e9ecef;">
+                                </div>
+                                <div class="mb-3 form-group-centered">
+                                    <label class="form-label">Giới tính</label>
+                                    <div class="d-flex justify-content-center gap-4">
+                                        <div class="form-check form-check-inline custom-radio">
+                                            <input class="form-check-input" type="radio" name="gender" id="male" value="Nam">
+                                            <label class="form-check-label" for="male">Nam</label>
+                                        </div>
+                                        <div class="form-check form-check-inline custom-radio">
+                                            <input class="form-check-input" type="radio" name="gender" id="female" value="Nữ">
+                                            <label class="form-check-label" for="female">Nữ</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3 form-group-centered position-relative">
+                                    <label for="birthDate" class="form-label">Ngày sinh</label>
+                                    <input type="text" class="form-control custom-input date-input" id="birthDate" name="birthDate" placeholder="18/06/2003">
+                                    <span class="calendar-icon">
+                <i class="bi bi-calendar3"></i>
+            </span>
+                                </div>
+                                <div class="d-flex justify-content-center gap-3 mt-4">
+                                    <button type="button" class="btn btn-cancel" onclick="cancelEdit()">Hủy</button>
+                                    <button type="submit" class="btn btn-update">Cập nhật thông tin</button>
+                                </div>
+                            </form>
+                        </div>
+
+
+
+
+                    </div>
+                    <!-- Đơn hàng của tôi -->
+                    <div class="card-content" id="orders-content" style="display: none;">
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm theo tên đơn, hóa đơn, tên sản phẩm...">
+                            <i class="bi bi-search search-icon"></i>
+                        </div>
+                        <div class="tab-nav">
+                            <a href="#" class="active">Tất cả</a>
+                            <a href="#">Đang xử lý</a>
+                            <a href="#">Đang giao</a>
+                            <a href="#">Đã giao</a>
+                            <a href="#">Đã hủy</a>
+                            <a href="#">Trả hàng</a>
+                        </div>
+                        <div class="no-orders text-center">
+                            <img src="/image/donhang.png" alt="Không có đơn hàng" class="no-orders-img">
+                            <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
+                            <p class="mb-3">Cùng khám phá hàng ngàn sản phẩm tại Nhà thuốc FPT Long Châu ngay hôm nay!</p>
+                            <button class="btn btn-primary">Khám phá ngay</button>
+                        </div>
+                    </div>
+                    <!-- Quản lý số địa chỉ -->
+                    <div class="card-content" id="addresses-content" style="display: none;">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary">Thêm địa chỉ mới</button>
+                        </div>
+                        <div class="address-list">
+                            <div class="address-item">
+                                <h5>Trần Khắc Sơn | 0325005057</h5>
+                                <p>22 lền kề 26, Xá Vạn Cần, Huyện Hoài Đức, Hà Nội</p>
+                                <p class="text-muted">Mặc định</p>
+                                <a href="#" class="text-primary">Sửa</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lịch hẹn tiêm chủng -->
+                    <div class="card-content" id="appointments-content" style="display: none;">
+                        <div class="qr-card">
+                            <h4 class="mb-3">Mã Quy Khách tại ứng dụng Long Châu để xem nội dung lịch hẹn tiêm chủng</h4>
+                            <div class="qr-code">
+                                <img src="https://via.placeholder.com/200" alt="QR Code">
+                            </div>
+                            <p class="mt-3 mb-1">Quét QR ngay với camera của điện thoại bạn để tải ứng dụng</p>
+                            <p class="mb-1">Long Châu QR</p>
+                            <p>Học liên App Store hoặc Google Play để tìm và ứng dụng</p>
+                        </div>
+                    </div>
+
+                    <!-- Đơn hàng tiêm chủng -->
+                    <div class="card-content" id="vaccination-orders-content" style="display: none;">
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm hóa đơn...">
+                            <i class="bi bi-search search-icon"></i>
+                        </div>
+                        <div class="tab-nav">
+                            <a href="#" class="active">Tất cả</a>
+                            <a href="#">Chờ tư vấn</a>
+                            <a href="#">Đã tư vấn</a>
+                            <a href="#">Chưa liên lạc</a>
+                        </div>
+                        <div class="no-orders text-center">
+                            <img src="https://via.placeholder.com/100" alt="No vaccination orders" style="opacity: 0.7;">
+                            <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
+                            <p class="mb-3">Đặt lịch tiêm chủng ngay để nhận ưu đãi từ Long Châu</p>
+                            <button class="btn btn-primary">Đặt lịch ngay</button>
+                        </div>
+                    </div>
+
+                    <!-- Đơn thuốc của tôi -->
+                    <div class="card-content" id="prescriptions-content" style="display: none;">
+                        <div class="tab-nav">
+                            <a href="#" class="active">Tất cả</a>
+                            <a href="#">Chờ tư vấn</a>
+                            <a href="#">Đã tư vấn</a>
+                            <a href="#">Chưa liên lạc</a>
+                        </div>
+                        <div class="no-prescriptions text-center">
+                            <img src="https://via.placeholder.com/100" alt="No prescriptions" style="opacity: 0.7;">
+                            <p class="mt-3 mb-1">Bạn chưa có yêu cầu nào.</p>
+                            <p class="mb-3">Đặt đơn Long Châu liền sáng lòng lành nghệ</p>
+                            <button class="btn btn-primary">Gửi yêu cầu mới</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</main>
+<div th:replace="~{part/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuItems = document.querySelectorAll('.menu-item');
+        const contentArea = document.getElementById('content-area');
+        const pageTitle = document.getElementById('page-title');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+
+                menuItems.forEach(menu => menu.classList.remove('active'));
+                this.classList.add('active');
+
+                const contents = contentArea.querySelectorAll('.card-content');
+                contents.forEach(content => content.style.display = 'none');
+
+                let title = 'Thông tin cá nhân';
+                switch(section) {
+                    case 'personal':
+                        document.getElementById('personal-content').style.display = 'block';
+                        title = 'Thông tin cá nhân';
+                        break;
+                    case 'orders':
+                        document.getElementById('orders-content').style.display = 'block';
+                        title = 'Đơn hàng của tôi';
+                        break;
+                    case 'addresses':
+                        document.getElementById('addresses-content').style.display = 'block';
+                        title = 'Quản lý số địa chỉ';
+                        break;
+                    case 'appointments':
+                        document.getElementById('appointments-content').style.display = 'block';
+                        title = 'Lịch hẹn tiêm chủng';
+                        break;
+                    case 'vaccination-orders':
+                        document.getElementById('vaccination-orders-content').style.display = 'block';
+                        title = 'Đơn hàng tiêm chủng';
+                        break;
+                    case 'prescriptions':
+                        document.getElementById('prescriptions-content').style.display = 'block';
+                        title = 'Đơn thuốc của tôi';
+                        break;
+                    case 'logout':
+                        window.location.href = '/login';
+                        return;
+                }
+                pageTitle.textContent = title;
+            });
+        });
+    });
+    function showEditForm() {
+        document.getElementById('personal-display').style.display = 'none';
+        document.getElementById('personal-edit').style.display = 'block';
+    }
+
+    function cancelEdit() {
+        document.getElementById('personal-edit').style.display = 'none';
+        document.getElementById('personal-display').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

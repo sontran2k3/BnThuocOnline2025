@@ -1,0 +1,910 @@
+ <div th:fragment="header">
+    <style>
+        /* Reset và typography cơ bản */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Header container */
+        .header-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 15px 0;
+        }
+
+        /* Logo và branding */
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        .brand-section img {
+            height: 40px;
+            transition: transform 0.3s ease;
+        }
+        .brand-section img:hover {
+            transform: scale(1.05);
+        }
+        .brand-section a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a3c34;
+            text-decoration: none;
+        }
+        .brand-section .subtitle {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* Thanh tìm kiếm */
+        .search-barhome {
+            background: #ffffff;
+            border-radius: 50px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            justify-content: space-between;
+        }
+        .search-barhome:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        .search-barhome select,
+        .search-barhome input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.9rem;
+            padding: 6px;
+        }
+        .search-barhome select {
+            color: #6b7280;
+            width: 150px;
+            appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="%236b7280" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-size: 12px;
+            border-right: 1px solid #e5e7eb;
+            margin-right: 10px;
+        }
+        .search-barhome input {
+            flex-grow: 1;
+            padding: 6px 10px;
+            font-weight: 500;
+            color: #1a3c34;
+        }
+        .search-barhome input::placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+        .search-barhome button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        .search-barhome button:hover svg {
+            transform: scale(1.1);
+        }
+        .search-barhome svg {
+            color: #1a3c34;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Icon hành động và nút giỏ hàng */
+        .action-icons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-icons a {
+            background: #ffffff;
+            border-radius: 50%;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .action-icons a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .action-icons svg {
+            color: #1a3c34;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Nút giỏ hàng */
+        .cart-button {
+            border: 0;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        .cart-button span {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .cart-button .cart-total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a3c34;
+        }
+
+        /* Support box */
+        .support-box {
+            text-align: right;
+        }
+        .support-box span {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .support-box h5 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a3c34;
+        }
+
+        /* Responsive */
+        @media (max-width: 767px) {
+            .header-container .row {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            .brand-section,
+            .action-icons {
+                justify-content: center;
+                text-align: center;
+                width: 100%;
+            }
+            .search-barhome {
+                width: 90%;
+                display: none;
+            }
+            .action-icons {
+                flex-direction: row;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .cart-button {
+                display: none;
+            }
+            .support-box {
+                text-align: center;
+                display: none;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .brand-section,
+            .action-icons {
+                justify-content: flex-start;
+            }
+            .action-icons {
+                justify-content: flex-end;
+            }
+            .cart-button {
+                margin-left: 15px;
+            }
+            .support-box {
+                text-align: right;
+            }
+        }
+
+        /* Modal đăng nhập */
+        #loginModal .modal-dialog {
+            max-width: 500px;
+            width: 90%;
+            margin: 1.75rem auto;
+        }
+        #loginModal .modal-content {
+            background: url('/logonewT.png') no-repeat center center;
+            background-size: 60%;
+            background-color: rgba(245, 247, 250, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #loginModal .modal-header {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: none;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        #loginModal .modal-title {
+            color: #1a3c34;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        #loginModal .btn-close {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #loginModal .modal-body {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 5px 30px 40px 30px;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        #loginModal .modal-body p {
+            color: #6b7280;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+        #loginModal .btn {
+            border-radius: 25px;
+            padding: 14px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        #loginModal .btn-primary {
+            background: linear-gradient(135deg, #1a3c34, #2d6a4f);
+            border: none;
+        }
+        #loginModal .btn-primary:hover {
+            background: linear-gradient(135deg, #2d6a4f, #1a3c34);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        #loginModal .btn-danger {
+            background: linear-gradient(135deg, #d00000, #ff4d4d);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #loginModal .btn-danger:hover {
+            background: linear-gradient(135deg, #ff4d4d, #d00000);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* CSS cho giỏ hàng */
+        .offcanvas-body .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+        }
+        .cart-item-details {
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cart-item-quantity span {
+            font-size: 1rem;
+            color: #6b7280;
+        }
+        .cart-item-price {
+            font-weight: 700;
+            color: #1a3c34;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Login container */
+        .login-container {
+            max-width: 450px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-header {
+            margin-bottom: 30px;
+        }
+        .login-header h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .login-header p {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s ease; /* Thời gian transition ngắn hơn cho phản hồi nhanh */
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Để thêm hiệu ứng ripple */
+            overflow: hidden;
+        }
+        .btn-google {
+            background-color: #fff;
+            color: #4285f4;
+            border: 1px solid #e0e0e0;
+        }
+        .btn-google:hover {
+            background-color: #4285f4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+        }
+        .btn-google:active {
+            transform: translateY(1px); /* Hiệu ứng nhấn xuống */
+            box-shadow: 0 2px 5px rgba(66, 133, 244, 0.2); /* Giảm bóng khi nhấn */
+            background-color: #357abd; /* Đổi màu nhẹ khi nhấn */
+        }
+        .btn-facebook {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+        }
+        .btn-facebook:hover {
+            background-color: #166fe5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+        }
+        .btn-facebook:active {
+            transform: translateY(1px); /* Hiệu ứng nhấn xuống */
+            box-shadow: 0 2px 5px rgba(24, 119, 242, 0.2); /* Giảm bóng khi nhấn */
+            background-color: #135fb8; /* Đổi màu nhẹ khi nhấn */
+        }
+        .btn-login i {
+            margin-right: 8px;
+        }
+        .footer-text {
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 0.85rem;
+        }
+
+        /* Hiệu ứng ripple khi click */
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
+            pointer-events: none;
+        }
+        .btn-login:active::after {
+            transform: scale(1);
+            opacity: 0;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Đảm bảo modal nằm giữa trên màn hình nhỏ */
+        @media (max-width: 576px) {
+            #loginModal .modal-dialog {
+                width: 90%;
+                margin: 0 auto;
+            }
+            .login-container {
+                padding: 20px;
+            }
+        }
+        /* Style cho form đăng nhập/đăng ký */
+        #loginModal .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.95rem;
+            border: 1px solid #e0e0e0;
+            transition: border-color 0.3s ease;
+        }
+
+        #loginModal .form-control:focus {
+            border-color: #1a3c34;
+            box-shadow: 0 0 5px rgba(26, 60, 52, 0.3);
+            outline: none;
+        }
+
+        #loginModal .form-label {
+            color: #2c3e50;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        #loginModal .nav-tabs {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        #loginModal .nav-link {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: color 0.3s ease;
+        }
+
+        #loginModal .nav-link.active {
+            color: #1a3c34;
+            border-bottom: 2px solid #1a3c34;
+        }
+
+        #loginModal .nav-link:hover {
+            color: #2d6a4f;
+        }
+
+
+
+
+
+
+        /* CSS cho dropdown giỏ hàng */
+        .cart-dropdown-wrapper {
+            position: relative;
+        }
+
+        .cart-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-count {
+            top: -5px;
+            right: -5px;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+        }
+
+        .cart-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 350px;
+            background: #007bff; /* Nền xanh giống hình */
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            display: none;
+            z-index: 1000;
+            margin-top: 5px;
+        }
+
+        .cart-dropdown-wrapper:hover .cart-dropdown {
+            display: block; /* Hiển thị dropdown khi hover */
+        }
+
+        .cart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .cart-item-details {
+            flex-grow: 1;
+        }
+
+        .cart-item-details strong {
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .cart-item-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item-price {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0;
+        }
+
+        .cart-item-quantity {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .delete-item {
+            color: white;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .delete-item:hover {
+            opacity: 1;
+        }
+
+        .cart-dropdown .btn-primary {
+            background: #0056b3;
+            border: none;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .cart-dropdown .btn-primary:hover {
+            background: #003d82;
+        }
+
+        /* Responsive */
+        @media (max-width: 767px) {
+            .cart-dropdown {
+                width: 300px;
+                right: -50px;
+            }
+        }
+
+    </style>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <defs>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="link" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 19a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm5 0a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm0-4a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm-5 0a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm7-12h-1V2a1 1 0 0 0-2 0v1H8V2a1 1 0 0 0-2 0v1H5a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3Zm1 17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9h16Zm0-11H4V6a1 1 0 0 1 1-1h1v1a1 1 0 0 0 2 0V5h8v1a1 1 0 0 0 2 0V5h1a1 1 0 0 1 1 1ZM7 15a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm0 4a1 1 0 1 0-1-1a1 1 0 0 0 1 1Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="arrow-right" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 0 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 0 0 0 1.42a1 1 0 0 0 1.42 0l5-5a1 1 0 0 0 .21-.33a1 1 0 0 0 0-.76Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="category" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19 5.5h-6.28l-.32-1a3 3 0 0 0-2.84-2H5a3 3 0 0 0-3 3v13a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-10a3 3 0 0 0-3-3Zm1 13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1h4.56a1 1 0 0 1 .95.68l.54 1.64a1 1 0 0 0 .95.68h7a1 1 0 0 1 1 1Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="calendar" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19 4h-2V3a1 1 0 0 0-2 0v1H9V3a1 1 0 0 0-2 0v1H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Zm1 15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7h16Zm0-9H4V7a1 1 0 0 1 1-1h2v1a1 1 0 0 0 2 0V6h6v1a1 1 0 0 0 2 0V6h2a1 1 0 0 1 1 1Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="heart" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M20.16 4.61A6.27 6.27 0 0 0 12 4a6.27 6.27 0 0 0-8.16 9.48l7.45 7.45a1 1 0 0 0 1.42 0l7.45-7.45a6.27 6.27 0 0 0 0-8.87Zm-1.41 7.46L12 18.81l-6.75-6.74a4.28 4.28 0 0 1 3-7.3a4.25 4.25 0 0 1 3 1.25a1 1 0 0 0 1.42 0a4.27 4.27 0 0 1 6 6.05Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="plus" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="minus" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M19 11H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="cart" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M8.5 19a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 8.5 19ZM19 16H7a1 1 0 0 1 0-2h8.491a3.013 3.013 0 0 0 2.885-2.176l1.585-5.55A1 1 0 0 0 19 5H6.74a3.007 3.007 0 0 0-2.82-2H3a1 1 0 0 0 0 2h.921a1.005 1.005 0 0 1 .962.725l.155.545v.005l1.641 5.742A3 3 0 0 0 7 18h12a1 1 0 0 0 0-2Zm-1.326-9l-1.22 4.274a1.005 1.005 0 0 1-.963.726H8.754l-.255-.892L7.326 7ZM16.5 19a1.5 1.5 0 1 0 1.5 1.5a1.5 1.5 0 0 0-1.5-1.5Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="check" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M18.71 7.21a1 1 0 0 0-1.42 0l-7.45 7.46l-3.13-3.14A1 1 0 1 0 5.29 13l3.84 3.84a1 1 0 0 0 1.42 0l8.16-8.16a1 1 0 0 0 0-1.47Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="trash" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M10 18a1 1 0 0 0 1-1v-6a1 1 0 0 0-2 0v6a1 1 0 0 0 1 1ZM20 6h-4V5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v1H4a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8h1a1 1 0 0 0 0-2ZM10 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1h-4Zm7 14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8h10Zm-3-1a1 1 0 0 0 1-1v-6a1 1 0 0 0-2 0v6a1 1 0 0 0 1 1Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="star-outline" viewBox="0 0 15 15">
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.804L5.337 11l.413-2.533L4 6.674l2.418-.37L7.5 4l1.082 2.304l2.418.37l-1.75 1.793L9.663 11L7.5 9.804Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="star-solid" viewBox="0 0 15 15">
+                <path fill="currentColor" d="M7.953 3.788a.5.5 0 0 0-.906 0L6.08 5.85l-2.154.33a.5.5 0 0 0-.283.843l1.574 1.613l-.373 2.284a.5.5 0 0 0 .736.518l1.92-1.063l1.921 1.063a.5.5 0 0 0 .736-.519l-.373-2.283l1.574-1.613a.5.5 0 0 0-.283-.844L8.921 5.85l-.968-2.062Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="search" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M21.71 20.29L18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="user" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M15.71 12.71a6 6 0 1 0-7.42 0a10 10 0 0 0-6.22 8.18a1 1 0 0 0 2 .22a8 8 0 0 1 15.9 0a1 1 0 0 0 1 .89h.11a1 1 0 0 0 .88-1.1a10 10 0 0 0-6.25-8.19ZM12 12a4 4 0 1 1 4-4a4 4 0 0 1-4 4Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="close" viewBox="0 0 15 15">
+                <path fill="currentColor" d="M7.953 3.788a.5.5 0 0 0-.906 0L6.08 5.85l-2.154.33a.5.5 0 0 0-.283.843l1.574 1.613l-.373 2.284a.5.5 0 0 0 .736.518l1.92-1.063l1.921 1.063a.5.5 0 0 0 .736-.519l-.373-2.283l1.574-1.613a.5.5 0 0 0-.283-.844L8.921 5.85l-.968-2.062Z"/>
+            </symbol>
+            <symbol xmlns="http://www.w3.org/2000/svg" id="logout" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M14 19a1 1 0 0 1-1 1H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h8a1 1 0 0 1 0 2H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 1 1 1Zm6.71-7.71l-3-3a1 1 0 0 0-1.42 1.42L18.59 11H10a1 1 0 0 0 0 2h8.59l-2.3 2.29a1 1 0 1 0 1.42 1.42l3-3a1 1 0 0 0 0-1.42Z"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <div class="header-container">
+        <div class="container-fluid">
+            <div class="row align-items-center py-3">
+                <!-- Logo và tên thương hiệu -->
+                <div class="col-12 col-sm-4 col-lg-3 brand-section">
+                    <img src="/logonewT.png" alt="Medical Care Logo" style="height: 64px">
+                    <div>
+                        <a th:href="@{/part/header}">Chăm sóc y tế</a>
+                        <div class="subtitle">Sức khỏe và thể chất</div>
+                    </div>
+                </div>
+
+                <!-- Thanh tìm kiếm (ẩn trên mobile) -->
+                <div class="col-sm-6 col-lg-5 d-none d-lg-block">
+                    <div class="search-barhome">
+                        <select class="form-select">
+                            <option>Sản phẩm</option>
+                            <option>Medicines</option>
+                            <option>Supplements</option>
+                            <option>Devices</option>
+                        </select>
+                        <form id="search-form" action="index.html" method="post">
+                            <input type="text" placeholder="Tìm kiếm...">
+                        </form>
+                        <button type="submit" class="search-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M21.71 20.29L18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-sm-8 col-lg-4 d-flex justify-content-end align-items-center gap-4">
+                    <div class="support-box d-none d-xl-block">
+                        <span class="fs-6 text-muted">Liên hệ?</span>
+                        <h5 class="mb-0">+84-234567898</h5>
+                    </div>
+                    <div class="action-icons">
+                        <!-- Icon đăng nhập / ảnh đại diện -->
+                        <a th:href="@{''}" data-bs-toggle="modal" data-bs-target="#loginModal" th:unless="${loggedInUser != null}">
+                            <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#user"></use></svg>
+                        </a>
+                        <a th:href="@{/home(providerId=${loggedInUser.googleId != null ? loggedInUser.googleId : loggedInUser.facebookId}, provider=${loggedInUser.googleId != null ? 'google' : 'facebook'})}" th:if="${loggedInUser != null}">
+                            <img th:src="${loggedInUser.picture}" alt="User Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+                        </a>
+
+                        <a href="#">
+                            <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#heart"></use></svg>
+                        </a>
+                        <div class="cart-dropdown-wrapper position-relative">
+                            <a href="#" class="cart-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#cart"></use></svg>
+                                <span class="cart-count badge bg-danger rounded-circle position-absolute" th:text="${cartItemCount != null ? cartItemCount : 0}">0</span>
+                            </a>
+                            <div class="cart-dropdown">
+                                <h5 class="cart-title">Giỏ hàng</h5>
+                                <ul class="cart-items list-unstyled" th:if="${cartItems != null and not #lists.isEmpty(cartItems)}">
+                                    <li class="cart-item d-flex align-items-start" th:each="item : ${cartItems}">
+                                        <img th:src="${item.product.mainImageUrl ?: '/images/placeholder.png'}" alt="Product Image" class="cart-item-img">
+                                        <div class="cart-item-details flex-grow-1">
+                                            <strong th:text="${item.product.tenSanPham}"></strong>
+                                            <div class="cart-item-info d-flex justify-content-between align-items-center">
+                                                <p class="cart-item-price mb-0" th:text="${#numbers.formatDecimal(item.price, 0, 0)} + 'đ'"></p>
+                                                <span class="cart-item-quantity" th:text="'x' + ${item.quantity} + ' ' + ${item.donViTinh.donViTinh}"></span>
+                                            </div>
+                                        </div>
+                                        <a href="#" class="delete-item align-self-center" th:onclick="'removeFromCart(' + ${item.id} + ')'">
+                                            <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#trash"></use></svg>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="cart-items list-unstyled" th:if="${cartItems == null or #lists.isEmpty(cartItems)}">
+                                    <li>Giỏ hàng trống</li>
+                                </ul>
+                                <a href="/cart" class="btn btn-primary w-100 mt-2">Xem giỏ hàng</a>
+                            </div>
+                        </div>
+                        <a th:href="@{/logout}" th:if="${loggedInUser != null}" class="ms-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#logout"></use></svg>
+                        </a>
+                        <button class="cart-button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                            <span class="fs-6 text-muted">Your Cart</span>
+                            <span class="cart-total fs-5 fw-bold">$1290.00</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal đăng nhập -->
+        <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header text-center">
+                        <h2 class="modal-title w-100" id="loginModalLabel">Chào mừng bạn!</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <!-- Tabs chuyển đổi giữa Đăng nhập và Đăng ký -->
+                        <ul class="nav nav-tabs justify-content-center mb-4" id="loginTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Đăng nhập</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Đăng ký</button>
+                            </li>
+                        </ul>
+
+                        <!-- Nội dung của các tab -->
+                        <div class="tab-content" id="loginTabContent">
+                            <!-- Tab Đăng nhập -->
+                            <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                <form action="/login" method="post">
+                                    <div class="mb-3 text-start">
+                                        <label for="loginPhone" class="form-label">Số điện thoại</label>
+                                        <input type="tel" class="form-control" id="loginPhone" name="phone" placeholder="Nhập số điện thoại" required>
+                                    </div>
+                                    <div class="mb-3 text-start">
+                                        <label for="loginPassword" class="form-label">Mật khẩu</label>
+                                        <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-login w-100">Đăng nhập</button>
+                                </form>
+                                <p class="text-muted mt-3">Hoặc đăng nhập bằng:</p>
+                                <a href="/oauth2/authorization/google" class="btn btn-light btn-login btn-google d-flex align-items-center justify-content-center mt-2">
+                                    <i class="bi bi-google me-2"></i> Đăng nhập bằng Google
+                                </a>
+                                <a href="/oauth2/authorization/facebook" class="btn btn-primary btn-login btn-facebook d-flex align-items-center justify-content-center mt-2">
+                                    <i class="bi bi-facebook me-2"></i> Đăng nhập bằng Facebook
+                                </a>
+                            </div>
+
+                            <!-- Tab Đăng ký -->
+                            <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                <form action="/register" method="post">
+                                    <div class="mb-3 text-start">
+                                        <label for="registerPhone" class="form-label">Số điện thoại</label>
+                                        <input type="tel" class="form-control" id="registerPhone" name="phone" placeholder="Nhập số điện thoại" required>
+                                    </div>
+                                    <div class="mb-3 text-start">
+                                        <label for="registerPassword" class="form-label">Mật khẩu</label>
+                                        <input type="password" class="form-control" id="registerPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                    </div>
+                                    <div class="mb-3 text-start">
+                                        <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-login w-100">Đăng ký</button>
+                                </form>
+                                <p class="text-muted mt-3">Hoặc đăng ký bằng:</p>
+                                <a href="/oauth2/authorization/google" class="btn btn-light btn-login btn-google d-flex align-items-center justify-content-center mt-2">
+                                    <i class="bi bi-google me-2"></i> Đăng nhập bằng Google
+                                </a>
+                                <a href="/oauth2/authorization/facebook" class="btn btn-primary btn-login btn-facebook d-flex align-items-center justify-content-center mt-2">
+                                    <i class="bi bi-facebook me-2"></i> Đăng nhập bằng Facebook
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer text-center">
+                        <p class="text-muted w-100">© 2025. Đăng ký an toàn & nhanh chóng.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Offcanvas giỏ hàng -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasCartLabel">Giỏ hàng của bạn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <h5 class="fw-bold text-warning">Giỏ hàng <span class="badge bg-warning text-dark">3</span></h5>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="cart-item-details">
+                            <strong>Thuốc ho</strong>
+                            <p class="text-muted small mb-0">Hỗ trợ giảm ho</p>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span>Số lượng: 2</span>
+                            <span class="cart-item-price">$12</span>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="cart-item-details">
+                            <strong>Vitamin C</strong>
+                            <p class="text-muted small mb-0">Tăng cường miễn dịch</p>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span>Số lượng: 1</span>
+                            <span class="cart-item-price">$8</span>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="cart-item-details">
+                            <strong>Paracetamol</strong>
+                            <p class="text-muted small mb-0">Giảm đau, hạ sốt</p>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <span>Số lượng: 3</span>
+                            <span class="cart-item-price">$5</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="d-flex justify-content-between fw-bold border-top pt-2">
+                    <span>Tổng (USD)</span>
+                    <span class="text-success">$25</span>
+                </div>
+                <button class="btn btn-warning w-100 mt-3">Thanh toán ngay</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function removeFromCart(cartItemId) {
+            $.ajax({
+                url: '/cart/remove',
+                type: 'POST',
+                data: { cartItemId: cartItemId },
+                success: function(response) {
+                    alert('Sản phẩm đã được xóa khỏi giỏ hàng!');
+                    location.reload(); // Tải lại trang để cập nhật giỏ hàng
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi xóa sản phẩm:', error);
+                    alert('Đã xảy ra lỗi khi xóa sản phẩm!');
+                }
+            });
+        }
+        $(document).ready(function() {
+            $.ajax({
+                url: '/cart/count',
+                type: 'GET',
+                success: function(response) {
+                    updateCartCount(response.cartItemCount);
+                }
+            });
+        });
+    </script>
+</div>
