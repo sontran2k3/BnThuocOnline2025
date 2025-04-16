@@ -1,10 +1,10 @@
 package com.example.BnThuocOnline2025.controller;
 
 import com.example.BnThuocOnline2025.model.CreatePaymentLinkRequestBody;
+import com.example.BnThuocOnline2025.model.OrderItem;
 import com.example.BnThuocOnline2025.model.Orders;
 import com.example.BnThuocOnline2025.model.User;
-import com.example.BnThuocOnline2025.repository.OrdersRepository;
-import com.example.BnThuocOnline2025.repository.UserRepository;
+import com.example.BnThuocOnline2025.repository.*;
 import com.example.BnThuocOnline2025.service.GioHangService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +36,13 @@ public class PaymentController {
 
     private static final Logger logger = LoggerFactory.getLogger(GioHangService.class);
 
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private DonViTinhRepository donViTinhRepository;
 
     private final PayOS payOS;
     private final OrdersRepository ordersRepository;
@@ -123,17 +130,28 @@ public class PaymentController {
                 user = userRepository.findByEmail(email).orElse(null);
             }
 
-            // Gán userId vào đơn hàng
             if (user != null) {
                 order.setUserId(user.getId());
-                order.setUser(user); // Gán trực tiếp đối tượng User để đảm bảo liên kết
+                order.setUser(user);
                 logger.info("User ID {} assigned to order {}", user.getId(), orderCode);
             } else {
                 logger.warn("No user found for order {}. Proceeding as guest.", orderCode);
             }
 
-            // Lưu đơn hàng vào cơ sở dữ liệu
-            ordersRepository.save(order);
+            // Lưu đơn hàng
+            order = ordersRepository.save(order);
+
+            // Lưu chi tiết đơn hàng vào order_items
+            for (Map<String, Object> item : items) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setProduct(productRepository.findById(((Number) item.get("productId")).intValue()).orElse(null));
+                orderItem.setDonViTinh(donViTinhRepository.findById(((Number) item.get("donViTinhId")).intValue()).orElse(null));
+                orderItem.setQuantity(((Number) item.get("quantity")).intValue());
+                orderItem.setPrice(new BigDecimal(((Number) item.get("price")).doubleValue()));
+                orderItem.setAddedAt(LocalDateTime.now());
+                orderItemRepository.save(orderItem);
+            }
 
             response.put("success", true);
             response.put("checkoutUrl", data.getCheckoutUrl());

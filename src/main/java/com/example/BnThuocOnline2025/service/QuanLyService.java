@@ -62,6 +62,9 @@ public class QuanLyService {
     @Autowired
     private CartItemRepository cartItemRepository;
 
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // Danh mục
@@ -620,6 +623,24 @@ public class QuanLyService {
         return ordersPage.getContent();
     }
 
+
+//    // Trong QuanLyService.java
+//    public List<CartItem> getOrderItems(int orderId) {
+//        Orders order = ordersRepository.findById(orderId)
+//                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+//
+//        if (order.getCart() == null) {
+//            return Collections.emptyList();
+//        }
+//
+//        return cartItemRepository.findByCart(order.getCart());
+//    }
+
+    public List<OrderItem> getOrderItems(int orderId) {
+        Orders order = ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+        return orderItemRepository.findByOrder(order);
+    }
 
 
 

@@ -1,3 +1,4 @@
+// Trong users.js
 $(document).ready(function () {
     let currentPage = 1;
     const pageSize = 10;
@@ -22,7 +23,8 @@ $(document).ready(function () {
                 updatePagination(page, data.length);
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách người dùng: ' + xhr.responseText);
+                console.error('Lỗi tải danh sách người dùng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách người dùng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     }
@@ -32,7 +34,7 @@ $(document).ready(function () {
         const tbody = $('#users-tbody');
         tbody.empty();
 
-        if (users.length === 0) {
+        if (!users || users.length === 0) {
             tbody.append('<tr><td colspan="6" class="text-center">Không tìm thấy người dùng.</td></tr>');
             return;
         }
@@ -62,14 +64,12 @@ $(document).ready(function () {
         const pagination = $('#users-pagination');
         pagination.empty();
 
-        // Nút Previous
         pagination.append(`
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${currentPage - 1}">Trước</a>
             </li>
         `);
 
-        // Các trang
         for (let i = 1; i <= totalPages; i++) {
             pagination.append(`
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
@@ -78,7 +78,6 @@ $(document).ready(function () {
             `);
         }
 
-        // Nút Next
         pagination.append(`
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${currentPage + 1}">Sau</a>
@@ -104,7 +103,6 @@ $(document).ready(function () {
             url: `/api/quanly/users/${userId}`,
             method: 'GET',
             success: function (user) {
-                // Gán dữ liệu vào modal
                 $('#detail_user_id').val(user.id);
                 $('#detail_user_name').val(user.name || '');
                 $('#detail_user_email').val(user.email || '');
@@ -118,17 +116,16 @@ $(document).ready(function () {
                     $('#detail_user_picture').hide();
                 }
 
-                // Tải danh sách đơn hàng
                 loadUserOrders(user.id);
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin người dùng: ' + xhr.responseText);
+                console.error('Lỗi tải thông tin người dùng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin người dùng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     });
 
     // Hàm tải danh sách đơn hàng
-// Hàm tải danh sách đơn hàng
     function loadUserOrders(userId) {
         $.ajax({
             url: `/api/quanly/orders?user_id=${userId}`,
@@ -137,34 +134,34 @@ $(document).ready(function () {
                 const tbody = $('#user_orders_table_body');
                 tbody.empty();
 
-                if (orders.length === 0) {
+                if (!orders || orders.length === 0) {
                     tbody.append('<tr><td colspan="6" class="text-center">Không có đơn hàng nào.</td></tr>');
                     return;
                 }
 
                 orders.forEach(order => {
-                    const productList = 'Danh sách sản phẩm'; // Thay bằng API lấy chi tiết đơn hàng
+                    const productList = 'Danh sách sản phẩm';
                     const row = `
-                    <tr>
-                        <td>${order.id}</td>
-                        <td>${new Date(order.orderDate).toLocaleString('vi-VN')}</td>
-                        <td>${order.totalPrice.toLocaleString('vi-VN')}</td>
-                        <td>${order.status}</td>
-                        <td>${productList}</td>
-                        <td>
-                            <button class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
-                        </td>
-                    </tr>
-                `;
+                        <tr>
+                            <td>${order.id}</td>
+                            <td>${order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
+                            <td>${order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0'}</td>
+                            <td>${order.status || 'N/A'}</td>
+                            <td>${productList}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
+                            </td>
+                        </tr>
+                    `;
                     tbody.append(row);
                 });
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách đơn hàng: ' + xhr.responseText);
+                console.error('Lỗi tải danh sách đơn hàng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách đơn hàng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     }
-
 
     // Xử lý nút "Xóa"
     $('#users-table').on('click', '.delete-user', function () {
@@ -178,7 +175,8 @@ $(document).ready(function () {
                     loadUsers(currentPage, $('#search-users').val().trim());
                 },
                 error: function (xhr) {
-                    Utils.showAlert('error', 'Lỗi', 'Không thể xóa người dùng: ' + xhr.responseText);
+                    console.error('Lỗi xóa người dùng:', xhr);
+                    Utils.showAlert('error', 'Lỗi', 'Không thể xóa người dùng: ' + (xhr.responseText || 'Unknown error'));
                 }
             });
         });
@@ -193,7 +191,6 @@ $(document).ready(function () {
 
     // Xử lý nút "Lưu thay đổi"
     $('#saveUserChanges').click(function () {
-        // Chuyển đổi dateOfBirth sang định dạng YYYY-MM-DD nếu cần
         let dob = $('#detail_user_dob').val();
         if (dob) {
             const parts = dob.split('/');
@@ -226,73 +223,90 @@ $(document).ready(function () {
                 loadUsers(currentPage, $('#search-users').val().trim());
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể cập nhật người dùng: ' + xhr.responseText);
+                console.error('Lỗi cập nhật người dùng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể cập nhật người dùng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     });
 
-
     // Xử lý nút "Xem" chi tiết đơn hàng
-// Xử lý nút "Xem" chi tiết đơn hàng
-    $('#user_orders_table').on('click', '.view-order-details', function () {
+    $('#user_orders_table').on('click', '.view-order-details', function (e) {
+        e.preventDefault(); // Ngăn chặn hành vi mặc định
+        console.log('Nút Xem được nhấn'); // Debug
         const orderId = $(this).data('order-id');
+        console.log('Order ID:', orderId); // Debug
+
         $.ajax({
             url: `/api/quanly/orders/${orderId}`,
             method: 'GET',
             success: function (order) {
+                console.log('Dữ liệu đơn hàng:', order); // Debug
                 // Gán thông tin đơn hàng vào modal
-                $('#order_detail_id').text(order.id);
-                $('#order_detail_date').text(new Date(order.orderDate).toLocaleString('vi-VN'));
-                $('#order_detail_total').text(order.totalPrice.toLocaleString('vi-VN'));
-                $('#order_detail_status').text(order.status);
+                $('#order_detail_id').text(order.id || 'N/A');
+                $('#order_detail_date').text(order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A');
+                $('#order_detail_total').text(order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0');
+                $('#order_detail_status').text(order.status || 'N/A');
 
                 // Tải danh sách sản phẩm trong đơn hàng
                 loadOrderItems(order.id);
 
                 // Mở modal
-                $('#orderDetailModal').modal('show');
+                try {
+                    $('#orderDetailModal').modal('show');
+                    console.log('Modal được mở'); // Debug
+                } catch (err) {
+                    console.error('Lỗi khi mở modal:', err);
+                    Utils.showAlert('error', 'Lỗi', 'Không thể mở modal chi tiết đơn hàng.');
+                }
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin đơn hàng: ' + xhr.responseText);
+                console.error('Lỗi tải thông tin đơn hàng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin đơn hàng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     });
 
-// Hàm tải danh sách sản phẩm trong đơn hàng (cart_items)
     function loadOrderItems(orderId) {
+        console.log('Tải danh sách sản phẩm cho orderId:', orderId); // Debug
+        const tbody = $('#order_items_table_body');
+        tbody.html('<tr><td colspan="6" class="text-center">Đang tải...</td></tr>');
+
         $.ajax({
             url: `/api/quanly/orders/${orderId}/items`,
             method: 'GET',
-            success: function (items) {
-                const tbody = $('#order_items_table_body');
+            success: function (response) {
+                console.log('Phản hồi API:', response); // Debug chi tiết
                 tbody.empty();
 
-                if (items.length === 0) {
+                // Kiểm tra nếu response không phải là mảng hoặc rỗng
+                if (!response || !Array.isArray(response) || response.length === 0) {
+                    console.log('Dữ liệu rỗng hoặc không phải mảng:', response);
                     tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào trong đơn hàng.</td></tr>');
                     return;
                 }
 
-                items.forEach(item => {
+                // Duyệt qua danh sách sản phẩm
+                response.forEach(item => {
                     const row = `
                     <tr>
-                        <td>${item.id}</td>
+                        <td>${item.id || 'N/A'}</td>
                         <td>${item.productName || 'N/A'}</td>
                         <td>${item.donViTinh || 'N/A'}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.price.toLocaleString('vi-VN')}</td>
-                        <td>${item.totalPrice.toLocaleString('vi-VN')}</td>
+                        <td>${item.quantity || 0}</td>
+                        <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
+                        <td>${item.totalPrice ? item.totalPrice.toLocaleString('vi-VN') : '0'}</td>
                     </tr>
                 `;
                     tbody.append(row);
                 });
             },
             error: function (xhr) {
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách sản phẩm: ' + xhr.responseText);
+                console.error('Lỗi tải danh sách sản phẩm:', xhr.responseText); // Ghi lỗi chi tiết
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách sản phẩm: ' + (xhr.responseText || 'Unknown error'));
+                tbody.empty().append('<tr><td colspan="6" class="text-center">Không thể tải sản phẩm.</td></tr>');
             }
         });
     }
-
-
 
 
 });

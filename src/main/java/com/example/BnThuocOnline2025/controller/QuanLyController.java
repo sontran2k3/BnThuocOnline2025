@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/quanly")
@@ -250,6 +252,28 @@ public class QuanLyController {
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @GetMapping("/orders/{orderId}/items")
+    public ResponseEntity<?> getOrderItems(@PathVariable int orderId) {
+        try {
+            List<OrderItem> items = quanLyService.getOrderItems(orderId);
+            List<Map<String, Object>> itemDTOs = items.stream().map(item -> {
+                Map<String, Object> dto = new HashMap<>();
+                dto.put("id", item.getId());
+                dto.put("productName", item.getProduct().getTenSanPham());
+                dto.put("donViTinh", item.getDonViTinh() != null ? item.getDonViTinh().getDonViTinh() : "N/A");
+                dto.put("quantity", item.getQuantity());
+                dto.put("price", item.getPrice());
+                dto.put("totalPrice", item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                return dto;
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok(itemDTOs);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
         }
     }
 
