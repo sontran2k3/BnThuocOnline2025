@@ -5,12 +5,18 @@ import com.example.BnThuocOnline2025.model.Orders;
 import com.example.BnThuocOnline2025.model.User;
 import com.example.BnThuocOnline2025.repository.OrdersRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
+import com.example.BnThuocOnline2025.service.GioHangService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +34,9 @@ import java.util.*;
 @RequestMapping("/thanhtoan")
 public class PaymentController {
 
+    private static final Logger logger = LoggerFactory.getLogger(GioHangService.class);
+
+
     private final PayOS payOS;
     private final OrdersRepository ordersRepository;
     private final UserRepository userRepository;
@@ -41,7 +50,11 @@ public class PaymentController {
 
     @PostMapping(value = "/payos", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, Object> createPayOSPayment(@RequestBody Map<String, Object> orderData, HttpServletRequest request) {
+    public Map<String, Object> createPayOSPayment(
+            @RequestBody Map<String, Object> orderData,
+            @AuthenticationPrincipal OAuth2User oAuth2User,
+            HttpServletRequest request,
+            HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
             String customerName = (String) orderData.get("customerName");
@@ -98,22 +111,35 @@ public class PaymentController {
             order.setCustomerAddress(customerAddress);
             order.setPaymentMethod("payos");
 
-            // Lấy user từ session hoặc email
-            String email = request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : null;
-            if (email != null) {
-                User user = userRepository.findByEmail(email).orElse(null);
-                if (user != null) {
-                    order.setUserId(user.getId()); // Lưu UUID trực tiếp
-                }
-            } // Nếu không có user, userId sẽ là null (khách vãng lai)
+            // Lấy thông tin người dùng
+            User user = null;
+            if (oAuth2User != null) {
+                String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+                String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+                user = "google".equals(provider) ? userRepository.findByGoogleId(providerId).orElse(null)
+                        : userRepository.findByFacebookId(providerId).orElse(null);
+            } else if (request.getUserPrincipal() != null) {
+                String email = request.getUserPrincipal().getName();
+                user = userRepository.findByEmail(email).orElse(null);
+            }
 
+            // Gán userId vào đơn hàng
+            if (user != null) {
+                order.setUserId(user.getId());
+                order.setUser(user); // Gán trực tiếp đối tượng User để đảm bảo liên kết
+                logger.info("User ID {} assigned to order {}", user.getId(), orderCode);
+            } else {
+                logger.warn("No user found for order {}. Proceeding as guest.", orderCode);
+            }
+
+            // Lưu đơn hàng vào cơ sở dữ liệu
             ordersRepository.save(order);
 
             response.put("success", true);
             response.put("checkoutUrl", data.getCheckoutUrl());
             response.put("orderCode", orderCode);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error creating payment link: {}", e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Không thể tạo link thanh toán: " + e.getMessage());
         }

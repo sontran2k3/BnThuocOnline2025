@@ -1355,6 +1355,64 @@
     </div>
 
 
+    <!-- Modal Chi tiết Đơn hàng -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderDetailModalLabel">Chi tiết Đơn hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Thông tin đơn hàng</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">ID Đơn hàng:</label>
+                            <span id="order_detail_id"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày đặt:</label>
+                            <span id="order_detail_date"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tổng tiền (VNĐ):</label>
+                            <span id="order_detail_total"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Trạng thái:</label>
+                            <span id="order_detail_status"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4">Danh sách sản phẩm</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="order_items_table">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 10%;">ID</th>
+                                <th style="width: 30%;">Sản phẩm</th>
+                                <th style="width: 15%;">Đơn vị tính</th>
+                                <th style="width: 15%;">Số lượng</th>
+                                <th style="width: 15%;">Giá (VNĐ)</th>
+                                <th style="width: 15%;">Tổng giá (VNĐ)</th>
+                            </tr>
+                            </thead>
+                            <tbody id="order_items_table_body">
+                            <!-- Dữ liệu sản phẩm sẽ được thêm động -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
 </div>
 
@@ -1366,6 +1424,7 @@
 <script type="module" src="js/products.js" defer></script>
 <script src="js/inventory.js" defer></script>
 <script src="js/users.js" defer></script>
+<script src="js/orders.js" defer></script>
 <script src="js/dashboard.js" defer></script>
 
 

@@ -233,17 +233,66 @@ $(document).ready(function () {
 
 
     // Xử lý nút "Xem" chi tiết đơn hàng
+// Xử lý nút "Xem" chi tiết đơn hàng
     $('#user_orders_table').on('click', '.view-order-details', function () {
         const orderId = $(this).data('order-id');
         $.ajax({
             url: `/api/quanly/orders/${orderId}`,
             method: 'GET',
             success: function (order) {
-                Swal.fire('Thông tin đơn hàng', `Đơn hàng ID: ${order.id}<br>Ngày đặt: ${new Date(order.orderDate).toLocaleString('vi-VN')}<br>Tổng tiền: ${order.totalPrice.toLocaleString('vi-VN')} VNĐ<br>Trạng thái: ${order.status}`, 'info');
+                // Gán thông tin đơn hàng vào modal
+                $('#order_detail_id').text(order.id);
+                $('#order_detail_date').text(new Date(order.orderDate).toLocaleString('vi-VN'));
+                $('#order_detail_total').text(order.totalPrice.toLocaleString('vi-VN'));
+                $('#order_detail_status').text(order.status);
+
+                // Tải danh sách sản phẩm trong đơn hàng
+                loadOrderItems(order.id);
+
+                // Mở modal
+                $('#orderDetailModal').modal('show');
             },
             error: function (xhr) {
                 Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin đơn hàng: ' + xhr.responseText);
             }
         });
     });
+
+// Hàm tải danh sách sản phẩm trong đơn hàng (cart_items)
+    function loadOrderItems(orderId) {
+        $.ajax({
+            url: `/api/quanly/orders/${orderId}/items`,
+            method: 'GET',
+            success: function (items) {
+                const tbody = $('#order_items_table_body');
+                tbody.empty();
+
+                if (items.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào trong đơn hàng.</td></tr>');
+                    return;
+                }
+
+                items.forEach(item => {
+                    const row = `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.productName || 'N/A'}</td>
+                        <td>${item.donViTinh || 'N/A'}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.price.toLocaleString('vi-VN')}</td>
+                        <td>${item.totalPrice.toLocaleString('vi-VN')}</td>
+                    </tr>
+                `;
+                    tbody.append(row);
+                });
+            },
+            error: function (xhr) {
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách sản phẩm: ' + xhr.responseText);
+            }
+        });
+    }
+
+
+
+
 });
