@@ -18,10 +18,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import jakarta.servlet.http.HttpSession;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 public class HomeController {
@@ -110,9 +112,7 @@ public class HomeController {
     }
 
     @GetMapping("/sanpham")
-    public String productDetail(@RequestParam("id") int productId,
-                                @RequestParam(value = "rating", required = false) Float rating,
-                                Model model,
+    public String productDetail(@RequestParam("id") int productId, Model model,
                                 @AuthenticationPrincipal OAuth2User oAuth2User,
                                 HttpSession session) {
         Product product = productService.getProductById(productId);
@@ -120,14 +120,6 @@ public class HomeController {
         ChiTietSanPham chiTietSanPham = productService.getChiTietSanPhamByProductId(productId);
         List<CauHoiLienQuan> cauHoiLienQuan = productService.getCauHoiLienQuanByProductId(productId);
         List<Product> relatedProducts = productService.getRelatedProducts(productId, 6);
-
-        // Lấy danh sách đánh giá
-        List<ProductReview> reviews = rating != null
-                ? productService.getProductReviewsByRating(productId, rating)
-                : productService.getProductReviews(productId);
-        Double averageRating = productService.getAverageRating(productId);
-        long reviewCount = productService.getReviewCount(productId);
-        Map<Integer, Long> ratingCounts = productService.getReviewCountByRating(productId);
 
         if (product == null) {
             return "redirect:/";
@@ -150,23 +142,15 @@ public class HomeController {
         model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
         model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
 
-        // Thêm thông tin sản phẩm và đánh giá
+        // Thêm thông tin sản phẩm
         model.addAttribute("product", product);
         model.addAttribute("images", images);
         model.addAttribute("chiTietSanPham", chiTietSanPham);
         model.addAttribute("cauHoiLienQuan", cauHoiLienQuan);
         model.addAttribute("products", relatedProducts);
-        model.addAttribute("reviews", reviews);
-        model.addAttribute("averageRating", averageRating);
-        model.addAttribute("reviewCount", reviewCount);
-        model.addAttribute("ratingCounts", ratingCounts);
-        model.addAttribute("selectedRating", rating);
 
         return "sanpham";
     }
-
-
-
 
     @GetMapping("/products-by-doituong")
     public String getProductsByDoiTuong(@RequestParam("doiTuongId") int doiTuongId, Model model) {
@@ -203,13 +187,14 @@ public class HomeController {
 
     @PostMapping("/submit-review")
     @ResponseBody
-    public Map<String, Object> submitReview(@RequestParam("productId") int productId,
-                                            @RequestParam("rating") float rating,
-                                            @RequestParam("reviewContent") String reviewContent,
-                                            @AuthenticationPrincipal OAuth2User oAuth2User) {
+    public Map<String, Object> submitReview(
+            @RequestParam("productId") int productId,
+            @RequestParam("rating") float rating,
+            @RequestParam("reviewContent") String reviewContent,
+            @AuthenticationPrincipal OAuth2User oAuth2User) {
         Map<String, Object> response = new HashMap<>();
 
-        // Kiểm tra xem người dùng đã đăng nhập chưa
+        // Kiểm tra đăng nhập
         if (oAuth2User == null) {
             response.put("success", false);
             response.put("message", "Vui lòng đăng nhập để gửi đánh giá.");
@@ -236,7 +221,27 @@ public class HomeController {
             return response;
         }
 
-        // Tạo và lưu đánh giá
+        // Kiểm tra đánh giá trùng lặp
+        List<ProductReview> existingReviews = productService.getProductReviews(productId);
+        if (existingReviews.stream().anyMatch(review -> review.getUser().getId().equals(user.getId()))) {
+            response.put("success", false);
+            response.put("message", "Bạn đã đánh giá sản phẩm này rồi.");
+            return response;
+        }
+
+        // Kiểm tra dữ liệu đầu vào
+        if (rating < 1 || rating > 5) {
+            response.put("success", false);
+            response.put("message", "Số sao phải từ 1 đến 5.");
+            return response;
+        }
+        if (reviewContent.length() > 500) {
+            response.put("success", false);
+            response.put("message", "Nội dung đánh giá không được vượt quá 500 ký tự.");
+            return response;
+        }
+
+        // Lưu đánh giá
         ProductReview review = new ProductReview();
         review.setProduct(product);
         review.setUser(user);
@@ -247,6 +252,47 @@ public class HomeController {
 
         response.put("success", true);
         response.put("message", "Đánh giá đã được gửi thành công!");
+        return response;
+    }
+
+    @GetMapping("/get-reviews")
+    @ResponseBody
+    public Map<String, Object> getReviews(
+            @RequestParam("productId") int productId,
+            @RequestParam(value = "rating", required = false, defaultValue = "0") float rating) {
+        Map<String, Object> response = new HashMap<>();
+
+        // Lấy danh sách đánh giá
+        List<ProductReview> reviews = rating == 0
+                ? productService.getProductReviews(productId) // Tất cả đánh giá
+                : productService.getProductReviewsByRating(productId, rating); // Đánh giá theo số sao
+
+        Double averageRating = productService.getAverageRating(productId);
+        long reviewCount = productService.getReviewCount(productId);
+        Map<Integer, Long> ratingCounts = productService.getReviewCountByRating(productId);
+
+        response.put("reviews", reviews.stream().map(review -> {
+            Map<String, Object> reviewData = new HashMap<>();
+            reviewData.put("userName", review.getUser().getName());
+            reviewData.put("rating", review.getRating());
+            reviewData.put("reviewContent", review.getReviewContent());
+            reviewData.put("createdAt", review.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            return reviewData;
+        }).collect(Collectors.toList()));
+        response.put("averageRating", averageRating);
+        response.put("reviewCount", reviewCount);
+        response.put("ratingCounts", ratingCounts);
+
+        return response;
+    }
+
+
+
+    @GetMapping("/check-auth")
+    @ResponseBody
+    public Map<String, Boolean> checkAuth(@AuthenticationPrincipal OAuth2User oAuth2User) {
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("authenticated", oAuth2User != null);
         return response;
     }
 }

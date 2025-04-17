@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 public class ProductService {
@@ -95,6 +94,16 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+//    private void loadProductDetails(Product product) {
+//        Optional<ProductImage> mainImage = productImageRepository.findByProductIdAndIsMainTrue(product.getId());
+//        mainImage.ifPresent(image -> product.setMainImageUrl(image.getImageUrl()));
+//
+//        List<DonViTinh> donViTinhList = donViTinhRepository.findByProductId(product.getId());
+//        product.setDonViTinhList(donViTinhList);
+//    }
+
+
+
     public BigDecimal calculateDiscountedPrice(BigDecimal gia, BigDecimal discount) {
         if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
             return gia.multiply(BigDecimal.ONE.subtract(discount.divide(BigDecimal.valueOf(100))));
@@ -108,13 +117,16 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public void loadProductDetails(Product product) {
+     public void loadProductDetails(Product product) {
         Optional<ProductImage> mainImage = productImageRepository.findByProductIdAndIsMainTrue(product.getId());
         mainImage.ifPresent(image -> product.setMainImageUrl(image.getImageUrl()));
 
         List<DonViTinh> donViTinhList = donViTinhRepository.findByProductId(product.getId());
         product.setDonViTinhList(donViTinhList);
     }
+
+
+
 
     // Lấy danh sách đánh giá theo productId
     public List<ProductReview> getProductReviews(int productId) {

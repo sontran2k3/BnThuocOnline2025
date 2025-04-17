@@ -63,7 +63,9 @@ public class SecurityConfig {
                                 "/thanhtoan/success",
                                 "/thanhtoan/cancel",
                                 "/thanhtoan/payos/webhook",
-                                "/submit-review"
+                                "/submit-review",
+                                "/get-reviews",
+                                "/check-auth"
                         ).permitAll()
                         // Endpoint yêu cầu xác thực (nếu cần)
                         .requestMatchers("/thanhtoan/payos").authenticated()
@@ -79,7 +81,9 @@ public class SecurityConfig {
                                 "/api/login",
                                 "/thanhtoan/payos", // Nếu gửi JSON từ frontend
                                 "/thanhtoan/payos/webhook", // Webhook từ PayOS
-                                "/submit-review"
+                                "/submit-review",
+                                "/get-reviews",
+                                "/check-auth"
                         )
                 )
                 .oauth2Login(oauth2 -> oauth2
