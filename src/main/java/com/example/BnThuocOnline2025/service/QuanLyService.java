@@ -1,6 +1,7 @@
 package com.example.BnThuocOnline2025.service;
 
-import com.example.BnThuocOnline2025.dto.InventoryDTO;
+import com.example.BnThuocOnline2025.dto.InventoryResponseDTO;
+import com.example.BnThuocOnline2025.dto.InventoryTransactionDTO;
 import com.example.BnThuocOnline2025.dto.ProductDTO;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.repository.*;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -449,35 +451,7 @@ public class QuanLyService {
         return nhaCungCapRepository.findAll();
     }
 
-    @Transactional
-    public Inventory addInventory(InventoryDTO inventoryDTO) {
-        Kho kho = khoRepository.findById(inventoryDTO.getWarehouseId())
-                .orElseThrow(() -> new RuntimeException("Kho không tồn tại"));
-        Product product = productRepository.findById(inventoryDTO.getProductId())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        NhaCungCap supplier = null;
-        if (inventoryDTO.getSupplierId() != null) {
-            supplier = nhaCungCapRepository.findById(inventoryDTO.getSupplierId())
-                    .orElseThrow(() -> new RuntimeException("Nhà cung cấp không tồn tại"));
-        }
 
-        Inventory inventory = new Inventory();
-        inventory.setKho(kho);
-        inventory.setProduct(product);
-        inventory.setBatchNumber(inventoryDTO.getBatchNumber());
-        inventory.setQuantity(inventoryDTO.getQuantity());
-        inventory.setManufactureDate(inventoryDTO.getManufactureDate());
-        inventory.setExpiryDate(inventoryDTO.getExpiryDate());
-        inventory.setStorageLocation(inventoryDTO.getStorageLocation());
-        inventory.setSupplier(supplier);
-        inventory.setGhichu(inventoryDTO.getNote());
-
-        return inventoryRepository.save(inventory);
-    }
-
-    public List<Inventory> getAllInventory() {
-        return inventoryRepository.findAll();
-    }
 
     // Tổng số sản phẩm
     public long getTotalProducts() {
@@ -624,17 +598,6 @@ public class QuanLyService {
     }
 
 
-//    // Trong QuanLyService.java
-//    public List<CartItem> getOrderItems(int orderId) {
-//        Orders order = ordersRepository.findById(orderId)
-//                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
-//
-//        if (order.getCart() == null) {
-//            return Collections.emptyList();
-//        }
-//
-//        return cartItemRepository.findByCart(order.getCart());
-//    }
 
     public List<OrderItem> getOrderItems(int orderId) {
         Orders order = ordersRepository.findById(orderId)
@@ -642,8 +605,180 @@ public class QuanLyService {
         return orderItemRepository.findByOrder(order);
     }
 
+    private InventoryResponseDTO mapToInventoryResponseDTO(Inventory inventory) {
+        InventoryResponseDTO dto = new InventoryResponseDTO();
+        dto.setId(inventory.getId());
+        dto.setBatchNumber(inventory.getBatchNumber());
+        dto.setQuantity(inventory.getQuantity());
+        dto.setManufactureDate(inventory.getManufactureDate());
+        dto.setExpiryDate(inventory.getExpiryDate());
+        dto.setStorageLocation(inventory.getStorageLocation());
+        dto.setGhichu(inventory.getGhichu());
+        dto.setCreatedAt(inventory.getCreatedAt());
+        dto.setUpdatedAt(inventory.getUpdatedAt());
+
+        // Ánh xạ Kho
+        if (inventory.getKho() != null) {
+            InventoryResponseDTO.KhoDTO khoDTO = new InventoryResponseDTO.KhoDTO();
+            khoDTO.setId(inventory.getKho().getId());
+            khoDTO.setMaKho(inventory.getKho().getMaKho());
+            khoDTO.setTenKho(inventory.getKho().getTenKho());
+            dto.setKho(khoDTO);
+        }
+
+        // Ánh xạ Product
+        if (inventory.getProduct() != null) {
+            InventoryResponseDTO.ProductDTO productDTO = new InventoryResponseDTO.ProductDTO();
+            productDTO.setId(inventory.getProduct().getId());
+            productDTO.setTenSanPham(inventory.getProduct().getTenSanPham());
+            dto.setProduct(productDTO);
+        }
+
+        // Ánh xạ Supplier
+        if (inventory.getSupplier() != null) {
+            InventoryResponseDTO.SupplierDTO supplierDTO = new InventoryResponseDTO.SupplierDTO();
+            supplierDTO.setId(inventory.getSupplier().getId());
+            supplierDTO.setTenNhaCungCap(inventory.getSupplier().getTenNhaCungCap());
+            dto.setSupplier(supplierDTO);
+        }
+
+        return dto;
+    }
+
+    public List<InventoryResponseDTO> getAllInventory() {
+        List<Inventory> inventories = inventoryRepository.findAllWithDetails();
+        return inventories.stream()
+                .map(this::mapToInventoryResponseDTO)
+                .collect(Collectors.toList());
+    }
 
 
+    @Autowired
+    private InventoryTransactionRepository inventoryTransactionRepository;
 
+    private void recordInventoryTransaction(Inventory inventory, InventoryTransaction.TransactionType type,
+                                            Integer quantity, String reason, Orders order, User createdBy) {
+        InventoryTransaction transaction = new InventoryTransaction();
+        transaction.setInventory(inventory);
+        transaction.setKho(inventory.getKho());
+        transaction.setProduct(inventory.getProduct());
+        transaction.setSupplier(inventory.getSupplier());
+        transaction.setBatchNumber(inventory.getBatchNumber());
+        transaction.setTransactionType(type);
+        transaction.setQuantity(quantity);
+        transaction.setReason(reason);
+        transaction.setOrder(order);
+        transaction.setCreatedBy(createdBy);
+        inventoryTransactionRepository.save(transaction);
+    }
+
+    @Transactional
+    public Inventory addInventory(InventoryResponseDTO inventoryDTO) {
+        Kho kho = khoRepository.findById(inventoryDTO.getWarehouseId())
+                .orElseThrow(() -> new RuntimeException("Kho không tồn tại"));
+        Product product = productRepository.findById(inventoryDTO.getProductId())
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        NhaCungCap supplier = nhaCungCapRepository.findById(inventoryDTO.getSupplierId())
+                .orElseThrow(() -> new RuntimeException("Nhà cung cấp không tồn tại"));
+
+        if (inventoryRepository.existsByKhoIdAndBatchNumber(inventoryDTO.getWarehouseId(), inventoryDTO.getBatchNumber())) {
+            throw new RuntimeException("Số lô '" + inventoryDTO.getBatchNumber() + "' đã tồn tại trong kho!");
+        }
+
+        Inventory inventory = new Inventory();
+        inventory.setKho(kho);
+        inventory.setProduct(product);
+        inventory.setBatchNumber(inventoryDTO.getBatchNumber());
+        inventory.setQuantity(inventoryDTO.getQuantity());
+        inventory.setManufactureDate(inventoryDTO.getManufactureDate());
+        inventory.setExpiryDate(inventoryDTO.getExpiryDate());
+        inventory.setStorageLocation(inventoryDTO.getStorageLocation());
+        inventory.setSupplier(supplier);
+        inventory.setGhichu(inventoryDTO.getNote());
+
+        Inventory savedInventory = inventoryRepository.save(inventory);
+
+        // Ghi giao dịch nhập kho
+        recordInventoryTransaction(savedInventory, InventoryTransaction.TransactionType.NHAP_KHO,
+                inventoryDTO.getQuantity(), "Nhập lô hàng mới", null, null);
+
+        return savedInventory;
+    }
+
+    @Transactional
+    public void processOrderInventory(Integer orderId, User user) {
+        Orders order = ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+
+        if (!order.getStatus().equals("completed")) {
+            throw new RuntimeException("Đơn hàng chưa được xác nhận!");
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+        for (OrderItem item : orderItems) {
+            Integer productId = item.getProduct().getId();
+            Integer quantity = item.getQuantity();
+
+            // Tìm bản ghi inventory phù hợp (ưu tiên lô gần hết hạn)
+            List<Inventory> inventories = inventoryRepository.findByProductId(productId);
+            inventories.sort(Comparator.comparing(Inventory::getExpiryDate, Comparator.nullsLast(Comparator.naturalOrder())));
+
+            int remainingQuantity = quantity;
+            for (Inventory inventory : inventories) {
+                if (remainingQuantity <= 0) break;
+
+                int availableQuantity = inventory.getQuantity();
+                int deductQuantity = Math.min(remainingQuantity, availableQuantity);
+
+                inventory.setQuantity(availableQuantity - deductQuantity);
+                inventoryRepository.save(inventory);
+
+                // Ghi giao dịch xuất kho
+                recordInventoryTransaction(inventory, InventoryTransaction.TransactionType.XUAT_KHO,
+                        -deductQuantity, "Xuất kho cho đơn hàng #" + orderId, order, user);
+
+                remainingQuantity -= deductQuantity;
+            }
+
+            if (remainingQuantity > 0) {
+                throw new RuntimeException("Không đủ tồn kho cho sản phẩm ID: " + productId);
+            }
+        }
+    }
+
+    public List<InventoryTransactionDTO> getInventoryTransactions(Integer khoId, Integer productId,
+                                                                  LocalDateTime startDate, LocalDateTime endDate) {
+        List<InventoryTransaction> transactions = inventoryTransactionRepository.findTransactions(khoId, productId, startDate, endDate);
+        return transactions.stream()
+                .map(this::mapToInventoryTransactionDTO)
+                .collect(Collectors.toList());
+    }
+
+    private InventoryTransactionDTO mapToInventoryTransactionDTO(InventoryTransaction transaction) {
+        InventoryTransactionDTO dto = new InventoryTransactionDTO();
+        dto.setId(transaction.getId());
+        dto.setInventoryId(transaction.getInventory().getId());
+        dto.setKho(new InventoryResponseDTO.KhoDTO());
+        dto.getKho().setId(transaction.getKho().getId());
+        dto.getKho().setMaKho(transaction.getKho().getMaKho());
+        dto.getKho().setTenKho(transaction.getKho().getTenKho());
+        dto.setProduct(new InventoryResponseDTO.ProductDTO());
+        dto.getProduct().setId(transaction.getProduct().getId());
+        dto.getProduct().setTenSanPham(transaction.getProduct().getTenSanPham());
+        if (transaction.getSupplier() != null) {
+            dto.setSupplier(new InventoryResponseDTO.SupplierDTO());
+            dto.getSupplier().setId(transaction.getSupplier().getId());
+            dto.getSupplier().setTenNhaCungCap(transaction.getSupplier().getTenNhaCungCap());
+        }
+        dto.setBatchNumber(transaction.getBatchNumber());
+        dto.setTransactionType(transaction.getTransactionType().toString());
+        dto.setQuantity(transaction.getQuantity());
+        dto.setTransactionDate(transaction.getTransactionDate());
+        dto.setReason(transaction.getReason());
+        dto.setOrderId(transaction.getOrder() != null ? transaction.getOrder().getId() : null);
+        dto.setCreatedBy(transaction.getCreatedBy() != null ? transaction.getCreatedBy().getName() : null);
+        dto.setCreatedAt(transaction.getCreatedAt());
+        return dto;
+    }
 
 }

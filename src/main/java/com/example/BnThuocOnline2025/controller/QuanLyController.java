@@ -1,6 +1,7 @@
 package com.example.BnThuocOnline2025.controller;
 
-import com.example.BnThuocOnline2025.dto.InventoryDTO;
+import com.example.BnThuocOnline2025.dto.InventoryResponseDTO;
+import com.example.BnThuocOnline2025.dto.InventoryTransactionDTO;
 import com.example.BnThuocOnline2025.dto.ProductDTO;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.service.QuanLyService;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,7 +131,7 @@ public class QuanLyController {
     }
 
     @PostMapping("/inventory")
-    public ResponseEntity<?> addInventory(@RequestBody InventoryDTO inventoryDTO) {
+    public ResponseEntity<?> addInventory(@RequestBody InventoryResponseDTO inventoryDTO) {
         try {
             Inventory savedInventory = quanLyService.addInventory(inventoryDTO);
             return ResponseEntity.ok(savedInventory);
@@ -141,8 +143,8 @@ public class QuanLyController {
     }
 
     @GetMapping("/inventory")
-    public ResponseEntity<List<Inventory>> getAllInventory() {
-        List<Inventory> inventoryList = quanLyService.getAllInventory();
+    public ResponseEntity<List<InventoryResponseDTO>> getAllInventory() {
+        List<InventoryResponseDTO> inventoryList = quanLyService.getAllInventory();
         return ResponseEntity.ok(inventoryList);
     }
 
@@ -276,6 +278,24 @@ public class QuanLyController {
             return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
         }
     }
+
+    @GetMapping("/inventory-transactions")
+    public ResponseEntity<List<InventoryTransactionDTO>> getInventoryTransactions(
+            @RequestParam(required = false) Integer khoId,
+            @RequestParam(required = false) Integer productId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+            LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+            List<InventoryTransactionDTO> transactions = quanLyService.getInventoryTransactions(khoId, productId, start, end);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+
 
 
 

@@ -109,14 +109,14 @@
                                 <button id="increase">+</button>
                             </div>
                         </div>
-                        <button class="btn btn-primary" style="max-width: 300px;">Thêm vào giỏ hàng</button>
+                        <button class="btn btn-primary" style="max-width: 300px; height: 40px">Thêm vào giỏ hàng</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container mt-5 product-details" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 20px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); padding: 30px;">
+    <div class="container mt-4 product-details" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 5px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); padding: 30px;">
         <div class="row">
             <!-- Sidebar Navigation -->
             <div class="col-md-2">
@@ -163,6 +163,38 @@
                     <div id="item-7" class="mb-5">
                         <h4 class="section-title">Bảo quản</h4>
                         <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.baoQuan : 'Không có thông tin chi tiết'}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Câu hỏi thường gặp</h4>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item" th:each="faq, iterStat : ${cauHoiLienQuan}">
+                        <h2 class="accordion-header" th:id="'heading' + ${iterStat.count}">
+                            <button class="accordion-button" th:classappend="${iterStat.first} ? '' : 'collapsed'" type="button"
+                                    data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.count}">
+                                <i class="bi bi-question-circle me-2"></i>
+                                <span th:utext="${faq.cauHoi}"></span>
+                            </button>
+                        </h2>
+                        <div th:id="'collapse' + ${iterStat.count}"
+                             class="accordion-collapse collapse"
+                             th:classappend="${iterStat.first} ? 'show' : ''"
+                             data-bs-parent="#faqAccordion">
+                            <div class="accordion-body" th:utext="${faq.cauTraLoi}"></div>
+                        </div>
+                    </div>
+                    <!-- Hiển thị thông báo nếu không có câu hỏi -->
+                    <div class="accordion-item" th:unless="${cauHoiLienQuan != null and not #lists.isEmpty(cauHoiLienQuan)}">
+                        <div class="accordion-body">
+                            Hiện tại chưa có câu hỏi thường gặp nào cho sản phẩm này.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -219,37 +251,6 @@
                 <!-- Hiển thị thông báo nếu không có sản phẩm liên quan -->
                 <div class="text-center text-muted" th:unless="${products != null and not #lists.isEmpty(products)}">
                     Hiện tại chưa có sản phẩm liên quan nào.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mt-4">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Câu hỏi thường gặp</h4>
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item" th:each="faq, iterStat : ${cauHoiLienQuan}">
-                        <h2 class="accordion-header" th:id="'heading' + ${iterStat.count}">
-                            <button class="accordion-button" th:classappend="${iterStat.first} ? '' : 'collapsed'" type="button"
-                                    data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.count}">
-                                <i class="bi bi-question-circle me-2"></i>
-                                <span th:utext="${faq.cauHoi}"></span>
-                            </button>
-                        </h2>
-                        <div th:id="'collapse' + ${iterStat.count}"
-                             class="accordion-collapse collapse"
-                             th:classappend="${iterStat.first} ? 'show' : ''"
-                             data-bs-parent="#faqAccordion">
-                            <div class="accordion-body" th:utext="${faq.cauTraLoi}"></div>
-                        </div>
-                    </div>
-                    <!-- Hiển thị thông báo nếu không có câu hỏi -->
-                    <div class="accordion-item" th:unless="${cauHoiLienQuan != null and not #lists.isEmpty(cauHoiLienQuan)}">
-                        <div class="accordion-body">
-                            Hiện tại chưa có câu hỏi thường gặp nào cho sản phẩm này.
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

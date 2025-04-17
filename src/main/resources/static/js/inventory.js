@@ -256,24 +256,28 @@ class InventoryManager {
         const pageSize = 10;
 
         $.ajax({
-            url: '/api/quanly/inventory_transactions',
+            url: '/api/quanly/inventory-transactions',
             method: 'GET',
             success: (data) => {
+                if (!Array.isArray(data)) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Dữ liệu không hợp lệ!' });
+                    return;
+                }
+
                 let filteredData = data.filter(item => {
-                    const matchesSearch = (item.productName?.toLowerCase() || '').includes(search) ||
+                    const matchesSearch = (item.product?.tenSanPham?.toLowerCase() || '').includes(search) ||
                         (item.batchNumber?.toLowerCase() || '').includes(search) ||
                         (item.transactionType?.toLowerCase() || '').includes(search);
                     const matchesType = !typeFilter || item.transactionType === typeFilter;
-                    const matchesDate = !dateFilter || item.transactionDate.split(' ')[0] === dateFilter;
+                    const matchesDate = !dateFilter || (item.transactionDate && item.transactionDate.split('T')[0] === dateFilter);
                     return matchesSearch && matchesType && matchesDate;
                 });
 
                 this.renderTransactions(filteredData, page, pageSize);
             },
-            error: () => Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể tải lịch sử giao dịch!' })
+            error: (xhr) => Swal.fire({ icon: 'error', title: 'Lỗi', text: xhr.responseText || 'Không thể tải lịch sử giao dịch!' })
         });
     }
-
     // Hiển thị lịch sử giao dịch
     renderTransactions(data, page, pageSize) {
         const tbody = $('#transaction-tbody');
@@ -284,27 +288,33 @@ class InventoryManager {
         const end = Math.min(start + pageSize, totalItems);
         const paginated = data.slice(start, end);
 
+        const typeMap = {
+            'NHAP_KHO': 'Nhập kho',
+            'XUAT_KHO': 'Xuất kho',
+            'DIEU_CHINH': 'Điều chỉnh'
+        };
+
         paginated.forEach(item => {
+            const transactionType = typeMap[item.transactionType] || item.transactionType || 'N/A';
             const row = `
-                <tr>
-                    <td>${item.id}</td>
-                    <td>${item.transactionType === 'IN' ? 'Nhập kho' : 'Xuất kho'}</td>
-                    <td>${item.productName || 'N/A'}</td>
-                    <td>${item.batchNumber || 'N/A'}</td>
-                    <td>${item.quantity || 'N/A'}</td>
-                    <td>${item.supplierName || 'N/A'}</td>
-                    <td>${item.employeeName || 'N/A'}</td>
-                    <td>${item.orderId ? `#${item.orderId}` : 'N/A'}</td>
-                    <td>${item.transactionDate || 'N/A'}</td>
-                    <td>${item.note || 'N/A'}</td>
-                </tr>
-            `;
+            <tr>
+                <td>${item.id || 'N/A'}</td>
+                <td>${transactionType}</td>
+                <td>${item.product?.tenSanPham || 'N/A'}</td>
+                <td>${item.batchNumber || 'N/A'}</td>
+                <td>${item.quantity || 'N/A'}</td>
+                <td>${item.supplier?.tenNhaCungCap || 'N/A'}</td>
+                <td>${item.createdBy?.name || 'N/A'}</td>
+                <td>${item.order?.id ? `#${item.order.id}` : 'N/A'}</td>
+                <td>${item.transactionDate ? item.transactionDate.split('T')[0] : 'N/A'}</td>
+                <td>${item.reason || 'N/A'}</td>
+            </tr>
+        `;
             tbody.append(row);
         });
 
         this.renderPagination('#transaction-pagination', totalPages, page, (selectedPage) => this.loadTransactions(selectedPage));
     }
-
     // Load danh sách kho cho modal
     loadWarehousesForModal() {
         $.ajax({
