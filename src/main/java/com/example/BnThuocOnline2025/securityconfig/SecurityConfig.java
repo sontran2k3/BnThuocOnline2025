@@ -54,16 +54,16 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/logonewT.png",
-                                "/sanpham",
+                                "/sanpham/**",
                                 "/product-images/**",
                                 "/cart/**",
                                 "/products-by-doituong",
                                 "/quanly",
                                 "/api/login",
-                                // Thêm các endpoint liên quan đến PayOS
                                 "/thanhtoan/success",
                                 "/thanhtoan/cancel",
-                                "/thanhtoan/payos/webhook" // Webhook cần public
+                                "/thanhtoan/payos/webhook",
+                                "/submit-review"
                         ).permitAll()
                         // Endpoint yêu cầu xác thực (nếu cần)
                         .requestMatchers("/thanhtoan/payos").authenticated()
@@ -78,7 +78,8 @@ public class SecurityConfig {
                                 "/products",
                                 "/api/login",
                                 "/thanhtoan/payos", // Nếu gửi JSON từ frontend
-                                "/thanhtoan/payos/webhook" // Webhook từ PayOS
+                                "/thanhtoan/payos/webhook", // Webhook từ PayOS
+                                "/submit-review"
                         )
                 )
                 .oauth2Login(oauth2 -> oauth2

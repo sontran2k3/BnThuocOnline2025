@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -109,7 +110,9 @@ public class HomeController {
     }
 
     @GetMapping("/sanpham")
-    public String productDetail(@RequestParam("id") int productId, Model model,
+    public String productDetail(@RequestParam("id") int productId,
+                                @RequestParam(value = "rating", required = false) Float rating,
+                                Model model,
                                 @AuthenticationPrincipal OAuth2User oAuth2User,
                                 HttpSession session) {
         Product product = productService.getProductById(productId);
@@ -117,6 +120,14 @@ public class HomeController {
         ChiTietSanPham chiTietSanPham = productService.getChiTietSanPhamByProductId(productId);
         List<CauHoiLienQuan> cauHoiLienQuan = productService.getCauHoiLienQuanByProductId(productId);
         List<Product> relatedProducts = productService.getRelatedProducts(productId, 6);
+
+        // Lấy danh sách đánh giá
+        List<ProductReview> reviews = rating != null
+                ? productService.getProductReviewsByRating(productId, rating)
+                : productService.getProductReviews(productId);
+        Double averageRating = productService.getAverageRating(productId);
+        long reviewCount = productService.getReviewCount(productId);
+        Map<Integer, Long> ratingCounts = productService.getReviewCountByRating(productId);
 
         if (product == null) {
             return "redirect:/";
@@ -139,15 +150,23 @@ public class HomeController {
         model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
         model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
 
-        // Thêm thông tin sản phẩm
+        // Thêm thông tin sản phẩm và đánh giá
         model.addAttribute("product", product);
         model.addAttribute("images", images);
         model.addAttribute("chiTietSanPham", chiTietSanPham);
         model.addAttribute("cauHoiLienQuan", cauHoiLienQuan);
         model.addAttribute("products", relatedProducts);
+        model.addAttribute("reviews", reviews);
+        model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewCount", reviewCount);
+        model.addAttribute("ratingCounts", ratingCounts);
+        model.addAttribute("selectedRating", rating);
 
         return "sanpham";
     }
+
+
+
 
     @GetMapping("/products-by-doituong")
     public String getProductsByDoiTuong(@RequestParam("doiTuongId") int doiTuongId, Model model) {
@@ -178,6 +197,56 @@ public class HomeController {
         } else {
             response.put("error", "Không tìm thấy đơn vị tính hoặc sản phẩm.");
         }
+        return response;
+    }
+
+
+    @PostMapping("/submit-review")
+    @ResponseBody
+    public Map<String, Object> submitReview(@RequestParam("productId") int productId,
+                                            @RequestParam("rating") float rating,
+                                            @RequestParam("reviewContent") String reviewContent,
+                                            @AuthenticationPrincipal OAuth2User oAuth2User) {
+        Map<String, Object> response = new HashMap<>();
+
+        // Kiểm tra xem người dùng đã đăng nhập chưa
+        if (oAuth2User == null) {
+            response.put("success", false);
+            response.put("message", "Vui lòng đăng nhập để gửi đánh giá.");
+            return response;
+        }
+
+        // Lấy thông tin người dùng
+        String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+        String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+        Optional<User> userOpt = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
+
+        if (!userOpt.isPresent()) {
+            response.put("success", false);
+            response.put("message", "Không tìm thấy thông tin người dùng.");
+            return response;
+        }
+
+        User user = userOpt.get();
+        Product product = productService.getProductById(productId);
+
+        if (product == null) {
+            response.put("success", false);
+            response.put("message", "Sản phẩm không tồn tại.");
+            return response;
+        }
+
+        // Tạo và lưu đánh giá
+        ProductReview review = new ProductReview();
+        review.setProduct(product);
+        review.setUser(user);
+        review.setRating(rating);
+        review.setReviewContent(reviewContent.isEmpty() ? null : reviewContent);
+
+        productService.saveProductReview(review);
+
+        response.put("success", true);
+        response.put("message", "Đánh giá đã được gửi thành công!");
         return response;
     }
 }

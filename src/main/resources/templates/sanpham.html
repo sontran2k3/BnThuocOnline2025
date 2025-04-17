@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh sách sản phẩm</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
@@ -12,8 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" defer></script>
     <script src="/js/quanly/sanpham.js"></script>
     <link rel="stylesheet" href="" th:href="@{/css/sanpham.css}">
-    <link rel="icon" type="logonew/png" th:href="@{/logonewT.png}">
-
+    <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
 <div th:insert="~{part/header :: header}"></div>
@@ -72,8 +73,6 @@
                         </th:block>
                     </div>
                 </div>
-
-
 
                 <div class="mt-3 row">
                     <div class="col-4">
@@ -258,37 +257,73 @@
 
     <div class="container mt-4 mb-5">
         <div class="rating-container">
-            <div class="rating-title">Đánh giá sản phẩm <span class="text-muted" id="reviewCount">(0 đánh giá)</span></div>
-            <div class="d-flex align-items-center my-3">
-                <div class="rating-score" id="averageRating">0.0 <span class="star rating-star">★</span></div>
-                <div class="rating-summary" id="ratingSummary">
-                    <div class="d-flex"><div class="star rating-summary">★★★★★</div><div class="rating-bar"><div class="rating-fill" style="width: 0%;"></div></div><div>0</div></div>
-                    <div class="d-flex"><div class="star rating-summary">★★★★☆</div><div class="rating-bar"><div class="rating-fill" style="width: 0%;"></div></div><div>0</div></div>
-                    <div class="d-flex"><div class="star rating-summary">★★★☆☆</div><div class="rating-bar"><div class="rating-fill" style="width: 0%;"></div></div><div>0</div></div>
-                    <div class="d-flex"><div class="star rating-summary">★★☆☆☆</div><div class="rating-bar"><div class="rating-fill" style="width: 0%;"></div></div><div>0</div></div>
-                    <div class="d-flex"><div class="star rating-summary">★☆☆☆☆</div><div class="rating-bar"><div class="rating-fill" style="width: 0%;"></div></div><div>0</div></div>
-                </div>
+            <div class="rating-title">
+                Đánh giá sản phẩm
+                <span class="text-muted" th:text="'(' + ${reviewCount} + ' đánh giá)'">(0 đánh giá)</span>
             </div>
-            <button class="btn btn-primary send" data-bs-toggle="modal" data-bs-target="#reviewModal">Gửi đánh giá</button>
+            <div class="d-flex align-items-center my-3">
+                <div class="rating-score" th:text="${averageRating} + ' ★'">0.0 ★</div>
+                <div class="rating-summary" id="ratingSummary"></div>
+            </div>
 
+            <!-- Nút gửi đánh giá, chỉ hiển thị nếu người dùng đã đăng nhập -->
+            <div th:if="${loggedInUser != null}">
+                <button class="btn btn-primary send"
+                        data-bs-toggle="modal"
+                        data-bs-target="#reviewModal">
+                    Gửi đánh giá
+                </button>
+            </div>
+            <div th:if="${loggedInUser == null}" class="text-muted">
+                Vui lòng <a href="/login">đăng nhập</a> để gửi đánh giá.
+            </div>
+
+            <!-- Bộ lọc đánh giá -->
             <div class="filters mt-3">
                 Lọc theo:
-                <button class="btn btn-outline-secondary filter-btn active" data-rating="all">Tất cả</button>
-                <button class="btn btn-outline-secondary filter-btn" data-rating="5">5 sao</button>
-                <button class="btn btn-outline-secondary filter-btn" data-rating="4">4 sao</button>
-                <button class="btn btn-outline-secondary filter-btn" data-rating="3">3 sao</button>
-                <button class="btn btn-outline-secondary filter-btn" data-rating="2">2 sao</button>
-                <button class="btn btn-outline-secondary filter-btn" data-rating="1">1 sao</button>
+                <a th:href="@{/sanpham(id=${product.id})}"
+                   class="btn btn-outline-secondary"
+                   th:classappend="${selectedRating == null} ? 'active' : ''">Tất cả</a>
+                <a th:each="i : ${#numbers.sequence(5, 1, -1)}"
+                   th:href="@{/sanpham(id=${product.id}, rating=${i})}"
+                   class="btn btn-outline-secondary"
+                   th:classappend="${selectedRating == i} ? 'active' : ''"
+                   th:text="${i} + ' sao'">5 sao</a>
             </div>
 
             <!-- Danh sách đánh giá -->
-            <div id="reviewList">
-                <div class="text-muted text-center">Chưa có đánh giá nào cho sản phẩm này.</div>
+            <div th:each="review : ${reviews}" class="review-item mt-4">
+                <div class="avatar"
+                     th:text="${review.user.name != null ? #strings.substring(review.user.name, 0, 2).toUpperCase() : 'NN'}">NN</div>
+                <div class="connector-vertical"></div>
+                <div class="connector-horizontal"></div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <span class="review-author" th:text="${review.user.name ?: 'Người dùng ẩn danh'}">Người dùng ẩn danh</span>
+                        <span class="review-meta"
+                              th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')} + ' - Trả lời'">2 ngày trước - Trả lời</span>
+                        <button class="comment-btn">Bình luận</button>
+                    </div>
+                    <div class="star mt-1" th:text="${#strings.repeat('★', review.rating.intValue())}">★★★★★</div>
+                    <div class="review-content" th:text="${review.reviewContent ?: 'Không có nội dung đánh giá'}">Không có nội dung đánh giá</div>
+                    <div class="staff-reply" th:if="${review.reviewContent != null}">
+                        <div class="staff-name">Quỳnh Chu - Dược sĩ</div>
+                        <div>
+                            Chào bạn <span th:text="${review.user.name ?: 'Khách'}">Khách</span>,<br/>
+                            Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông báo nếu không có đánh giá -->
+            <div th:if="${#lists.isEmpty(reviews)}" class="text-center text-muted mt-4">
+                Hiện tại chưa có đánh giá nào cho sản phẩm này.
             </div>
         </div>
     </div>
 
-    <!-- Modal đánh giá -->
+    <!-- Modal gửi đánh giá -->
     <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content p-3 rounded-4">
@@ -300,8 +335,8 @@
                     <div class="d-flex align-items-center mb-3">
                         <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" alt="Sản phẩm" width="64" class="me-3 rounded-2"/>
                         <div>
-                            <div class="fw-semibold" th:text="${product.tenSanPham}">Tên sản phẩm</div>
-                            <small class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}">Mô tả ngắn</small>
+                            <div class="fw-semibold" th:text="${product.tenSanPham}">Enterogermina Gut Defense Sanofi</div>
+                            <small class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}">Tăng cường tiêu hóa, hỗ trợ bảo vệ đường ruột</small>
                         </div>
                     </div>
 
@@ -317,16 +352,13 @@
                     <!-- Nội dung đánh giá -->
                     <textarea class="form-control mb-3" id="reviewContent" rows="3" placeholder="Nhập nội dung đánh giá (Không bắt buộc - Vui lòng gõ tiếng Việt có dấu)..."></textarea>
 
-                    <button class="btn btn-primary w-100" id="submitReviewBtn">Gửi</button>
+                    <button class="btn btn-primary w-100" id="submitReview" th:data-product-id="${product.id}">Gửi</button>
                 </div>
             </div>
         </div>
     </div>
 
-
-
     <div class="container mt-4" style="height: 20px"></div>
-
 </main>
 <div th:insert="~{part/footer :: footer}"></div>
 
@@ -334,90 +366,173 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script th:inline="javascript">
     $(document).ready(function() {
-        const productId = /*[[${product?.id}]]*/ null;
-        let reviews = [];
+        // Xử lý khi chọn đơn vị tính cho sản phẩm chính
+        $('input[name="unit"]').on('change', function() {
+            var productId = /*[[${product?.id}]]*/ null;
+            var donViTinhId = $(this).attr('data-dvt-id');
 
-        // Hàm lấy danh sách đánh giá
-        function loadReviews(filterRating = 'all') {
+            if (productId === null) {
+                console.error('Không tìm thấy productId');
+                return;
+            }
+
             $.ajax({
-                url: '/product-reviews',
+                url: '/update-price',
                 type: 'GET',
-                data: { productId: productId },
-                success: function(data) {
-                    reviews = data;
-                    updateReviewDisplay(filterRating);
+                data: { productId: productId, donViTinhId: donViTinhId },
+                success: function(response) {
+                    $('.product-price span').text(Number(response.discountedPrice).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ');
+                    if (response.hasDiscount) {
+                        $('.old-price').text(Number(response.gia).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ').show();
+                    } else {
+                        $('.old-price').hide();
+                    }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Lỗi khi lấy đánh giá:', error);
+                    console.error('Lỗi khi cập nhật giá:', error);
+                }
+            });
+        });
+
+        // Kích hoạt sự kiện change cho đơn vị tính mặc định của sản phẩm chính khi load trang
+        var checkedUnit = $('input[name="unit"]:checked');
+        if (checkedUnit.length === 0) {
+            var firstUnit = $('input[name="unit"]').first();
+            if (firstUnit.length > 0) {
+                firstUnit.prop('checked', true);
+                firstUnit.trigger('change');
+            } else {
+                console.error('Không có đơn vị tính nào để chọn');
+            }
+        } else {
+            checkedUnit.trigger('change');
+        }
+
+        // Xử lý tăng/giảm số lượng
+        $('#increase').click(function() {
+            let qty = parseInt($('#quantity').val());
+            $('#quantity').val(qty + 1);
+        });
+        $('#decrease').click(function() {
+            let qty = parseInt($('#quantity').val());
+            if (qty > 1) $('#quantity').val(qty - 1);
+        });
+
+        // Hàm cập nhật giá cho "Sản phẩm liên quan"
+        window.updatePriceRelated = function(productId, donViTinhId) {
+            var productCard = $('#related-unit-btn-' + productId + '-' + donViTinhId).closest('.card');
+            if (!productCard.length) return;
+
+            productCard.find('.unit-btn').removeClass('active');
+            $('#related-unit-btn-' + productId + '-' + donViTinhId).addClass('active');
+
+            $.ajax({
+                url: '/update-price',
+                type: 'GET',
+                data: { productId: productId, donViTinhId: donViTinhId },
+                success: function(response) {
+                    var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
+                    var gia = Number(response.gia).toLocaleString('vi-VN');
+                    var discountPercent = response.discount ? Number(response.discount) : 0;
+                    var unit = response.donViTinh;
+
+                    $('#related-discounted-price-' + productId).text(discountedPrice + 'đ/' + unit);
+                    if (response.hasDiscount) {
+                        $('#related-original-price-' + productId).text(gia + 'đ/' + unit).show();
+                        $('#related-discount-badge-' + productId).text('-' + discountPercent + '%').show();
+                    } else {
+                        $('#related-original-price-' + productId).hide();
+                        $('#related-discount-badge-' + productId).hide();
+                    }
+
+                    var unitInfo = productCard.find('.unit-info');
+                    if (unitInfo.length) {
+                        unitInfo.text(response.quyCach || '');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi cập nhật giá:', error);
+                }
+            });
+        };
+
+        // Khởi tạo trạng thái đơn vị tính cho "Sản phẩm liên quan"
+        function initializeRelatedUnitButtons() {
+            $('.product-card .card').each(function() {
+                var firstButton = $(this).find('.unit-btn').first();
+
+                if (firstButton.length > 0) {
+                    var ids = firstButton.attr('id').split('-');
+                    var productId = ids[2];
+                    var donViTinhId = ids[3];
+                    if (productId && donViTinhId) {
+                        $(this).find('.unit-btn').removeClass('active');
+                        firstButton.addClass('active');
+                        firstButton.trigger('click');
+                    }
                 }
             });
         }
 
-        // Hàm hiển thị danh sách đánh giá và cập nhật thống kê
-        function updateReviewDisplay(filterRating) {
-            const reviewList = $('#reviewList');
-            reviewList.empty();
+        // Gọi hàm khởi tạo khi trang load
+        initializeRelatedUnitButtons();
 
-            let filteredReviews = reviews;
-            if (filterRating !== 'all') {
-                filteredReviews = reviews.filter(review => Math.floor(review.rating) == filterRating);
-            }
+        // Hàm thay đổi hình ảnh chính khi click vào thumbnail
+        function changeImage(imageUrl, element) {
+            var mainImage = document.getElementById('mainImage');
+            if (mainImage) {
+                mainImage.style.opacity = '0';
+                setTimeout(function() {
+                    mainImage.src = imageUrl;
+                    mainImage.style.opacity = '1';
+                }, 300);
 
-            if (filteredReviews.length === 0) {
-                reviewList.append('<div class="text-muted text-center">Chưa có đánh giá nào cho sản phẩm này.</div>');
-            } else {
-                filteredReviews.forEach(review => {
-                    const reviewHtml = `
-                        <div class="review-item">
-                            <div class="avatar">${review.user.name.charAt(0)}</div>
-                            <div class="connector-vertical"></div>
-                            <div class="connector-horizontal"></div>
-                            <div>
-                                <div class="d-flex align-items-center">
-                                    <span class="review-author">${review.user.name}</span>
-                                    <span class="review-meta">${new Date(review.createdAt).toLocaleDateString('vi-VN')} - Trả lời</span>
-                                    <button class="comment-btn">Bình luận</button>
-                                </div>
-                                <div class="star mt-1">${'★'.repeat(Math.floor(review.rating))}</div>
-                                <div class="review-content">${review.reviewContent || 'Không có nội dung'}</div>
-                            </div>
-                        </div>`;
-                    reviewList.append(reviewHtml);
+                var thumbnails = document.querySelectorAll('.product-thumbnails img');
+                thumbnails.forEach(function(thumb) {
+                    thumb.classList.remove('active');
                 });
+
+                element.classList.add('active');
             }
-
-            const totalReviews = reviews.length;
-            const averageRating = totalReviews > 0 ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1) : 0;
-            $('#reviewCount').text(`(${totalReviews} đánh giá)`);
-            $('#averageRating').html(`${averageRating} <span class="star rating-star">★</span>`);
-
-            const ratingCounts = [0, 0, 0, 0, 0];
-            reviews.forEach(review => {
-                const rating = Math.floor(review.rating);
-                if (rating >= 1 && rating <= 5) ratingCounts[rating - 1]++;
-            });
-            $('#ratingSummary .d-flex').each(function(index) {
-                const count = ratingCounts[4 - index];
-                const percentage = totalReviews > 0 ? (count / totalReviews * 100).toFixed(0) : 0;
-                $(this).find('.rating-fill').css('width', `${percentage}%`);
-                $(this).find('div:last-child').text(count);
-            });
         }
 
-        // Kiểm tra trạng thái đăng nhập
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            $('.send').prop('disabled', true).text('Đăng nhập để đánh giá');
+        // Đặt thumbnail đầu tiên làm active khi trang load
+        var firstThumbnail = $('.product-thumbnails img').first();
+        if (firstThumbnail.length > 0) {
+            firstThumbnail.addClass('active');
+            changeImage(firstThumbnail.attr('data-image-url'), firstThumbnail[0]);
         }
 
-        // Xử lý gửi đánh giá
-        $('#submitReviewBtn').click(function() {
-            const token = localStorage.getItem('jwtToken');
-            console.log('Token being sent:', token);
-            if (!token) {
-                alert('Bạn cần đăng nhập để gửi đánh giá.');
-                return;
-            }
+        // Xử lý chọn số sao trong modal đánh giá
+        const stars = $('.rating-stars span');
+        stars.each(function() {
+            $(this).on('mouseover', function() {
+                var rating = $(this).data('star');
+                stars.each(function() {
+                    $(this).toggleClass('hover', $(this).data('star') <= rating);
+                });
+            });
+
+            $(this).on('mouseout', function() {
+                stars.removeClass('hover');
+            });
+
+            $(this).on('click', function() {
+                var rating = $(this).data('star');
+                stars.each(function() {
+                    $(this).toggleClass('active', $(this).data('star') <= rating);
+                });
+            });
+        });
+
+        // Xử lý gửi đánh giá qua AJAX
+        $('#submitReview').on('click', function() {
+            var productId = $(this).data('product-id');
+            var rating = $('.rating-stars span.active').length || 5; // Mặc định 5 sao nếu không chọn
+            var reviewContent = $('#reviewContent').val().trim();
+            var csrfToken = $('meta[name="_csrf"]').attr('content');
+            var csrfHeader = $('meta[name="_csrf_header"]').attr('content');
+
             $.ajax({
                 url: '/submit-review',
                 type: 'POST',
@@ -427,69 +542,54 @@
                     reviewContent: reviewContent
                 },
                 beforeSend: function(xhr) {
-                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    if (csrfHeader && csrfToken) {
+                        xhr.setRequestHeader(csrfHeader, csrfToken);
+                    }
                 },
                 success: function(response) {
-                    console.log('Submit review response:', response);
                     if (response.success) {
+                        alert(response.message); // Có thể thay bằng thông báo toast
                         $('#reviewModal').modal('hide');
-                        $('#reviewContent').val('');
-                        loadReviews();
-                        alert(response.message);
+                        location.reload(); // Tải lại trang để cập nhật danh sách đánh giá
                     } else {
                         alert(response.message);
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error submitting review:', xhr.responseText);
-                    alert('Đã xảy ra lỗi khi gửi đánh giá: ' + xhr.responseText);
+                    alert('Đã xảy ra lỗi khi gửi đánh giá: ' + (xhr.responseJSON?.message || error));
                 }
             });
         });
-        // Xử lý lọc đánh giá
-        $('.filter-btn').click(function() {
-            $('.filter-btn').removeClass('active');
-            $(this).addClass('active');
-            const filterRating = $(this).data('rating');
-            updateReviewDisplay(filterRating);
-        });
 
-        // Xử lý chọn sao
-        const stars = $('.rating-stars span');
-        stars.on('click', function() {
-            const selected = $(this).data('star');
-            stars.removeClass('active');
-            stars.each(function(index) {
-                if (index < selected) $(this).addClass('active');
-            });
-        });
+        // Xử lý tóm tắt đánh giá
+        var reviews = /*[[${reviews}]]*/ [];
+        var reviewCount = /*[[${reviewCount}]]*/ 0;
 
-        // Tải đánh giá khi trang được load
-        loadReviews();
-    });
-
-    // Lấy token khi trang tải
-    $(document).ready(function() {
-        $.ajax({
-            url: '/api/get-token',
-            method: 'GET',
-            success: function(response) {
-                console.log('Get token response:', response);
-                if (response.token) {
-                    localStorage.setItem('jwtToken', response.token);
-                    $('.send').prop('disabled', false).text('Gửi đánh giá');
-                } else {
-                    console.log('No token received:', response.error);
-                    localStorage.removeItem('jwtToken');
-                    $('.send').prop('disabled', true).text('Đăng nhập để đánh giá');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error getting token:', error);
-                localStorage.removeItem('jwtToken');
-                $('.send').prop('disabled', true).text('Đăng nhập để đánh giá');
+        // Tính số lượng đánh giá cho mỗi mức sao
+        var ratingCounts = [0, 0, 0, 0, 0, 0]; // Index 0 không dùng
+        reviews.forEach(function(review) {
+            var rating = Math.round(review.rating); // Làm tròn rating
+            if (rating >= 1 && rating <= 5) {
+                ratingCounts[rating]++;
             }
         });
+
+        // Tạo HTML cho tóm tắt đánh giá
+        var ratingSummaryHtml = '';
+        for (var i = 5; i >= 1; i--) {
+            var starString = '★'.repeat(i) + '☆'.repeat(5 - i);
+            var percentage = reviewCount > 0 ? (ratingCounts[i] / reviewCount * 100) : 0;
+            ratingSummaryHtml += `
+                <div class="d-flex">
+                    <div class="star rating-summary">${starString}</div>
+                    <div class="rating-bar">
+                        <div class="rating-fill" style="width: ${percentage}%;"></div>
+                    </div>
+                    <div>${ratingCounts[i]}</div>
+                </div>
+            `;
+        }
+        $('#ratingSummary').html(ratingSummaryHtml);
     });
 </script>
 </body>

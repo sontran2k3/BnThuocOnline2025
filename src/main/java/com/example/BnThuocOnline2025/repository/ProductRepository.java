@@ -15,4 +15,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "LEFT JOIN FETCH p.doiTuong " +
             "LEFT JOIN FETCH p.donViTinhList")
     List<Product> findAllWithDetails();
+
+
+
 }

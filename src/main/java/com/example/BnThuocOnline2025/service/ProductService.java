@@ -9,9 +9,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class ProductService {
@@ -32,6 +35,9 @@ public class ProductService {
 
     @Autowired
     private DonViTinhRepository donViTinhRepository;
+
+    @Autowired
+    private ProductReviewRepository productReviewRepository;
 
     private static final int PAGE_SIZE = 12;
 
@@ -89,16 +95,6 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-//    private void loadProductDetails(Product product) {
-//        Optional<ProductImage> mainImage = productImageRepository.findByProductIdAndIsMainTrue(product.getId());
-//        mainImage.ifPresent(image -> product.setMainImageUrl(image.getImageUrl()));
-//
-//        List<DonViTinh> donViTinhList = donViTinhRepository.findByProductId(product.getId());
-//        product.setDonViTinhList(donViTinhList);
-//    }
-
-
-
     public BigDecimal calculateDiscountedPrice(BigDecimal gia, BigDecimal discount) {
         if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
             return gia.multiply(BigDecimal.ONE.subtract(discount.divide(BigDecimal.valueOf(100))));
@@ -112,11 +108,51 @@ public class ProductService {
                 .orElse(null);
     }
 
-     public void loadProductDetails(Product product) {
+    public void loadProductDetails(Product product) {
         Optional<ProductImage> mainImage = productImageRepository.findByProductIdAndIsMainTrue(product.getId());
         mainImage.ifPresent(image -> product.setMainImageUrl(image.getImageUrl()));
 
         List<DonViTinh> donViTinhList = donViTinhRepository.findByProductId(product.getId());
         product.setDonViTinhList(donViTinhList);
+    }
+
+    // Lấy danh sách đánh giá theo productId
+    public List<ProductReview> getProductReviews(int productId) {
+        return productReviewRepository.findByProductId(productId);
+    }
+
+    // Lấy đánh giá theo số sao
+    public List<ProductReview> getProductReviewsByRating(int productId, float rating) {
+        return productReviewRepository.findByProductIdAndRating(productId, rating);
+    }
+
+    // Lấy trung bình số sao
+    public Double getAverageRating(int productId) {
+        Double avgRating = productReviewRepository.findAverageRatingByProductId(productId);
+        return avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0;
+    }
+
+    // Đếm số lượng đánh giá
+    public long getReviewCount(int productId) {
+        return productReviewRepository.countByProductId(productId);
+    }
+
+    // Lưu đánh giá
+    public ProductReview saveProductReview(ProductReview review) {
+        return productReviewRepository.save(review);
+    }
+
+    // Lấy số lượng đánh giá theo từng mức sao
+    public Map<Integer, Long> getReviewCountByRating(int productId) {
+        Map<Integer, Long> ratingCounts = new HashMap<>();
+        List<ProductReview> reviews = productReviewRepository.findByProductId(productId);
+        for (int i = 1; i <= 5; i++) {
+            final int rating = i;
+            long count = reviews.stream()
+                    .filter(review -> Math.round(review.getRating()) == rating)
+                    .count();
+            ratingCounts.put(i, count);
+        }
+        return ratingCounts;
     }
 }
