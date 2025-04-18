@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap; // Thêm import này
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +69,7 @@ public class UserController {
             User user = userOptional.get();
             user.setName(name);
             user.setDateOfBirth(dateOfBirth);
-            user.setAddress(address);
+            user.setAddress(address); // Lưu chuỗi địa chỉ từ dropdown
             user.setPhoneNumber(phoneNumber);
             user.setPassword(password);
             userService.saveUser(user);
@@ -80,10 +82,15 @@ public class UserController {
     public String showHomePage(Model model, @RequestParam String providerId, @RequestParam String provider) {
         Optional<User> user = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
         if (user.isPresent()) {
-            model.addAttribute("name", user.get().getName());
-            model.addAttribute("email", user.get().getEmail());
-            model.addAttribute("phoneNumber", user.get().getPhoneNumber());
-            model.addAttribute("picture", user.get().getPicture());
+            User currentUser = user.get();
+            model.addAttribute("loggedInUser", currentUser);
+            model.addAttribute("name", currentUser.getName());
+            model.addAttribute("email", currentUser.getEmail());
+            model.addAttribute("phoneNumber", currentUser.getPhoneNumber());
+            model.addAttribute("picture", currentUser.getPicture());
+            model.addAttribute("gender", currentUser.getGender());
+            model.addAttribute("dateOfBirth", currentUser.getDateOfBirth());
+            model.addAttribute("address", currentUser.getAddress());
             return "thongtincanhan";
         }
         return "redirect:/";
@@ -133,7 +140,59 @@ public class UserController {
     }
 
 
-    
+    @PostMapping("/updatePersonalInfo")
+    public String updatePersonalInfo(
+            @RequestParam String fullName,
+            @RequestParam String gender,
+            @RequestParam String birthDate,
+            @AuthenticationPrincipal OAuth2User oAuth2User,
+            Model model) {
+        // Lấy thông tin người dùng hiện tại
+        String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+        String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+        Optional<User> userOptional = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Cập nhật thông tin
+            user.setName(fullName);
+            user.setGender(gender);
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                user.setDateOfBirth(LocalDate.parse(birthDate, formatter));
+            } catch (DateTimeParseException e) {
+                model.addAttribute("error", "Ngày sinh không hợp lệ, vui lòng nhập theo định dạng dd/MM/yyyy");
+                // Trả lại dữ liệu hiện tại để hiển thị
+                model.addAttribute("loggedInUser", user);
+                model.addAttribute("name", user.getName());
+                model.addAttribute("phoneNumber", user.getPhoneNumber());
+                model.addAttribute("gender", user.getGender());
+                model.addAttribute("dateOfBirth", user.getDateOfBirth());
+                model.addAttribute("picture", user.getPicture());
+                model.addAttribute("email", user.getEmail());
+                return "thongtincanhan";
+            }
+
+            // Lưu thông tin
+            userService.saveUser(user);
+
+            // Thêm thông báo thành công
+            model.addAttribute("success", "Cập nhật thông tin thành công!");
+            // Cập nhật model
+            model.addAttribute("loggedInUser", user);
+            model.addAttribute("name", user.getName());
+            model.addAttribute("phoneNumber", user.getPhoneNumber());
+            model.addAttribute("gender", user.getGender());
+            model.addAttribute("dateOfBirth", user.getDateOfBirth());
+            model.addAttribute("picture", user.getPicture());
+            model.addAttribute("email", user.getEmail());
+        } else {
+            model.addAttribute("error", "Không tìm thấy người dùng!");
+            return "redirect:/";
+        }
+
+        return "thongtincanhan";
+    }
 
 }
 

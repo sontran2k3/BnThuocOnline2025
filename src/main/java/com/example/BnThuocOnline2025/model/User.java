@@ -25,8 +25,9 @@ public class User {
     private String address;
     private String password;
     private String phoneNumber;
+    private String gender;
     private String email;
-    private String role; // Thêm trường role (ví dụ: "ADMIN" hoặc "USER")
+    private String role;
 
     public User(String facebookId, String googleId, String name, String picture, String email) {
         this.facebookId = facebookId;
@@ -34,6 +35,6 @@ public class User {
         this.name = name;
         this.picture = picture;
         this.email = email;
-        this.role = "USER"; // Mặc định là USER
+        this.role = "USER";
     }
 }

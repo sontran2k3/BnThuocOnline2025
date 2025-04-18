@@ -38,7 +38,6 @@ body {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4a90e2, #5c6bc0);
     position: relative;
     display: flex;
     align-items: center;
@@ -378,7 +377,6 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ffffff" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>') no-repeat center;
     background-size: 50px;
     border-radius: 50%;
 }
@@ -485,5 +483,175 @@ body {
 
 .btn-cancel:hover {
     background-color: #d3d7db;
+}
+.profile-img-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.profile-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-size: cover; /* Đảm bảo ảnh avatar đầy đủ */
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Loại bỏ biểu tượng SVG mặc định */
+.profile-img::before {
+    content: none; /* Xóa biểu tượng SVG */
+}
+
+/* Định dạng phần profile-card */
+.profile-card {
+    background: linear-gradient(135deg, #4a90e2, #5c6bc0);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Căn giữa các nhóm form */
+.form-group-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Định dạng nhãn (label) */
+.form-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-align: left;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Định dạng các trường nhập liệu */
+.custom-input {
+    border-radius: 20px !important;
+    padding: 10px 15px;
+    font-size: 14px;
+    border: 1px solid #e9ecef;
+    box-shadow: none;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Định dạng trường ngày sinh và biểu tượng lịch */
+.date-input {
+    padding-right: 40px; /* Để dành chỗ cho biểu tượng lịch */
+}
+
+.calendar-icon {
+    position: absolute;
+    right: calc(50% - 180px); /* Căn chỉnh biểu tượng lịch */
+    top: 68%; /* Điều chỉnh vị trí theo chiều dọc */
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 16px;
+    pointer-events: none;
+}
+
+/* Định dạng nút radio (Nam/Nữ) */
+.custom-radio {
+    display: flex;
+    align-items: center;
+}
+
+.custom-radio .form-check-input {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4a90e2;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.custom-radio .form-check-input:checked {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.custom-radio .form-check-label {
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+/* Định dạng nút "Cập nhật thông tin" */
+.btn-update {
+    background-color: #4a90e2;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
+}
+
+.btn-update:hover {
+    background-color: #357abd;
+    box-shadow: 0 2px 5px rgba(53, 122, 189, 0.3);
+}
+
+/* Định dạng nút "Hủy" */
+.btn-cancel {
+    background-color: #e9ecef;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.btn-cancel:hover {
+    background-color: #d3d7db;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .row.align-items-start {
+        flex-direction: column;
+    }
+
+    .col-md-3, .col-md-9 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .col-md-3 {
+        margin-bottom: 20px;
+    }
+
+    .calendar-icon {
+        right: 15px; /* Điều chỉnh cho màn hình nhỏ */
+    }
+
+    .custom-input {
+        max-width: 100%;
+    }
+}
+
+
+/* Định dạng đường line mỏng */
+.divider {
+    border: 0;
+    border-top: 1px solid #333; /* Đường line mỏng màu nhạt */
+    margin: 5px 0; /* Khoảng cách trên dưới */
+    max-width: 100%; /* Đảm bảo line kéo dài toàn bộ chiều rộng */
 }
 

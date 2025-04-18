@@ -67,7 +67,9 @@ public class UserService {
     }
 
     public User saveUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (user.getPassword() != null && !user.getPassword().isEmpty() && !user.getPassword().startsWith("$2a$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
