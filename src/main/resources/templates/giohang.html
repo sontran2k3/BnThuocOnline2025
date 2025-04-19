@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="" th:href="@{/css/giohang.css}">
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://provinces.open-api.vn/api/province.js"></script>
 
 </head>
 <body>
@@ -134,65 +136,89 @@
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <!-- Thông tin đơn hàng -->
-                            <div class="modal-section">
-                                <h6><i class="bi bi-box-seam"></i> Thông tin đơn hàng</h6>
-                                <div id="modal-order-items">
-                                    <!-- Danh sách sản phẩm sẽ được thêm bằng JavaScript -->
+                            <div class="row">
+                                <!-- Bên trái: Thông tin đơn hàng -->
+                                <div class="col-md-6">
+                                    <div class="modal-section">
+                                        <h6><i class="bi bi-box-seam"></i> Thông tin đơn hàng</h6>
+                                        <div id="modal-order-items">
+                                            <!-- Danh sách sản phẩm sẽ được thêm bằng JavaScript -->
+                                        </div>
+                                        <hr class="order-summary-divider">
+                                        <div class="summary-row">
+                                            <span>Tổng tiền:</span>
+                                            <span id="modal-cart-total"></span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Giảm giá trực tiếp:</span>
+                                            <span id="modal-direct-discount" style="color: #f7941d;"></span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Giảm giá voucher:</span>
+                                            <span id="modal-voucher-discount" style="color: #f7941d;"></span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Tiết kiệm được:</span>
+                                            <span id="modal-total-savings" style="color: #f7941d;"></span>
+                                        </div>
+                                        <div class="summary-row total">
+                                            <span>Thanh toán:</span>
+                                            <span id="modal-final-total"></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <hr class="order-summary-divider">
-                                <div class="summary-row">
-                                    <span>Tổng tiền:</span>
-                                    <span id="modal-cart-total"></span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Giảm giá trực tiếp:</span>
-                                    <span id="modal-direct-discount" style="color: #f7941d;"></span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Giảm giá voucher:</span>
-                                    <span id="modal-voucher-discount" style="color: #f7941d;"></span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Tiết kiệm được:</span>
-                                    <span id="modal-total-savings" style="color: #f7941d;"></span>
-                                </div>
-                                <div class="summary-row total">
-                                    <span>Thanh toán:</span>
-                                    <span id="modal-final-total"></span>
-                                </div>
-                            </div>
-
-                            <!-- Thông tin khách hàng -->
-                            <div class="modal-section">
-                                <h6><i class="bi bi-person"></i> Thông tin khách hàng</h6>
-                                <div class="form-group">
-                                    <label for="customer-name">Họ và tên <span style="color: #dc3545;">*</span></label>
-                                    <input type="text" id="customer-name" class="form-control" placeholder="Nhập họ và tên">
-                                    <div class="error-message">Vui lòng nhập họ và tên.</div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="customer-phone">Số điện thoại <span style="color: #dc3545;">*</span></label>
-                                    <input type="tel" id="customer-phone" class="form-control" placeholder="Nhập số điện thoại">
-                                    <div class="error-message">Vui lòng nhập số điện thoại hợp lệ.</div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="customer-address">Địa chỉ giao hàng <span style="color: #dc3545;">*</span></label>
-                                    <input type="text" id="customer-address" class="form-control" placeholder="Nhập địa chỉ giao hàng">
-                                    <div class="error-message">Vui lòng nhập địa chỉ giao hàng.</div>
-                                </div>
-                            </div>
-
-                            <!-- Phương thức thanh toán -->
-                            <div class="modal-section">
-                                <h6><i class="bi bi-credit-card"></i> Phương thức thanh toán</h6>
-                                <div class="form-group">
-                                    <label for="payment-method">Chọn phương thức</label>
-                                    <select id="payment-method" class="form-control">
-                                        <option value="cod">Thanh toán khi nhận hàng (COD)</option>
-                                        <option value="bank">Chuyển khoản ngân hàng</option>
-                                        <option value="payos">Thanh toán qua PayOS</option>
-                                    </select>
+                                <!-- Bên phải: Thông tin khách hàng và Phương thức thanh toán -->
+                                <div class="col-md-6">
+                                    <div class="modal-section">
+                                        <h6><i class="bi bi-person"></i> Thông tin khách hàng</h6>
+                                        <div class="form-group">
+                                            <label for="customer-name">Họ và tên <span style="color: #dc3545;">*</span></label>
+                                            <input type="text" id="customer-name" class="form-control" placeholder="Nhập họ và tên">
+                                            <div class="error-message">Vui lòng nhập họ và tên.</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="customer-phone">Số điện thoại <span style="color: #dc3545;">*</span></label>
+                                            <input type="tel" id="customer-phone" class="form-control" placeholder="Nhập số điện thoại">
+                                            <div class="error-message">Vui lòng nhập số điện thoại hợp lệ.</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="province">Tỉnh/Thành phố <span style="color: #dc3545;">*</span></label>
+                                            <select id="province" class="form-control">
+                                                <option value="">Chọn Tỉnh/Thành phố</option>
+                                            </select>
+                                            <div class="error-message">Vui lòng chọn Tỉnh/Thành phố.</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="district">Quận/Huyện <span style="color: #dc3545;">*</span></label>
+                                            <select id="district" class="form-control" disabled>
+                                                <option value="">Chọn Quận/Huyện</option>
+                                            </select>
+                                            <div class="error-message">Vui lòng chọn Quận/Huyện.</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="ward">Xã/Phường <span style="color: #dc3545;">*</span></label>
+                                            <select id="ward" class="form-control" disabled>
+                                                <option value="">Chọn Xã/Phường</option>
+                                            </select>
+                                            <div class="error-message">Vui lòng chọn Xã/Phường.</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="customer-address-detail">ĐịaAscendantly, Địa chỉ chi tiết <span style="color: #dc3545;">*</span></label>
+                                            <input type="text" id="customer-address-detail" class="form-control" placeholder="Nhập số nhà, tên đường">
+                                            <div class="error-message">Vui lòng nhập địa chỉ chi tiết.</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-section">
+                                        <h6><i class="bi bi-credit-card"></i> Phương thức thanh toán</h6>
+                                        <div class="form-group">
+                                            <label for="payment-method">Chọn phương thức</label>
+                                            <select id="payment-method" class="form-control">
+                                                <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                                                <option value="bank">Chuyển khoản ngân hàng</option>
+                                                <option value="payos">Thanh toán qua PayOS</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -441,14 +467,44 @@
 
             // Reset trạng thái form
             $('.form-group').removeClass('invalid');
-            $('#customer-name, #customer-phone, #customer-address').val('');
+            $('#customer-name, #customer-phone, #customer-address-detail').val('');
+            $('#province').val('');
+            $('#district').val('').prop('disabled', true);
+            $('#ward').val('').prop('disabled', true);
+
+            // Load danh sách Tỉnh/Thành phố
+            loadProvinces();
+        });
+
+        // Xử lý sự kiện chọn Tỉnh/Thành phố
+        $('#province').on('change', function() {
+            let provinceCode = $(this).val();
+            if (provinceCode) {
+                loadDistricts(provinceCode);
+            } else {
+                $('#district').empty().append('<option value="">Chọn Quận/Huyện</option>').prop('disabled', true);
+                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
+            }
+        });
+
+        // Xử lý sự kiện chọn Quận/Huyện
+        $('#district').on('change', function() {
+            let districtCode = $(this).val();
+            if (districtCode) {
+                loadWards(districtCode);
+            } else {
+                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
+            }
         });
 
         // Xử lý xác nhận đơn hàng
         $('#confirm-order').on('click', function() {
             let customerName = $('#customer-name').val().trim();
             let customerPhone = $('#customer-phone').val().trim();
-            let customerAddress = $('#customer-address').val().trim();
+            let province = $('#province').val();
+            let district = $('#district').val();
+            let ward = $('#ward').val();
+            let addressDetail = $('#customer-address-detail').val().trim();
             let paymentMethod = $('#payment-method').val();
 
             // Reset trạng thái lỗi
@@ -464,14 +520,32 @@
                 $('#customer-phone').closest('.form-group').addClass('invalid');
                 isValid = false;
             }
-            if (!customerAddress) {
-                $('#customer-address').closest('.form-group').addClass('invalid');
+            if (!province) {
+                $('#province').closest('.form-group').addClass('invalid');
+                isValid = false;
+            }
+            if (!district) {
+                $('#district').closest('.form-group').addClass('invalid');
+                isValid = false;
+            }
+            if (!ward) {
+                $('#ward').closest('.form-group').addClass('invalid');
+                isValid = false;
+            }
+            if (!addressDetail) {
+                $('#customer-address-detail').closest('.form-group').addClass('invalid');
                 isValid = false;
             }
 
             if (!isValid) {
                 return;
             }
+
+            // Tạo chuỗi địa chỉ đầy đủ
+            let provinceName = $('#province option:selected').data('name');
+            let districtName = $('#district option:selected').data('name');
+            let wardName = $('#ward option:selected').data('name');
+            let customerAddress = `${addressDetail}, ${wardName}, ${districtName}, ${provinceName}`;
 
             // Thu thập danh sách sản phẩm đã chọn
             let selectedItems = [];
@@ -546,9 +620,58 @@
 
             $('#checkoutModal').modal('hide');
         });
-
-
     });
+    // Hàm lấy danh sách Tỉnh/Thành phố
+    function loadProvinces() {
+        $.ajax({
+            url: 'https://provinces.open-api.vn/api/p/',
+            method: 'GET',
+            success: function(data) {
+                $('#province').empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
+                data.forEach(function(province) {
+                    $('#province').append(`<option value="${province.code}" data-name="${province.name}">${province.name}</option>`);
+                });
+            },
+            error: function(xhr) {
+                console.error('Error loading provinces:', xhr);
+            }
+        });
+    }
+
+    // Hàm lấy danh sách Quận/Huyện
+    function loadDistricts(provinceCode) {
+        $.ajax({
+            url: `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
+            method: 'GET',
+            success: function(data) {
+                $('#district').empty().append('<option value="">Chọn Quận/Huyện</option>').prop('disabled', false);
+                data.districts.forEach(function(district) {
+                    $('#district').append(`<option value="${district.code}" data-name="${district.name}">${district.name}</option>`);
+                });
+                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
+            },
+            error: function(xhr) {
+                console.error('Error loading districts:', xhr);
+            }
+        });
+    }
+
+    // Hàm lấy danh sách Xã/Phường
+    function loadWards(districtCode) {
+        $.ajax({
+            url: `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
+            method: 'GET',
+            success: function(data) {
+                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', false);
+                data.wards.forEach(function(ward) {
+                    $('#ward').append(`<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`);
+                });
+            },
+            error: function(xhr) {
+                console.error('Error loading wards:', xhr);
+            }
+        });
+    }
 </script>
 </body>
 </html>

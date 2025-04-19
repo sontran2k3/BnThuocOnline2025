@@ -522,6 +522,26 @@ body {
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
 }
+    /* Đảm bảo các trường select và input trong form-group hiển thị nhất quán */
+    #cart-content .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #cart-content .form-group select:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 6px rgba(26, 115, 232, 0.2);
+    }
+
+    #cart-content .form-group select:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -635,3 +655,8 @@ body {
         width: 100%;
     }
 }
+
+
+
+
+
