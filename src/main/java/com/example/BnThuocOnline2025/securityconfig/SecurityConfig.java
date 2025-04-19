@@ -67,9 +67,7 @@ public class SecurityConfig {
                                 "/get-reviews",
                                 "/check-auth"
                         ).permitAll()
-                        // Endpoint yêu cầu xác thực (nếu cần)
                         .requestMatchers("/thanhtoan/payos").authenticated()
-                        // Tất cả các endpoint khác yêu cầu xác thực
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf

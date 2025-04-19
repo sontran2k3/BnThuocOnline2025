@@ -11,6 +11,10 @@
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
 </head>
 <body>
 <div th:replace="~{part/header :: header}"></div>
@@ -163,14 +167,18 @@
 
                     <div class="card-content" id="addresses-content" style="display: none;">
                         <div class="d-flex justify-content-end mb-3">
-                            <button class="btn btn-primary">Thêm địa chỉ mới</button>
+                            <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#newAddress" aria-controls="newAddress">Thêm địa chỉ mới</button>
                         </div>
                         <div class="address-list">
-                            <div class="address-item">
-                                <h5><span th:text="${name != null ? name : 'Tên người dùng'}"></span> | <span th:text="${phoneNumber != null ? phoneNumber : 'Số điện thoại'}"></span></h5>
-                                <p th:text="${address != null ? address : 'Chưa cập nhật địa chỉ'}"></p>
-                                <p class="text-muted">Mặc định</p>
+                            <div th:each="address : ${addresses}" class="address-item">
+                                <h5><span th:text="${address.fullName}"></span> | <span th:text="${address.phoneNumber}"></span></h5>
+                                <p th:text="${address.addressDetail + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></p>
+                                <p th:text="${address.addressType}"></p>
+                                <p th:if="${address.isDefault}" class="text-muted">Mặc định</p>
                                 <a href="#" class="text-primary">Sửa</a>
+                            </div>
+                            <div th:if="${#lists.isEmpty(addresses)}" class="text-center">
+                                <p>Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ mới!</p>
                             </div>
                         </div>
                     </div>
@@ -218,6 +226,68 @@
                             <p class="mt-3 mb-1">Bạn chưa có yêu cầu nào.</p>
                             <p class="mb-3">Gửi yêu cầu đơn thuốc ngay</p>
                             <button class="btn btn-primary">Gửi yêu cầu mới</button>
+                        </div>
+                    </div>
+
+
+                    <div class="offcanvas offcanvas-end" tabindex="-1" id="newAddress" aria-labelledby="offcanvasCartLabel">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title" id="offcanvasCartLabel">Địa chỉ mới</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                            <form id="addAddressForm" th:action="@{/addAddress}" method="POST">
+                                <div class="mb-3">
+                                    <label for="fullNameAddress" class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control" id="fullNameAddress" name="fullName" placeholder="Họ và tên" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="phoneNumberAddress" class="form-label">Số điện thoại</label>
+                                    <input type="text" class="form-control" id="phoneNumberAddress" name="phoneNumber" placeholder="Số điện thoại" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">Tỉnh/Thành phố</label>
+                                    <select class="form-select" id="city" name="city" required>
+                                        <option value="" disabled selected>Chọn Tỉnh/Thành phố</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="district" class="form-label">Quận/Huyện</label>
+                                    <select class="form-select" id="district" name="district" required>
+                                        <option value="" disabled selected>Chọn Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ward" class="form-label">Phường/Xã</label>
+                                    <select class="form-select" id="ward" name="ward" required>
+                                        <option value="" disabled selected>Chọn Phường/Xã</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="addressDetail" class="form-label">Địa chỉ nhận hàng</label>
+                                    <input type="text" class="form-control" id="addressDetail" name="addressDetail" placeholder="Nhập địa chỉ cụ thể" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Loại địa chỉ</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check form-check-inline custom-radio">
+                                            <input class="form-check-input" type="radio" name="addressType" id="home" value="Nhà" required>
+                                            <label class="form-check-label" for="home">Nhà</label>
+                                        </div>
+                                        <div class="form-check form-check-inline custom-radio">
+                                            <input class="form-check-input" type="radio" name="addressType" id="office" value="Văn phòng">
+                                            <label class="form-check-label" for="office">Văn phòng</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="checkbox" class="form-check-input" id="defaultAddress" name="isDefault" style="margin-right: 8px;">
+                                    <label class="form-check-label" for="defaultAddress">Đặt làm địa chỉ mặc định</label>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary w-100 mt-3" style="margin-bottom: 20px">Thêm địa chỉ mới</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
 
@@ -283,7 +353,49 @@
                         title = 'Đơn thuốc của tôi';
                         break;
                     case 'logout':
-                        window.location.href = '/logout';
+                        // Hiển thị thông báo xác nhận đăng xuất với SweetAlert2
+                        Swal.fire({
+                            title: 'Bạn có chắc chắn muốn đăng xuất?',
+                            text: "Bạn sẽ được chuyển hướng về trang chủ sau khi đăng xuất.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Đăng xuất',
+                            cancelButtonText: 'Hủy'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Lấy CSRF token và header từ meta tags
+                                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                                // Gửi yêu cầu đăng xuất bằng fetch (AJAX)
+                                fetch('/logout', {
+                                    method: 'POST',
+                                    headers: {
+                                        [header]: token // Thêm CSRF token vào header
+                                    }
+                                }).then(response => {
+                                    if (response.ok) {
+                                        // Chuyển hướng về trang chủ sau khi đăng xuất thành công
+                                        window.location.href = '/';
+                                    } else {
+                                        Swal.fire(
+                                            'Lỗi!',
+                                            'Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+                                            'error'
+                                        );
+                                    }
+                                }).catch(error => {
+                                    console.error('Error during logout:', error);
+                                    Swal.fire(
+                                        'Lỗi!',
+                                        'Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+                                        'error'
+                                    );
+                                });
+                            }
+                        });
                         return;
                 }
 
@@ -327,6 +439,65 @@
 
         return true;
     }
+
+    // Tích hợp Open API Provinces (giữ nguyên)
+    document.addEventListener('DOMContentLoaded', function() {
+        const citySelect = document.getElementById('city');
+        const districtSelect = document.getElementById('district');
+        const wardSelect = document.getElementById('ward');
+
+        fetch('https://provinces.open-api.vn/api/p/')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.name;
+                    option.textContent = province.name;
+                    option.dataset.code = province.code;
+                    citySelect.appendChild(option);
+                });
+            });
+
+        citySelect.addEventListener('change', function() {
+            const cityCode = this.options[this.selectedIndex].dataset.code;
+            districtSelect.innerHTML = '<option value="" disabled selected>Chọn Quận/Huyện</option>';
+            wardSelect.innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
+
+            if (cityCode) {
+                fetch(`https://provinces.open-api.vn/api/p/${cityCode}?depth=2`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.districts.forEach(district => {
+                            const option = document.createElement('option');
+                            option.value = district.name;
+                            option.textContent = district.name;
+                            option.dataset.code = district.code;
+                            districtSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        districtSelect.addEventListener('change', function() {
+            const districtCode = this.options[this.selectedIndex].dataset.code;
+            wardSelect.innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
+
+            if (districtCode) {
+                fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.wards.forEach(ward => {
+                            const option = document.createElement('option');
+                            option.value = ward.name;
+                            option.textContent = ward.name;
+                            wardSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    });
 </script>
+
+
 </body>
 </html>

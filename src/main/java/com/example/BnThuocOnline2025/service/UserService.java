@@ -1,20 +1,25 @@
 package com.example.BnThuocOnline2025.service;
 
 import com.example.BnThuocOnline2025.model.User;
+import com.example.BnThuocOnline2025.model.UserAddress;
+import com.example.BnThuocOnline2025.repository.UserAddressRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final UserAddressRepository userAddressRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UserAddressRepository userAddressRepository) {
         this.userRepository = userRepository;
+        this.userAddressRepository = userAddressRepository;
     }
 
     public User saveOrUpdateUser(String providerId, String name, String picture, String email, String provider) {
@@ -56,12 +61,10 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    // Thêm phương thức tìm bằng phoneNumber
     public Optional<User> findByPhoneNumber(String phoneNumber) {
         return userRepository.findByPhoneNumber(phoneNumber);
     }
 
-    // Thêm phương thức tìm bằng id
     public Optional<User> findById(UUID id) {
         return userRepository.findById(id);
     }
@@ -78,5 +81,22 @@ public class UserService {
                 user.getAddress() != null &&
                 user.getPhoneNumber() != null &&
                 user.getPassword() != null;
+    }
+
+    public UserAddress saveAddress(UserAddress address) {
+        // Nếu địa chỉ được đặt làm mặc định, bỏ mặc định của các địa chỉ khác
+        if (address.getIsDefault()) {
+            List<UserAddress> defaultAddresses = userAddressRepository.findByUserAndIsDefault(address.getUser(), true);
+            for (UserAddress defaultAddress : defaultAddresses) {
+                defaultAddress.setIsDefault(false);
+                userAddressRepository.save(defaultAddress);
+            }
+        }
+        return userAddressRepository.save(address);
+    }
+
+    public List<UserAddress> getAddressesByUserId(UUID userId) {
+        Optional<User> user = userRepository.findById(userId);
+        return user.map(userAddressRepository::findByUser).orElse(List.of());
     }
 }

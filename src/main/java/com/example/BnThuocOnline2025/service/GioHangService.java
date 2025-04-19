@@ -39,7 +39,7 @@ public class GioHangService {
         Cart cart;
 
         if (user != null && user.getId() != null) {
-            logger.info("Finding or creating cart for user: {}", user.getId());
+//            logger.info("Finding or creating cart for user: {}", user.getId());
             List<Cart> userCarts = cartRepository.findAllByUser(user);
             if (userCarts.isEmpty()) {
                 cart = new Cart();
@@ -89,7 +89,7 @@ public class GioHangService {
                 sessionId = UUID.randomUUID().toString();
                 session.setAttribute("cartSessionId", sessionId);
             }
-            logger.info("Finding or creating cart for sessionId: {}", sessionId);
+//            logger.info("Finding or creating cart for sessionId: {}", sessionId);
             String finalSessionId = sessionId;
             cart = cartRepository.findBySessionId(sessionId).orElseGet(() -> {
                 Cart newCart = new Cart();
