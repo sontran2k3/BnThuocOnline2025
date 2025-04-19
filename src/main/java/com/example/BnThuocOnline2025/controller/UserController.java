@@ -1,9 +1,13 @@
 package com.example.BnThuocOnline2025.controller;
 
+import com.example.BnThuocOnline2025.model.Cart;
 import com.example.BnThuocOnline2025.model.User;
 import com.example.BnThuocOnline2025.model.UserAddress;
 import com.example.BnThuocOnline2025.securityconfig.JwtUtil;
+import com.example.BnThuocOnline2025.service.GioHangService;
 import com.example.BnThuocOnline2025.service.UserService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,6 +31,9 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private GioHangService gioHangService;
 
     public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
@@ -88,7 +95,7 @@ public class UserController {
     }
 
     @GetMapping("/home")
-    public String showHomePage(Model model, @RequestParam String providerId, @RequestParam String provider) {
+    public String showHomePage(Model model, @RequestParam String providerId, @RequestParam String provider, HttpSession session) {
         Optional<User> user = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
         if (user.isPresent()) {
             User currentUser = user.get();
@@ -102,6 +109,12 @@ public class UserController {
             model.addAttribute("address", currentUser.getAddress());
             List<UserAddress> addresses = userService.getAddressesByUserId(currentUser.getId());
             model.addAttribute("addresses", addresses);
+
+            // Thêm dữ liệu giỏ hàng
+            Cart cart = gioHangService.getOrCreateCart(currentUser, session);
+            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+            model.addAttribute("cartItems", gioHangService.getCartItems(currentUser, session));
+
             return "thongtincanhan";
         }
         return "redirect:/";
@@ -156,6 +169,7 @@ public class UserController {
             @RequestParam String gender,
             @RequestParam String birthDate,
             @AuthenticationPrincipal OAuth2User oAuth2User,
+            HttpSession session,
             Model model) {
         String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
         String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
@@ -177,6 +191,12 @@ public class UserController {
                 model.addAttribute("dateOfBirth", user.getDateOfBirth());
                 model.addAttribute("picture", user.getPicture());
                 model.addAttribute("email", user.getEmail());
+
+                // Thêm dữ liệu giỏ hàng
+                Cart cart = gioHangService.getOrCreateCart(user, session);
+                model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+                model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
+
                 return "thongtincanhan";
             }
 
@@ -190,6 +210,12 @@ public class UserController {
             model.addAttribute("dateOfBirth", user.getDateOfBirth());
             model.addAttribute("picture", user.getPicture());
             model.addAttribute("email", user.getEmail());
+
+            // Thêm dữ liệu giỏ hàng
+            Cart cart = gioHangService.getOrCreateCart(user, session);
+            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+            model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
+
         } else {
             model.addAttribute("error", "Không tìm thấy người dùng!");
             return "redirect:/";
@@ -202,6 +228,7 @@ public class UserController {
     public String addAddress(
             @ModelAttribute UserAddress address,
             @AuthenticationPrincipal OAuth2User oAuth2User,
+            HttpSession session,
             Model model) {
         String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
         String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
@@ -223,11 +250,16 @@ public class UserController {
             model.addAttribute("email", user.getEmail());
             List<UserAddress> addresses = userService.getAddressesByUserId(user.getId());
             model.addAttribute("addresses", addresses);
+
+            // Thêm dữ liệu giỏ hàng
+            Cart cart = gioHangService.getOrCreateCart(user, session);
+            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+            model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
+
         } else {
             model.addAttribute("error", "Không tìm thấy người dùng!");
             return "redirect:/";
         }
-
         return "thongtincanhan";
     }
 }
