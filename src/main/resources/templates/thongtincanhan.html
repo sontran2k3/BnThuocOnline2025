@@ -7,11 +7,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
     <link rel="stylesheet" href="" th:href="@{/css/thongtincanhan.css}">
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
@@ -108,7 +111,7 @@
                                 <!-- Chỉ hiển thị avatar nếu người dùng đã đăng nhập và có picture -->
                                 <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto" th:style="'background-image: url(' + ${picture} + ');'"></div>
                             </div>
-                            <form id="update-personal-info" th:action="@{/updatePersonalInfo}" method="POST" onsubmit="return validateForm()">
+                            <form id="update-personal-info" th:action="@{/updatePersonalInfo}" method="POST" onsubmit="updatePersonalInfo(event)">
                                 <div class="mb-3 form-group-centered">
                                     <label for="fullName" class="form-label">Họ và tên</label>
                                     <input type="text" class="form-control custom-input" id="fullName" name="fullName" th:value="${name}" placeholder="Nhập họ và tên" required>
@@ -165,13 +168,19 @@
                         </div>
                     </div>
 
+
                     <div class="card-content" id="addresses-content" style="display: none;">
                         <div class="d-flex justify-content-end mb-3">
                             <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#newAddress" aria-controls="newAddress">Thêm địa chỉ mới</button>
                         </div>
                         <div class="address-list">
-                            <div th:each="address : ${addresses}" class="address-item">
-                                <h5><span th:text="${address.fullName}"></span> | <span th:text="${address.phoneNumber}"></span></h5>
+                            <div th:each="address : ${addresses}" class="address-item" th:data-address-id="${address.id}">
+                                <h5>
+                                    <span th:text="${address.fullName}"></span> | <span th:text="${address.phoneNumber}"></span>
+                                    <a href="#" class="text-danger ms-2 delete-address" th:onclick="'deleteAddress(event, ' + ${address.id} + ')'">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </h5>
                                 <p th:text="${address.addressDetail + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></p>
                                 <p th:text="${address.addressType}"></p>
                                 <p th:if="${address.isDefault}" class="text-muted">Mặc định</p>
@@ -182,6 +191,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <div class="card-content" id="appointments-content" style="display: none;">
                         <div class="qr-card">
@@ -236,7 +246,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                         </div>
                         <div class="offcanvas-body">
-                            <form id="addAddressForm" th:action="@{/addAddress}" method="POST">
+                            <form id="addAddressForm" th:action="@{/addAddress}" method="POST" onsubmit="addAddress(event)">
                                 <div class="mb-3">
                                     <label for="fullNameAddress" class="form-label">Họ và tên</label>
                                     <input type="text" class="form-control" id="fullNameAddress" name="fullName" placeholder="Họ và tên" required>
@@ -300,6 +310,193 @@
 <div th:replace="~{part/footer :: footer}"></div>
 
 <script>
+    // Hàm gửi AJAX cho cập nhật thông tin cá nhân
+    function updatePersonalInfo(event) {
+        event.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        const form = document.getElementById('update-personal-info');
+        const formData = new FormData(form);
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                [header]: token
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                        stopOnFocus: true
+                    }).showToast();
+
+                    // Cập nhật thông tin trên giao diện
+                    const user = data.user;
+                    document.querySelector('.profile-card h5 span').textContent = user.name;
+                    document.querySelectorAll('.personal-table td')[0].textContent = user.name;
+                    document.querySelectorAll('.personal-table td')[1].textContent = user.phoneNumber;
+                    document.querySelectorAll('.personal-table td')[2].textContent = user.gender;
+                    document.querySelectorAll('.personal-table td')[3].textContent = user.dateOfBirth;
+
+                    // Ẩn form chỉnh sửa và hiển thị lại chế độ xem
+                    cancelEdit();
+                } else {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Toastify({
+                    text: "Đã có lỗi xảy ra, vui lòng thử lại.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
+            });
+    }
+
+
+    // Hàm gửi AJAX cho thêm địa chỉ mới
+    function addAddress(event) {
+        event.preventDefault();
+
+        const form = document.getElementById('addAddressForm');
+        const formData = new FormData(form);
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                [header]: token
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                        stopOnFocus: true
+                    }).showToast();
+
+                    // Cập nhật danh sách địa chỉ trên giao diện
+                    const addressList = document.querySelector('.address-list');
+                    addressList.innerHTML = '';
+
+                    if (data.addresses.length > 0) {
+                        data.addresses.forEach(address => {
+                            const addressItem = document.createElement('div');
+                            addressItem.classList.add('address-item');
+                            addressItem.setAttribute('data-address-id', address.id); // Thêm ID địa chỉ
+                            addressItem.innerHTML = `
+                            <h5>
+                                ${address.fullName} | ${address.phoneNumber}
+                                <a href="#" class="text-danger ms-2 delete-address" onclick="deleteAddress(event, ${address.id})">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </h5>
+                            <p>${address.addressDetail}</p>
+                            <p>${address.addressType}</p>
+                            ${address.isDefault ? '<p class="text-muted">Mặc định</p>' : ''}
+                            <a href="#" class="text-primary">Sửa</a>
+                        `;
+                            addressList.appendChild(addressItem);
+                        });
+                    } else {
+                        addressList.innerHTML = '<div class="text-center"><p>Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ mới!</p></div>';
+                    }
+
+                    // Đóng offcanvas và reset form
+                    const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('newAddress'));
+                    offcanvas.hide();
+                    form.reset();
+                    document.getElementById('district').innerHTML = '<option value="" disabled selected>Chọn Quận/Huyện</option>';
+                    document.getElementById('ward').innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
+                } else {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Toastify({
+                    text: "Đã có lỗi xảy ra, vui lòng thử lại.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
+            });
+    }
+
+
+    function showEditForm() {
+        document.getElementById('personal-display').style.display = 'none';
+        document.getElementById('personal-edit').style.display = 'block';
+    }
+
+    function cancelEdit() {
+        document.getElementById('personal-edit').style.display = 'none';
+        document.getElementById('personal-display').style.display = 'block';
+    }
+
+    function validateForm() {
+        const fullName = document.getElementById('fullName').value;
+        const birthDate = document.getElementById('birthDate').value;
+        const gender = document.querySelector('input[name="gender"]:checked');
+
+        if (!fullName.trim()) {
+            alert('Vui lòng nhập họ và tên!');
+            return false;
+        }
+
+        if (!gender) {
+            alert('Vui lòng chọn giới tính!');
+            return false;
+        }
+
+        if (!birthDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            alert('Vui lòng nhập ngày sinh đúng định dạng dd/MM/yyyy!');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Xử lý các sự kiện khi trang được tải
     document.addEventListener('DOMContentLoaded', function() {
         // Khởi tạo DatePicker cho ngày sinh
         flatpickr("#birthDate", {
@@ -353,46 +550,61 @@
                         title = 'Đơn thuốc của tôi';
                         break;
                     case 'logout':
-                        // Hiển thị thông báo xác nhận đăng xuất với SweetAlert2
                         Swal.fire({
-                            title: 'Bạn có chắc chắn muốn đăng xuất?',
-                            text: "Bạn sẽ được chuyển hướng về trang chủ sau khi đăng xuất.",
+                            title: 'Xác nhận đăng xuất',
+                            text: 'Bạn có chắc chắn muốn đăng xuất? ',
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonColor: '#3085d6',
                             cancelButtonColor: '#d33',
                             confirmButtonText: 'Đăng xuất',
-                            cancelButtonText: 'Hủy'
+                            cancelButtonText: 'Hủy',
+                            reverseButtons: true
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                // Lấy CSRF token và header từ meta tags
                                 const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
                                 const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-                                // Gửi yêu cầu đăng xuất bằng fetch (AJAX)
                                 fetch('/logout', {
                                     method: 'POST',
                                     headers: {
-                                        [header]: token // Thêm CSRF token vào header
+                                        [header]: token
                                     }
                                 }).then(response => {
                                     if (response.ok) {
-                                        // Chuyển hướng về trang chủ sau khi đăng xuất thành công
-                                        window.location.href = '/';
+                                        Toastify({
+                                            text: "Đăng xuất thành công!",
+                                            duration: 3000,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#28a745",
+                                            stopOnFocus: true
+                                        }).showToast();
+
+                                        // Chuyển hướng về trang chủ sau 1 giây để người dùng thấy thông báo
+                                        setTimeout(() => {
+                                            window.location.href = '/';
+                                        }, 1000);
                                     } else {
-                                        Swal.fire(
-                                            'Lỗi!',
-                                            'Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
-                                            'error'
-                                        );
+                                        Toastify({
+                                            text: "Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.",
+                                            duration: 3000,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#dc3545",
+                                            stopOnFocus: true
+                                        }).showToast();
                                     }
                                 }).catch(error => {
                                     console.error('Error during logout:', error);
-                                    Swal.fire(
-                                        'Lỗi!',
-                                        'Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
-                                        'error'
-                                    );
+                                    Toastify({
+                                        text: "Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.",
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "#dc3545",
+                                        stopOnFocus: true
+                                    }).showToast();
                                 });
                             }
                         });
@@ -405,47 +617,13 @@
                 }
             });
         });
-    });
 
-    function showEditForm() {
-        document.getElementById('personal-display').style.display = 'none';
-        document.getElementById('personal-edit').style.display = 'block';
-    }
-
-    function cancelEdit() {
-        document.getElementById('personal-edit').style.display = 'none';
-        document.getElementById('personal-display').style.display = 'block';
-    }
-
-    function validateForm() {
-        const fullName = document.getElementById('fullName').value;
-        const birthDate = document.getElementById('birthDate').value;
-        const gender = document.querySelector('input[name="gender"]:checked');
-
-        if (!fullName.trim()) {
-            alert('Vui lòng nhập họ và tên!');
-            return false;
-        }
-
-        if (!gender) {
-            alert('Vui lòng chọn giới tính!');
-            return false;
-        }
-
-        if (!birthDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-            alert('Vui lòng nhập ngày sinh đúng định dạng dd/MM/yyyy!');
-            return false;
-        }
-
-        return true;
-    }
-
-    // Tích hợp Open API Provinces (giữ nguyên)
-    document.addEventListener('DOMContentLoaded', function() {
+        // Tích hợp Open API Provinces để lấy danh sách tỉnh/thành, quận/huyện, phường/xã
         const citySelect = document.getElementById('city');
         const districtSelect = document.getElementById('district');
         const wardSelect = document.getElementById('ward');
 
+        // Lấy danh sách tỉnh/thành
         fetch('https://provinces.open-api.vn/api/p/')
             .then(response => response.json())
             .then(data => {
@@ -456,8 +634,20 @@
                     option.dataset.code = province.code;
                     citySelect.appendChild(option);
                 });
+            })
+            .catch(error => {
+                console.error('Error fetching provinces:', error);
+                Toastify({
+                    text: "Không thể tải danh sách tỉnh/thành. Vui lòng thử lại.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
             });
 
+        // Khi chọn tỉnh/thành, lấy danh sách quận/huyện
         citySelect.addEventListener('change', function() {
             const cityCode = this.options[this.selectedIndex].dataset.code;
             districtSelect.innerHTML = '<option value="" disabled selected>Chọn Quận/Huyện</option>';
@@ -474,10 +664,22 @@
                             option.dataset.code = district.code;
                             districtSelect.appendChild(option);
                         });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching districts:', error);
+                        Toastify({
+                            text: "Không thể tải danh sách quận/huyện. Vui lòng thử lại.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc3545",
+                            stopOnFocus: true
+                        }).showToast();
                     });
             }
         });
 
+        // Khi chọn quận/huyện, lấy danh sách phường/xã
         districtSelect.addEventListener('change', function() {
             const districtCode = this.options[this.selectedIndex].dataset.code;
             wardSelect.innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
@@ -492,12 +694,114 @@
                             option.textContent = ward.name;
                             wardSelect.appendChild(option);
                         });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching wards:', error);
+                        Toastify({
+                            text: "Không thể tải danh sách phường/xã. Vui lòng thử lại.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc3545",
+                            stopOnFocus: true
+                        }).showToast();
                     });
             }
         });
     });
+
+
+    // Hàm gửi AJAX để xóa địa chỉ
+    function deleteAddress(event, addressId) {
+        event.preventDefault();
+
+        // Sử dụng SweetAlert2 để hiển thị thông báo xác nhận
+        Swal.fire({
+            title: 'Xác nhận xóa',
+            text: 'Bạn có chắc chắn muốn xóa địa chỉ này?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Xóa',
+            cancelButtonText: 'Hủy',
+            reverseButtons: true // Đảo ngược vị trí nút để nút "Hủy" ở bên trái
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                fetch(`/deleteAddress/${addressId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        [header]: token
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toastify({
+                                text: data.message,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#28a745",
+                                stopOnFocus: true
+                            }).showToast();
+
+                            // Cập nhật danh sách địa chỉ trên giao diện
+                            const addressList = document.querySelector('.address-list');
+                            addressList.innerHTML = '';
+
+                            if (data.addresses.length > 0) {
+                                data.addresses.forEach(address => {
+                                    const addressItem = document.createElement('div');
+                                    addressItem.classList.add('address-item');
+                                    addressItem.setAttribute('data-address-id', address.id);
+                                    addressItem.innerHTML = `
+                                    <h5>
+                                        ${address.fullName} | ${address.phoneNumber}
+                                        <a href="#" class="text-danger ms-2 delete-address" onclick="deleteAddress(event, ${address.id})">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </h5>
+                                    <p>${address.addressDetail}</p>
+                                    <p>${address.addressType}</p>
+                                    ${address.isDefault ? '<p class="text-muted">Mặc định</p>' : ''}
+                                    <a href="#" class="text-primary">Sửa</a>
+                                `;
+                                    addressList.appendChild(addressItem);
+                                });
+                            } else {
+                                addressList.innerHTML = '<div class="text-center"><p>Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ mới!</p></div>';
+                            }
+                        } else {
+                            Toastify({
+                                text: data.message,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#dc3545",
+                                stopOnFocus: true
+                            }).showToast();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Toastify({
+                            text: "Đã có lỗi xảy ra, vui lòng thử lại.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc3545",
+                            stopOnFocus: true
+                        }).showToast();
+                    });
+            }
+        });
+    }
+
+
 </script>
-
-
 </body>
 </html>

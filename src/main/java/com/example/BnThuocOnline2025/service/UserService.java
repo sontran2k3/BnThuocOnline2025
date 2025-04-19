@@ -99,4 +99,11 @@ public class UserService {
         Optional<User> user = userRepository.findById(userId);
         return user.map(userAddressRepository::findByUser).orElse(List.of());
     }
+
+
+    public void deleteAddress(Long addressId) {
+        userAddressRepository.deleteById(addressId);
+    }
+
+
 }

@@ -656,4 +656,22 @@ body {
     margin: 5px 0; /* Khoảng cách trên dưới */
     max-width: 100%; /* Đảm bảo line kéo dài toàn bộ chiều rộng */
 }
+.success-toast::before {
+    content: "✔ ";
+    color: white;
+}
+
+.error-toast::before {
+    content: "✖ ";
+    color: white;
+}
+
+.delete-address {
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.delete-address:hover {
+    color: #c82333 !important; /* Màu đỏ đậm hơn khi hover */
+}
 

@@ -3,6 +3,7 @@ package com.example.BnThuocOnline2025.controller;
 import com.example.BnThuocOnline2025.model.Cart;
 import com.example.BnThuocOnline2025.model.User;
 import com.example.BnThuocOnline2025.model.UserAddress;
+import com.example.BnThuocOnline2025.repository.UserAddressRepository;
 import com.example.BnThuocOnline2025.securityconfig.JwtUtil;
 import com.example.BnThuocOnline2025.service.GioHangService;
 import com.example.BnThuocOnline2025.service.UserService;
@@ -34,6 +35,9 @@ public class UserController {
 
     @Autowired
     private GioHangService gioHangService;
+
+    @Autowired
+    private UserAddressRepository userAddressRepository;
 
     public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
@@ -164,13 +168,13 @@ public class UserController {
     }
 
     @PostMapping("/updatePersonalInfo")
-    public String updatePersonalInfo(
+    @ResponseBody
+    public Map<String, Object> updatePersonalInfo(
             @RequestParam String fullName,
             @RequestParam String gender,
             @RequestParam String birthDate,
-            @AuthenticationPrincipal OAuth2User oAuth2User,
-            HttpSession session,
-            Model model) {
+            @AuthenticationPrincipal OAuth2User oAuth2User) {
+        Map<String, Object> response = new HashMap<>();
         String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
         String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
         Optional<User> userOptional = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
@@ -183,83 +187,104 @@ public class UserController {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 user.setDateOfBirth(LocalDate.parse(birthDate, formatter));
             } catch (DateTimeParseException e) {
-                model.addAttribute("error", "Ngày sinh không hợp lệ, vui lòng nhập theo định dạng dd/MM/yyyy");
-                model.addAttribute("loggedInUser", user);
-                model.addAttribute("name", user.getName());
-                model.addAttribute("phoneNumber", user.getPhoneNumber());
-                model.addAttribute("gender", user.getGender());
-                model.addAttribute("dateOfBirth", user.getDateOfBirth());
-                model.addAttribute("picture", user.getPicture());
-                model.addAttribute("email", user.getEmail());
-
-                // Thêm dữ liệu giỏ hàng
-                Cart cart = gioHangService.getOrCreateCart(user, session);
-                model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-                model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
-
-                return "thongtincanhan";
+                response.put("success", false);
+                response.put("message", "Ngày sinh không hợp lệ, vui lòng nhập theo định dạng dd/MM/yyyy");
+                return response;
             }
 
             userService.saveUser(user);
-
-            model.addAttribute("success", "Cập nhật thông tin thành công!");
-            model.addAttribute("loggedInUser", user);
-            model.addAttribute("name", user.getName());
-            model.addAttribute("phoneNumber", user.getPhoneNumber());
-            model.addAttribute("gender", user.getGender());
-            model.addAttribute("dateOfBirth", user.getDateOfBirth());
-            model.addAttribute("picture", user.getPicture());
-            model.addAttribute("email", user.getEmail());
-
-            // Thêm dữ liệu giỏ hàng
-            Cart cart = gioHangService.getOrCreateCart(user, session);
-            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-            model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
-
+            response.put("success", true);
+            response.put("message", "Cập nhật thông tin thành công!");
+            response.put("user", Map.of(
+                    "name", user.getName(),
+                    "gender", user.getGender(),
+                    "dateOfBirth", user.getDateOfBirth().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    "phoneNumber", user.getPhoneNumber() != null ? user.getPhoneNumber() : "Chưa cập nhật",
+                    "email", user.getEmail(),
+                    "picture", user.getPicture()
+            ));
         } else {
-            model.addAttribute("error", "Không tìm thấy người dùng!");
-            return "redirect:/";
+            response.put("success", false);
+            response.put("message", "Không tìm thấy người dùng!");
         }
 
-        return "thongtincanhan";
+        return response;
     }
 
+
+
     @PostMapping("/addAddress")
-    public String addAddress(
+    @ResponseBody
+    public Map<String, Object> addAddress(
             @ModelAttribute UserAddress address,
-            @AuthenticationPrincipal OAuth2User oAuth2User,
-            HttpSession session,
-            Model model) {
+            @AuthenticationPrincipal OAuth2User oAuth2User) {
+        Map<String, Object> response = new HashMap<>();
         String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
         String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
         Optional<User> userOptional = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            address.setUser(user); // Gán đối tượng User thay vì userId
-            address.setIsDefault(address.getIsDefault() != null ? address.getIsDefault() : false);
+            address.setUser(user);
+            address.setIsDefault(address.getIsDefault() != null && address.getIsDefault());
             userService.saveAddress(address);
 
-            model.addAttribute("success", "Thêm địa chỉ thành công!");
-            model.addAttribute("loggedInUser", user);
-            model.addAttribute("name", user.getName());
-            model.addAttribute("phoneNumber", user.getPhoneNumber());
-            model.addAttribute("gender", user.getGender());
-            model.addAttribute("dateOfBirth", user.getDateOfBirth());
-            model.addAttribute("picture", user.getPicture());
-            model.addAttribute("email", user.getEmail());
-            List<UserAddress> addresses = userService.getAddressesByUserId(user.getId());
-            model.addAttribute("addresses", addresses);
-
-            // Thêm dữ liệu giỏ hàng
-            Cart cart = gioHangService.getOrCreateCart(user, session);
-            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-            model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
-
+            List<UserAddress> updatedAddresses = userService.getAddressesByUserId(user.getId());
+            response.put("success", true);
+            response.put("message", "Thêm địa chỉ thành công!");
+            response.put("addresses", updatedAddresses.stream().map(addr -> Map.of(
+                    "id", addr.getId(), // Thêm trường id
+                    "fullName", addr.getFullName(),
+                    "phoneNumber", addr.getPhoneNumber(),
+                    "addressDetail", addr.getAddressDetail() + ", " + addr.getWard() + ", " + addr.getDistrict() + ", " + addr.getCity(),
+                    "addressType", addr.getAddressType(),
+                    "isDefault", addr.getIsDefault()
+            )).toList());
         } else {
-            model.addAttribute("error", "Không tìm thấy người dùng!");
-            return "redirect:/";
+            response.put("success", false);
+            response.put("message", "Không tìm thấy người dùng!");
         }
-        return "thongtincanhan";
+
+        return response;
+    }
+
+
+    @DeleteMapping("/deleteAddress/{id}")
+    @ResponseBody
+    public Map<String, Object> deleteAddress(
+            @PathVariable("id") Long addressId,
+            @AuthenticationPrincipal OAuth2User oAuth2User) {
+        Map<String, Object> response = new HashMap<>();
+        String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+        String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+        Optional<User> userOptional = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            // Kiểm tra xem địa chỉ có thuộc về người dùng hiện tại không
+            Optional<UserAddress> addressOptional = userAddressRepository.findById(addressId);
+            if (addressOptional.isPresent() && addressOptional.get().getUser().getId().equals(user.getId())) {
+                userService.deleteAddress(addressId);
+                List<UserAddress> updatedAddresses = userService.getAddressesByUserId(user.getId());
+                response.put("success", true);
+                response.put("message", "Xóa địa chỉ thành công!");
+                response.put("addresses", updatedAddresses.stream().map(addr -> Map.of(
+                        "id", addr.getId(),
+                        "fullName", addr.getFullName(),
+                        "phoneNumber", addr.getPhoneNumber(),
+                        "addressDetail", addr.getAddressDetail() + ", " + addr.getWard() + ", " + addr.getDistrict() + ", " + addr.getCity(),
+                        "addressType", addr.getAddressType(),
+                        "isDefault", addr.getIsDefault()
+                )).toList());
+            } else {
+                response.put("success", false);
+                response.put("message", "Địa chỉ không tồn tại hoặc bạn không có quyền xóa!");
+            }
+        } else {
+            response.put("success", false);
+            response.put("message", "Không tìm thấy người dùng!");
+        }
+
+        return response;
     }
 }
