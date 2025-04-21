@@ -21,354 +21,398 @@
 <div th:insert="~{part/dropdowns :: dropdowns}"></div>
 
 <main>
-    <div class="container mt-4">
-        <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/" style="text-decoration: none;">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Thực phẩm chức năng</a></li>
-                <li class="breadcrumb-item"><a href="#" style="text-decoration: none;" >Hỗ trợ tiêu hóa</a></li>
-                <li class="breadcrumb-item active" aria-current="page" th:text="${product.tenSanPham}">Dạ dày tá tràng</li>
-            </ol>
-        </nav>
-    </div>
-
-    <!-- Thông tin sản phẩm -->
-    <div class="container mt-4" style="background-color: #f8f9fa; border-radius: 10px">
-        <div class="row">
-            <div class="col-md-6" style="margin-top: 50px;">
-                <div class="d-flex flex-column h-100 justify-content-between align-items-center">
-                    <img id="mainImage" th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" class="img-fluid rounded" th:alt="${product.tenSanPham}" style="height: 800px; object-fit: contain;">
-                    <div class="d-flex product-thumbnails justify-content-center" style="margin-bottom: 200px">
-                        <div class="thumbnail-container me-2" th:each="image : ${images}">
-                            <img th:src="${image.imageUrl}"
-                                 class="img-thumbnail"
-                                 th:alt="'Thumbnail ' + ${image.id}"
-                                 th:data-image-url="${image.imageUrl}"
-                                 onclick="changeImage(this.getAttribute('data-image-url'), this)">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6" style="margin-top: 20px">
-                <h5 class="text-primary" th:text="'Thương hiệu: ' + ${product.thuongHieu ?: 'Không xác định'}"></h5>
-                <h2 class="product-title" th:text="${product.tenSanPham}"></h2>
-                <p class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}"></p>
-                <h3 class="product-price">
-                    <span th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ'"></span>
-                    <small class="old-price" th:if="${product.hasDiscount()}"
-                           th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></small>
-                </h3>
-
-                <div class="mt-3 d-flex align-items-center">
-                    <label class="fw-bold me-3">Chọn đơn vị tính:</label>
-                    <div class="btn-group" role="group" aria-label="Chọn đơn vị tính">
-                        <th:block th:each="dvt : ${product.donViTinhList}">
-                            <input type="radio" class="btn-check" name="unit"
-                                   th:id="'option' + ${dvt.id}"
-                                   th:attr="data-dvt-id=${dvt.id}"
-                                   autocomplete="off"
-                                   th:checked="${dvt.id == product.defaultDonViTinh.id}">
-                            <label class="btn btn-outline-primary" th:for="'option' + ${dvt.id}"
-                                   th:text="${dvt.donViTinh}"></label>
-                        </th:block>
-                    </div>
-                </div>
-
-                <div class="mt-3 row">
-                    <div class="col-4">
-                        <p class="text-muted">Danh mục</p>
-                        <p class="text-muted">Dạng bào chế</p>
-                        <p class="text-muted">Quy cách</p>
-                        <p class="text-muted">Xuất xứ thương hiệu</p>
-                        <p class="text-muted">Nhà sản xuất</p>
-                        <p class="text-muted">Nước sản xuất</p>
-                        <p class="text-muted">Thành phần</p>
-                        <p class="text-muted">Mô tả ngắn</p>
-                        <p class="text-muted">Số đăng ký</p>
-                    </div>
-                    <div class="col-8">
-                        <p class="text-muted" th:text="${product.danhMuc != null ? product.danhMuc.tenDanhMuc : 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.dangBaoChe ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.quyCach ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.xuatXuThuongHieu ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.nhaSanXuat ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.nuocSanXuat ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.thanhPhan ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.moTaNgan ?: 'Không xác định'}"></p>
-                        <p class="text-muted" th:text="${product.soDangKy ?: 'Không xác định'}"></p>
-                    </div>
-                </div>
-
-                <div class="container mt-5 mb-5">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="quantity-container d-flex align-items-center">
-                            <label class="mb-0 me-2">Chọn số lượng:</label>
-                            <div class="quantity-selector">
-                                <button id="decrease">−</button>
-                                <input type="text" id="quantity" value="1" readonly>
-                                <button id="increase">+</button>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" style="max-width: 300px; height: 40px">Thêm vào giỏ hàng</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mt-4 product-details" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 5px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); padding: 30px;">
-        <div class="row">
-            <!-- Sidebar Navigation -->
-            <div class="col-md-2">
-                <nav id="navbar-example3" class="h-100 flex-column align-items-stretch pe-4 border-end" style="position: sticky; top: 30px;">
-                    <div class="nav nav-pills flex-column">
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-1">Mô tả sản phẩm</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-2">Thành phần</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-3">Công dụng</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-4">Cách dùng</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-5">Tác dụng phụ</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-6">Lưu ý</a>
-                        <a class="nav-link py-2 px-3 rounded mb-2" href="#item-7">Bảo quản</a>
-                    </div>
+    <div class="container main-container">
+        <!-- Breadcrumb -->
+        <div class="mt-4">
+            <div class="row">
+                <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/" style="text-decoration: none;">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Thực phẩm chức năng</a>
+                        </li>
+                        <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Hỗ trợ tiêu hóa</a></li>
+                        <li class="breadcrumb-item active" aria-current="page" th:text="${product.tenSanPham}">Dạ dày tá
+                            tràng
+                        </li>
+                    </ol>
                 </nav>
             </div>
-
-            <!-- Main Content -->
-            <div class="col-md-10">
-                <div data-bs-spy="scroll" data-bs-target="#navbar-example3" data-bs-smooth-scroll="true" class="scrollspy-example p-4" style="background-color: #ffffff; border-radius: 15px; max-height: 500px; overflow-y: auto; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);" tabindex="0">
-                    <div id="item-1" class="mb-5">
-                        <h4 class="section-title">Mô tả sản phẩm</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.moTaChiTiet : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-2" class="mb-5">
-                        <h4 class="section-title">Thành phần</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.thanhPhanChiTiet : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-3" class="mb-5">
-                        <h4 class="section-title">Công dụng</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.congDungChiTiet : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-4" class="mb-5">
-                        <h4 class="section-title">Cách dùng</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.cachDungChiTiet : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-5" class="mb-5">
-                        <h4 class="section-title">Tác dụng phụ</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.tacDungPhu : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-6" class="mb-5">
-                        <h4 class="section-title">Lưu ý</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.luuY : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                    <div id="item-7" class="mb-5">
-                        <h4 class="section-title">Bảo quản</h4>
-                        <p class="text-muted" th:utext="${chiTietSanPham != null ? chiTietSanPham.baoQuan : 'Không có thông tin chi tiết'}"></p>
-                    </div>
-                </div>
-            </div>
         </div>
-    </div>
 
-
-    <div class="container mt-4">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Câu hỏi thường gặp</h4>
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item" th:each="faq, iterStat : ${cauHoiLienQuan}">
-                        <h2 class="accordion-header" th:id="'heading' + ${iterStat.count}">
-                            <button class="accordion-button" th:classappend="${iterStat.first} ? '' : 'collapsed'" type="button"
-                                    data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.count}">
-                                <i class="bi bi-question-circle me-2"></i>
-                                <span th:utext="${faq.cauHoi}"></span>
-                            </button>
-                        </h2>
-                        <div th:id="'collapse' + ${iterStat.count}"
-                             class="accordion-collapse collapse"
-                             th:classappend="${iterStat.first} ? 'show' : ''"
-                             data-bs-parent="#faqAccordion">
-                            <div class="accordion-body" th:utext="${faq.cauTraLoi}"></div>
-                        </div>
-                    </div>
-                    <!-- Hiển thị thông báo nếu không có câu hỏi -->
-                    <div class="accordion-item" th:unless="${cauHoiLienQuan != null and not #lists.isEmpty(cauHoiLienQuan)}">
-                        <div class="accordion-body">
-                            Hiện tại chưa có câu hỏi thường gặp nào cho sản phẩm này.
+        <!-- Thông tin sản phẩm -->
+        <div class="mt-4 section-container" style="background-color: #f8f9fa; border-radius: 10px;">
+            <div class="row p-3">
+                <div class="col-md-6">
+                    <div class="d-flex flex-column h-100 justify-content-between align-items-center">
+                        <img id="mainImage" th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
+                             class="img-fluid rounded" th:alt="${product.tenSanPham}"
+                             style="max-height: 400px; object-fit: contain;">
+                        <div class="d-flex product-thumbnails justify-content-center mt-3" style="margin-bottom: 120px">
+                            <div class="thumbnail-container me-2" th:each="image : ${images}">
+                                <img th:src="${image.imageUrl}"
+                                     class="img-thumbnail"
+                                     th:alt="'Thumbnail ' + ${image.id}"
+                                     th:data-image-url="${image.imageUrl}"
+                                     onclick="changeImage(this.getAttribute('data-image-url'), this)">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+                <div class="col-md-6">
+                    <h5 class="text-primary" th:text="'Thương hiệu: ' + ${product.thuongHieu ?: 'Không xác định'}"></h5>
+                    <h2 class="product-title" th:text="${product.tenSanPham}"></h2>
+                    <p class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}"></p>
+                    <h3 class="product-price">
+                        <span th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ'"></span>
+                        <small class="old-price" th:if="${product.hasDiscount()}"
+                               th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></small>
+                    </h3>
 
-    <!-- Sản phẩm liên quan -->
-    <div class="container mt-4">
-        <h4 class="mb-3">Sản phẩm liên quan</h4>
-        <div class="product-scroll-container">
-            <div class="product-list">
-                <div class="product-card" th:each="product : ${products}">
-                    <div class="card border rounded shadow-sm d-flex flex-column h-100" th:href="@{/sanpham(id=${product.id})}">
-                        <!-- Hiển thị badge giảm giá -->
-                        <span class="badge bg-danger position-absolute discount-badge"
-                              th:id="'related-discount-badge-' + ${product.id}"
-                              th:style="${product.hasDiscount()} ? '' : 'display: none;'"
-                              th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
-                        <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
-                             class="card-img-top"
-                             th:alt="${product.tenSanPham}">
-                        <div class="card-body text-center d-flex flex-column">
-                            <h6 class="card-title" th:text="${product.tenSanPham}" style="font-size: 1rem;"></h6>
-                            <!-- Thanh lựa chọn đơn vị tính được cố định vị trí -->
-                            <div class="unit-btn-group-wrapper" th:if="${not #lists.isEmpty(product.donViTinhList)}">
-                                <div class="unit-btn-group">
-                                    <button th:each="dvt : ${product.donViTinhList}"
-                                            th:id="'related-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
-                                            th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
-                                            th:onclick="'updatePriceRelated(' + ${product.id} + ',' + ${dvt.id} + ')'"
-                                            th:text="${dvt.donViTinh}"
-                                            style="padding: 5px 10px; font-size: 14px;"></button>
+                    <div class="mt-3 d-flex align-items-center">
+                        <label class="fw-bold me-3">Chọn đơn vị tính:</label>
+                        <div class="btn-group" role="group" aria-label="Chọn đơn vị tính">
+                            <th:block th:each="dvt : ${product.donViTinhList}">
+                                <input type="radio" class="btn-check" name="unit"
+                                       th:id="'option' + ${dvt.id}"
+                                       th:attr="data-dvt-id=${dvt.id}"
+                                       autocomplete="off"
+                                       th:checked="${dvt.id == product.defaultDonViTinh.id}">
+                                <label class="btn btn-outline-primary" th:for="'option' + ${dvt.id}"
+                                       th:text="${dvt.donViTinh}"></label>
+                            </th:block>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 row">
+                        <div class="col-4">
+                            <p class="text-muted">Danh mục</p>
+                            <p class="text-muted">Dạng bào chế</p>
+                            <p class="text-muted">Quy cách</p>
+                            <p class="text-muted">Xuất xứ thương hiệu</p>
+                            <p class="text-muted">Nhà sản xuất</p>
+                            <p class="text-muted">Nước sản xuất</p>
+                            <p class="text-muted">Thành phần</p>
+                            <p class="text-muted">Mô tả ngắn</p>
+                            <p class="text-muted">Số đăng ký</p>
+                        </div>
+                        <div class="col-8">
+                            <p class="text-muted"
+                               th:text="${product.danhMuc != null ? product.danhMuc.tenDanhMuc : 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.dangBaoChe ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.quyCach ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.xuatXuThuongHieu ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.nhaSanXuat ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.nuocSanXuat ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.thanhPhan ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.moTaNgan ?: 'Không xác định'}"></p>
+                            <p class="text-muted" th:text="${product.soDangKy ?: 'Không xác định'}"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="quantity-container d-flex align-items-center">
+                                <label class="mb-0 me-2">Chọn số lượng:</label>
+                                <div class="quantity-selector">
+                                    <button id="decrease">−</button>
+                                    <input type="text" id="quantity" value="1" readonly>
+                                    <button id="increase">+</button>
                                 </div>
                             </div>
-                            <!-- Phần giá và quy cách -->
-                            <div class="price-section">
-                                <!-- Giá giảm và giá gốc -->
-                                <div th:id="'related-discounted-price-' + ${product.id}" class="discounted-price"
-                                     th:data-price="${product.getDiscountedPrice()}"
-                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
-                                     th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
-                                <div th:id="'related-original-price-' + ${product.id}" class="original-price"
-                                     th:style="${product.hasDiscount()} ? '' : 'display: none;'"
-                                     th:data-price="${product.getDefaultDonViTinh().gia}"
-                                     th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
-                                     th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
-                                <!-- Quy cách -->
-                                <div class="unit-info" th:text="${product.quyCach ?: ''}"></div>
+                            <button class="btn btn-primary">Thêm vào giỏ hàng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chi tiết sản phẩm -->
+        <div class="mt-4 section-container"
+             style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <div class="row p-3">
+                <div class="col-md-2">
+                    <nav id="navbar-example3" class="h-100 flex-column align-items-stretch pe-4 border-end"
+                         style="position: sticky; top: 30px;">
+                        <div class="nav nav-pills flex-column">
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-1">Mô tả sản phẩm</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-2">Thành phần</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-3">Công dụng</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-4">Cách dùng</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-5">Tác dụng phụ</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-6">Lưu ý</a>
+                            <a class="nav-link py-2 px-3 rounded mb-2" href="#item-7">Bảo quản</a>
+                        </div>
+                    </nav>
+                </div>
+                <div class="col-md-10">
+                    <div data-bs-spy="scroll" data-bs-target="#navbar-example3" data-bs-smooth-scroll="true"
+                         class="scrollspy-example p-3" style="max-height: 500px; overflow-y: auto;">
+                        <div id="item-1" class="mb-4">
+                            <h4 class="section-title">Mô tả sản phẩm</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.moTaChiTiet : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-2" class="mb-4">
+                            <h4 class="section-title">Thành phần</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.thanhPhanChiTiet : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-3" class="mb-4">
+                            <h4 class="section-title">Công dụng</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.congDungChiTiet : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-4" class="mb-4">
+                            <h4 class="section-title">Cách dùng</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.cachDungChiTiet : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-5" class="mb-4">
+                            <h4 class="section-title">Tác dụng phụ</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.tacDungPhu : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-6" class="mb-4">
+                            <h4 class="section-title">Lưu ý</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.luuY : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                        <div id="item-7" class="mb-4">
+                            <h4 class="section-title">Bảo quản</h4>
+                            <p class="text-muted"
+                               th:utext="${chiTietSanPham != null ? chiTietSanPham.baoQuan : 'Không có thông tin chi tiết'}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Câu hỏi thường gặp -->
+        <div class="mt-4 section-container"
+             style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <div class="row p-3">
+                <div class="col-12">
+                    <h4 class="card-title mb-3">Câu hỏi thường gặp</h4>
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item" th:each="faq, iterStat : ${cauHoiLienQuan}">
+                            <h2 class="accordion-header" th:id="'heading' + ${iterStat.count}">
+                                <button class="accordion-button" th:classappend="${iterStat.first} ? '' : 'collapsed'"
+                                        type="button"
+                                        data-bs-toggle="collapse" th:data-bs-target="'#collapse' + ${iterStat.count}">
+                                    <i class="bi bi-question-circle me-2"></i>
+                                    <span th:utext="${faq.cauHoi}"></span>
+                                </button>
+                            </h2>
+                            <div th:id="'collapse' + ${iterStat.count}"
+                                 class="accordion-collapse collapse"
+                                 th:classappend="${iterStat.first} ? 'show' : ''"
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body" th:utext="${faq.cauTraLoi}"></div>
                             </div>
-                            <a th:href="@{/sanpham(id=${product.id})}" class="btn btn-primary w-100 mt-auto" style="border-radius: 5px; padding: 8px 20px;">Chọn mua</a>
+                        </div>
+                        <div class="accordion-item"
+                             th:unless="${cauHoiLienQuan != null and not #lists.isEmpty(cauHoiLienQuan)}">
+                            <div class="accordion-body">
+                                Hiện tại chưa có câu hỏi thường gặp nào cho sản phẩm này.
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Hiển thị thông báo nếu không có sản phẩm liên quan -->
-                <div class="text-center text-muted" th:unless="${products != null and not #lists.isEmpty(products)}">
-                    Hiện tại chưa có sản phẩm liên quan nào.
+            </div>
+        </div>
+
+        <!-- Sản phẩm liên quan -->
+        <div class="mt-4 section-container"
+             style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <div class="row p-3">
+                <div class="col-12">
+                    <h4 class="mb-3">Sản phẩm liên quan</h4>
+                    <div class="product-scroll-container">
+                        <div class="product-list">
+                            <div class="product-card" th:each="product : ${products}">
+                                <div class="card border rounded shadow-sm d-flex flex-column h-100"
+                                     th:href="@{/sanpham(id=${product.id})}">
+                                    <span class="badge bg-danger position-absolute discount-badge"
+                                          th:id="'related-discount-badge-' + ${product.id}"
+                                          th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                          th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
+                                    <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
+                                         class="card-img-top"
+                                         th:alt="${product.tenSanPham}">
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <h6 class="card-title" th:text="${product.tenSanPham}"
+                                            style="font-size: 1rem;"></h6>
+                                        <div class="unit-btn-group-wrapper"
+                                             th:if="${not #lists.isEmpty(product.donViTinhList)}">
+                                            <div class="unit-btn-group">
+                                                <button th:each="dvt : ${product.donViTinhList}"
+                                                        th:id="'related-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
+                                                        th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
+                                                        th:onclick="'updatePriceRelated(' + ${product.id} + ',' + ${dvt.id} + ')'"
+                                                        th:text="${dvt.donViTinh}"
+                                                        style="padding: 5px 10px; font-size: 14px;"></button>
+                                            </div>
+                                        </div>
+                                        <div class="price-section">
+                                            <div th:id="'related-discounted-price-' + ${product.id}"
+                                                 class="discounted-price"
+                                                 th:data-price="${product.getDiscountedPrice()}"
+                                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                                 th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
+                                            <div th:id="'related-original-price-' + ${product.id}"
+                                                 class="original-price"
+                                                 th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                                 th:data-price="${product.getDefaultDonViTinh().gia}"
+                                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                                 th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ/' + ${product.getDefaultDonViTinh().donViTinh}"></div>
+                                            <div class="unit-info" th:text="${product.quyCach ?: ''}"></div>
+                                        </div>
+                                        <a th:href="@{/sanpham(id=${product.id})}" class="btn btn-primary w-100 mt-auto"
+                                           style="border-radius: 5px; padding: 8px 20px;">Chọn mua</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center text-muted"
+                                 th:unless="${products != null and not #lists.isEmpty(products)}">
+                                Hiện tại chưa có sản phẩm liên quan nào.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="container mt-4 mb-5">
-        <div class="rating-container">
-            <div class="rating-title">
-                Đánh giá sản phẩm
-                <span class="text-muted" th:text="'(' + ${reviewCount} + ' đánh giá)'">(0 đánh giá)</span>
-            </div>
-            <div class="d-flex align-items-center my-3">
-                <div class="rating-score" th:text="${averageRating} + ' ★'" style="color: #FFA500">0.0 ★</div>
-                <div class="rating-summary" id="ratingSummary"></div>
-            </div>
-
-            <!-- Nút gửi đánh giá, chỉ hiển thị nếu người dùng đã đăng nhập -->
-            <div th:if="${loggedInUser != null}">
-                <button class="btn btn-primary send"
-                        data-bs-toggle="modal"
-                        data-bs-target="#reviewModal">
-                    Gửi đánh giá
-                </button>
-            </div>
-            <div th:if="${loggedInUser == null}" class="text-muted">
-                Vui lòng <a href="/login">đăng nhập</a> để gửi đánh giá.
-            </div>
-
-            <!-- Bộ lọc đánh giá -->
-            <div class="filters mt-3">
-                Lọc theo:
-                <button class="btn btn-outline-secondary filter-rating active" data-rating="0">Tất cả</button>
-                <button th:each="i : ${#numbers.sequence(5, 1, -1)}"
-                        class="btn btn-outline-secondary filter-rating"
-                        th:classappend="${selectedRating == i} ? 'active' : ''"
-                        th:data-rating="${i}"
-                        th:text="${i} + ' sao'">5 sao</button>
-            </div>
-
-            <!-- Danh sách đánh giá -->
-            <div th:each="review : ${reviews}" class="review-item mt-4">
-                <div class="avatar"
-                     th:text="${review.user.name != null ? #strings.substring(review.user.name, 0, 2).toUpperCase() : 'NN'}">NN</div>
-                <div class="connector-vertical"></div>
-                <div class="connector-horizontal"></div>
-                <div>
-                    <div class="d-flex align-items-center">
-                        <span class="review-author" th:text="${review.user.name ?: 'Người dùng ẩn danh'}">Người dùng ẩn danh</span>
-                        <span class="review-meta"
-                              th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')} + ' - Trả lời'">2 ngày trước - Trả lời</span>
-                        <button class="comment-btn">Bình luận</button>
+        <!-- Đánh giá sản phẩm -->
+        <div class="mt-4 section-container rating-container"
+             style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <div class="row p-3">
+                <div class="col-12">
+                    <div class="rating-title">
+                        Đánh giá sản phẩm
+                        <span class="text-muted" th:text="'(' + ${reviewCount} + ' đánh giá)'">(0 đánh giá)</span>
                     </div>
-                    <div class="star mt-1" th:text="${#strings.repeat('★', review.rating.intValue())}">★★★★★</div>
-                    <div class="review-content" th:text="${review.reviewContent ?: 'Không có nội dung đánh giá'}">Không có nội dung đánh giá</div>
-                    <div class="staff-reply" th:if="${review.reviewContent != null}">
-                        <div class="staff-name">Tư vẫn 24/7</div>
+                    <div class="d-flex align-items-center my-3">
+                        <div class="rating-score" th:text="${averageRating} + ' ★'" style="color: #FFA500">0.0 ★</div>
+                        <div class="rating-summary" id="ratingSummary"></div>
+                    </div>
+
+                    <div th:if="${loggedInUser != null}">
+                        <button class="btn btn-primary send"
+                                data-bs-toggle="modal"
+                                data-bs-target="#reviewModal">
+                            Gửi đánh giá
+                        </button>
+                    </div>
+                    <div th:if="${loggedInUser == null}" class="text-muted">
+                        Vui lòng <a href="/login">đăng nhập</a> để gửi đánh giá.
+                    </div>
+
+                    <div class="filters mt-3">
+                        Lọc theo:
+                        <button class="btn btn-outline-secondary filter-rating active" data-rating="0">Tất cả</button>
+                        <button th:each="i : ${#numbers.sequence(5, 1, -1)}"
+                                class="btn btn-outline-secondary filter-rating"
+                                th:classappend="${selectedRating == i} ? 'active' : ''"
+                                th:data-rating="${i}"
+                                th:text="${i} + ' sao'">5 sao
+                        </button>
+                    </div>
+
+                    <div th:each="review : ${reviews}" class="review-item mt-4">
+                        <div class="avatar"
+                             th:text="${review.user.name != null ? #strings.substring(review.user.name, 0, 2).toUpperCase() : 'NN'}">
+                            NN
+                        </div>
+                        <div class="connector-vertical"></div>
+                        <div class="connector-horizontal"></div>
                         <div>
-                            Chào bạn <span th:text="${review.user.name ?: 'Khách'}">Khách</span>,<br/>
-                            Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Thông báo nếu không có đánh giá -->
-            <div th:if="${#lists.isEmpty(reviews)}" class="text-center text-muted mt-4">
-                Hiện tại chưa có đánh giá nào cho sản phẩm này.
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal gửi đánh giá -->
-    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-3 rounded-4">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold" id="reviewModalLabel">Đánh giá sản phẩm</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" alt="Sản phẩm" width="64" class="me-3 rounded-2"/>
-                        <div>
-                            <div class="fw-semibold" th:text="${product.tenSanPham}">Enterogermina Gut Defense Sanofi</div>
-                            <small class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}">Tăng cường tiêu hóa, hỗ trợ bảo vệ đường ruột</small>
+                            <div class="d-flex align-items-center">
+                                <span class="review-author" th:text="${review.user.name ?: 'Người dùng ẩn danh'}">Người dùng ẩn danh</span>
+                                <span class="review-meta"
+                                      th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')} + ' - Trả lời'">2 ngày trước - Trả lời</span>
+                                <button class="comment-btn">Bình luận</button>
+                            </div>
+                            <div class="star mt-1" th:text="${#strings.repeat('★', review.rating.intValue())}">★★★★★
+                            </div>
+                            <div class="review-content"
+                                 th:text="${review.reviewContent ?: 'Không có nội dung đánh giá'}">Không có nội dung
+                                đánh giá
+                            </div>
+                            <div class="staff-reply" th:if="${review.reviewContent != null}">
+                                <div class="staff-reply-header">
+                                    <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo"
+                                         style="height: 32px">
+                                    <div class="staff-name">Tư vấn 24/7</div>
+                                </div>
+                                <div class="staff-reply-content">
+                                    Chào bạn <span th:text="${review.user.name ?: 'Khách'}">Khách</span>,<br/>
+                                    Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928.
+                                    Thân mến!
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Thông báo lỗi -->
-                    <div id="reviewError" class="alert alert-danger d-none" role="alert"></div>
 
-                    <!-- Star rating -->
-                    <div class="rating-stars text-center mb-3">
-                        <span data-star="1">★</span>
-                        <span data-star="2">★</span>
-                        <span data-star="3">★</span>
-                        <span data-star="4">★</span>
-                        <span data-star="5" class="active">★</span>
+                    <div th:if="${#lists.isEmpty(reviews)}" class="text-center text-muted mt-4">
+                        Hiện tại chưa có đánh giá nào cho sản phẩm này.
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Nội dung đánh giá -->
-                    <textarea class="form-control mb-3" id="reviewContent" rows="3" placeholder="Nhập nội dung đánh giá (Không bắt buộc - Vui lòng gõ tiếng Việt có dấu)..."></textarea>
+        <!-- Modal gửi đánh giá -->
+        <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content p-3 rounded-4">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title fw-bold" id="reviewModalLabel">Đánh giá sản phẩm</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}" alt="Sản phẩm" width="64"
+                                 class="me-3 rounded-2"/>
+                            <div>
+                                <div class="fw-semibold" th:text="${product.tenSanPham}">Enterogermina Gut Defense
+                                    Sanofi
+                                </div>
+                                <small class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}">Tăng cường
+                                    tiêu hóa, hỗ trợ bảo vệ đường ruột</small>
+                            </div>
+                        </div>
 
-                    <button class="btn btn-primary w-100" id="submitReview" th:data-product-id="${product.id}" >Gửi</button>
+                        <div id="reviewError" class="alert alert-danger d-none" role="alert"></div>
+
+                        <div class="rating-stars text-center mb-3">
+                            <span data-star="1">★</span>
+                            <span data-star="2">★</span>
+                            <span data-star="3">★</span>
+                            <span data-star="4">★</span>
+                            <span data-star="5" class="active">★</span>
+                        </div>
+
+                        <textarea class="form-control mb-3" id="reviewContent" rows="3"
+                                  placeholder="Nhập nội dung đánh giá (Không bắt buộc - Vui lòng gõ tiếng Việt có dấu)..."></textarea>
+
+                        <button class="btn btn-primary w-100" id="submitReview" th:data-product-id="${product.id}">Gửi
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="container mt-4" style="height: 20px"></div>
 </main>
+
+
 <div th:insert="~{part/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script th:inline="javascript">
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Xử lý chọn đơn vị tính cho sản phẩm chính
-        $('input[name="unit"]').on('change', function() {
+        $('input[name="unit"]').on('change', function () {
             var productId = /*[[${product?.id}]]*/ null;
             var donViTinhId = $(this).attr('data-dvt-id');
 
@@ -380,16 +424,22 @@
             $.ajax({
                 url: '/update-price',
                 type: 'GET',
-                data: { productId: productId, donViTinhId: donViTinhId },
-                success: function(response) {
-                    $('.product-price span').text(Number(response.discountedPrice).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ');
+                data: {productId: productId, donViTinhId: donViTinhId},
+                success: function (response) {
+                    $('.product-price span').text(Number(response.discountedPrice).toLocaleString('vi-VN', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + 'đ');
                     if (response.hasDiscount) {
-                        $('.old-price').text(Number(response.gia).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'đ').show();
+                        $('.old-price').text(Number(response.gia).toLocaleString('vi-VN', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }) + 'đ').show();
                     } else {
                         $('.old-price').hide();
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Lỗi khi cập nhật giá:', error);
                 }
             });
@@ -410,17 +460,17 @@
         }
 
         // Xử lý tăng/giảm số lượng
-        $('#increase').click(function() {
+        $('#increase').click(function () {
             let qty = parseInt($('#quantity').val());
             $('#quantity').val(qty + 1);
         });
-        $('#decrease').click(function() {
+        $('#decrease').click(function () {
             let qty = parseInt($('#quantity').val());
             if (qty > 1) $('#quantity').val(qty - 1);
         });
 
         // Hàm cập nhật giá cho sản phẩm liên quan
-        window.updatePriceRelated = function(productId, donViTinhId) {
+        window.updatePriceRelated = function (productId, donViTinhId) {
             var productCard = $('#related-unit-btn-' + productId + '-' + donViTinhId).closest('.card');
             if (!productCard.length) return;
 
@@ -430,8 +480,8 @@
             $.ajax({
                 url: '/update-price',
                 type: 'GET',
-                data: { productId: productId, donViTinhId: donViTinhId },
-                success: function(response) {
+                data: {productId: productId, donViTinhId: donViTinhId},
+                success: function (response) {
                     var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
                     var gia = Number(response.gia).toLocaleString('vi-VN');
                     var discountPercent = response.discount ? Number(response.discount) : 0;
@@ -451,7 +501,7 @@
                         unitInfo.text(response.quyCach || '');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('Lỗi khi cập nhật giá:', error);
                 }
             });
@@ -459,7 +509,7 @@
 
         // Khởi tạo trạng thái đơn vị tính cho sản phẩm liên quan
         function initializeRelatedUnitButtons() {
-            $('.product-card .card').each(function() {
+            $('.product-card .card').each(function () {
                 var firstButton = $(this).find('.unit-btn').first();
                 if (firstButton.length > 0) {
                     var ids = firstButton.attr('id').split('-');
@@ -477,17 +527,17 @@
         initializeRelatedUnitButtons();
 
         // Hàm thay đổi hình ảnh chính khi click vào thumbnail
-        window.changeImage = function(imageUrl, element) {
+        window.changeImage = function (imageUrl, element) {
             var mainImage = document.getElementById('mainImage');
             if (mainImage) {
                 mainImage.style.opacity = '0';
-                setTimeout(function() {
+                setTimeout(function () {
                     mainImage.src = imageUrl;
                     mainImage.style.opacity = '1';
                 }, 300);
 
                 var thumbnails = document.querySelectorAll('.product-thumbnails img');
-                thumbnails.forEach(function(thumb) {
+                thumbnails.forEach(function (thumb) {
                     thumb.classList.remove('active');
                 });
 
@@ -504,21 +554,21 @@
 
         // Xử lý chọn số sao trong modal đánh giá
         const stars = $('.rating-stars span');
-        stars.each(function() {
-            $(this).on('mouseover', function() {
+        stars.each(function () {
+            $(this).on('mouseover', function () {
                 var rating = $(this).data('star');
-                stars.each(function() {
+                stars.each(function () {
                     $(this).toggleClass('hover', $(this).data('star') <= rating);
                 });
             });
 
-            $(this).on('mouseout', function() {
+            $(this).on('mouseout', function () {
                 stars.removeClass('hover');
             });
 
-            $(this).on('click', function() {
+            $(this).on('click', function () {
                 var rating = $(this).data('star');
-                stars.each(function() {
+                stars.each(function () {
                     $(this).toggleClass('active', $(this).data('star') <= rating);
                 });
                 updateSubmitButtonState(); // Cập nhật trạng thái nút Gửi
@@ -526,7 +576,7 @@
         });
 
         // Xử lý nhập nội dung đánh giá
-        $('#reviewContent').on('input', function() {
+        $('#reviewContent').on('input', function () {
             updateSubmitButtonState(); // Cập nhật trạng thái nút Gửi
         });
 
@@ -553,11 +603,11 @@
         }
 
         // Xử lý mở modal đánh giá
-        $('.send').on('click', function() {
+        $('.send').on('click', function () {
             $.ajax({
                 url: '/check-auth',
                 type: 'GET',
-                success: function(response) {
+                success: function (response) {
                     if (!response.authenticated) {
                         window.location.href = '/login?redirect=/sanpham?id=' + /*[[${product?.id}]]*/ null;
                     } else {
@@ -565,14 +615,14 @@
                         updateSubmitButtonState(); // Cập nhật trạng thái nút khi mở modal
                     }
                 },
-                error: function() {
+                error: function () {
                     showToast('Lỗi khi kiểm tra trạng thái đăng nhập.', 'error');
                 }
             });
         });
 
         // Xử lý gửi đánh giá qua AJAX
-        $('#submitReview').on('click', function() {
+        $('#submitReview').on('click', function () {
             var productId = $(this).data('product-id');
             var rating = $('.rating-stars span.active').length || 5; // Mặc định 5 sao nếu không chọn
             var reviewContent = $('#reviewContent').val().trim();
@@ -598,12 +648,12 @@
                     rating: rating,
                     reviewContent: reviewContent
                 },
-                beforeSend: function(xhr) {
+                beforeSend: function (xhr) {
                     if (csrfHeader && csrfToken) {
                         xhr.setRequestHeader(csrfHeader, csrfToken);
                     }
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         showToast(response.message, 'success');
                         $('#reviewModal').modal('hide');
@@ -616,7 +666,7 @@
                         $('#reviewError').text(response.message).removeClass('d-none');
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     $('#reviewError').text(xhr.responseJSON?.message || 'Đã xảy ra lỗi khi gửi đánh giá.').removeClass('d-none');
                 }
             });
@@ -646,35 +696,40 @@
                     productId: productId,
                     rating: rating // Thêm tham số rating để lọc
                 },
-                success: function(response) {
+                success: function (response) {
                     // Cập nhật danh sách đánh giá
                     var reviewHtml = '';
                     if (response.reviews.length === 0) {
                         reviewHtml = '<div class="text-center text-muted mt-4">Hiện tại chưa có đánh giá nào cho sản phẩm này.</div>';
                     } else {
                         response.reviews.forEach(review => {
+                            // Trong hàm updateReviewSection
                             reviewHtml += `
-                                <div class="review-item mt-4">
-                                    <div class="avatar">${review.userName ? review.userName.substring(0, 2).toUpperCase() : 'NN'}</div>
-                                    <div class="connector-vertical"></div>
-                                    <div class="connector-horizontal"></div>
-                                    <div>
-                                        <div class="d-flex align-items-center">
-                                            <span class="review-author">${review.userName || 'Người dùng ẩn danh'}</span>
-                                            <span class="review-meta">${review.createdAt} - Trả lời</span>
-                                            <button class="comment-btn">Bình luận</button>
-                                        </div>
-                                        <div class="star mt-1">${'★'.repeat(Math.round(review.rating))}</div>
-                                        <div class="review-content">${review.reviewContent || 'Không có nội dung đánh giá'}</div>
-                                        ${review.reviewContent ? `
-                                            <div class="staff-reply">
-                                                <div class="staff-name">Tư vẫn 24/7</div>
-                                                <div>Chào bạn ${review.userName || 'Khách'},<br/>
-                                                    Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
-                                                </div>
-                                            </div>` : ''}
-                                    </div>
-                                </div>`;
+    <div class="review-item mt-4">
+        <div class="avatar">${review.userName ? review.userName.substring(0, 2).toUpperCase() : 'NN'}</div>
+        <div class="connector-vertical"></div>
+        <div class="connector-horizontal"></div>
+        <div>
+            <div class="d-flex align-items-center">
+                <span class="review-author">${review.userName || 'Người dùng ẩn danh'}</span>
+                <span class="review-meta">${review.createdAt} - Trả lời</span>
+                <button class="comment-btn">Bình luận</button>
+            </div>
+            <div class="star mt-1">${'★'.repeat(Math.round(review.rating))}</div>
+            <div class="review-content">${review.reviewContent || 'Không có nội dung đánh giá'}</div>
+            ${review.reviewContent ? `
+                <div class="staff-reply">
+                    <div class="staff-reply-header">
+                        <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo" style="height: 32px">
+                        <div class="staff-name">Tư vấn 24/7</div>
+                    </div>
+                    <div class="staff-reply-content">
+                        Chào bạn ${review.userName || 'Khách'},<br/>
+                        Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
+                    </div>
+                </div>` : ''}
+        </div>
+    </div>`;
                         });
                     }
                     $('.rating-container').find('.review-item, .text-center.text-muted').remove();
@@ -698,14 +753,14 @@
                     }
                     $('#ratingSummary').html(ratingSummaryHtml);
                 },
-                error: function() {
+                error: function () {
                     showToast('Lỗi khi cập nhật đánh giá.', 'error');
                 }
             });
         }
 
         // Xử lý lọc đánh giá theo số sao
-        $('.filter-rating').on('click', function() {
+        $('.filter-rating').on('click', function () {
             var rating = parseInt($(this).data('rating')); // Lấy số sao từ data-rating
             var productId = /*[[${product?.id}]]*/ null;
 

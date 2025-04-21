@@ -21,21 +21,24 @@
     <div class="container mt-4">
         <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/" style="text-decoration: none; color: #1a73e8;">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/" style="text-decoration: none; color: #1a73e8;">Trang chủ</a>
+                </li>
                 <li class="breadcrumb-item active" aria-current="page">Giỏ hàng</li>
             </ol>
         </nav>
 
         <div id="cart-content">
             <!-- Khi có sản phẩm -->
-            <div class="cart-container" id="cart-items-container" th:unless="${cartItems == null or #lists.isEmpty(cartItems)}">
+            <div class="cart-container" id="cart-items-container"
+                 th:unless="${cartItems == null or #lists.isEmpty(cartItems)}">
                 <div class="row">
                     <!-- Danh sách sản phẩm (bên trái) -->
                     <div class="col-lg-8 col-md-12">
                         <div class="cart-header">
                             <h3>
                                 <input type="checkbox" id="select-all" checked>
-                                <label for="select-all">Chọn tất cả (<span th:text="${cartItems != null ? cartItems.size() : 0}"></span>)</label>
+                                <label for="select-all">Chọn tất cả (<span
+                                        th:text="${cartItems != null ? cartItems.size() : 0}"></span>)</label>
                             </h3>
                         </div>
 
@@ -43,18 +46,30 @@
                         <div th:each="item, iterStat : ${cartItems}">
                             <div class="cart-item">
                                 <div class="cart-item-left">
-                                    <input type="checkbox" th:id="'item-checkbox-' + ${item.id}" th:data-product-id="${item.product.id}" th:data-unit-id="${item.donViTinh?.id}" checked>
-                                    <img th:src="${item.product.mainImageUrl != null ? item.product.mainImageUrl : '/images/placeholder.png'}" alt="Product Image" style="margin-left: 20px">
+                                    <input type="checkbox" th:id="'item-checkbox-' + ${item.id}"
+                                           th:data-product-id="${item.product.id}"
+                                           th:data-unit-id="${item.donViTinh?.id}" checked>
+                                    <img th:src="${item.product.mainImageUrl != null ? item.product.mainImageUrl : '/images/placeholder.png'}"
+                                         alt="Product Image" style="margin-left: 20px">
                                     <div class="cart-item-details">
                                         <h6 th:text="${item.product.tenSanPham} ?: 'Sản phẩm không xác định'"></h6>
                                         <div class="cart-item-actions d-flex align-items-center gap-2">
                                             <div class="quantity-selector">
-                                                <button th:onclick="'decreaseQuantity(' + ${item.product.id} + ',' + ${item.donViTinh?.id} + ')'">−</button>
-                                                <input type="text" th:id="'quantity-' + ${item.product.id} + '-' + ${item.donViTinh?.id}" th:value="${item.quantity}" readonly>
-                                                <button th:onclick="'increaseQuantity(' + ${item.product.id} + ',' + ${item.donViTinh?.id} + ')'">+</button>
+                                                <button th:onclick="'decreaseQuantity(' + ${item.product.id} + ',' + ${item.donViTinh?.id} + ')'">
+                                                    −
+                                                </button>
+                                                <input type="text"
+                                                       th:id="'quantity-' + ${item.product.id} + '-' + ${item.donViTinh?.id}"
+                                                       th:value="${item.quantity}" readonly>
+                                                <button th:onclick="'increaseQuantity(' + ${item.product.id} + ',' + ${item.donViTinh?.id} + ')'">
+                                                    +
+                                                </button>
                                             </div>
-                                            <select class="unit-selector" th:id="'unit-' + ${item.product.id} + '-' + ${item.donViTinh?.id}">
-                                                <option th:value="${item.donViTinh?.id}" th:text="${item.donViTinh?.donViTinh} ?: 'N/A'" selected></option>
+                                            <select class="unit-selector"
+                                                    th:id="'unit-' + ${item.product.id} + '-' + ${item.donViTinh?.id}">
+                                                <option th:value="${item.donViTinh?.id}"
+                                                        th:text="${item.donViTinh?.donViTinh} ?: 'N/A'"
+                                                        selected></option>
                                                 <!-- Thêm các tùy chọn khác nếu cần -->
                                             </select>
                                             <button class="btn-remove" th:onclick="'removeItem(' + ${item.id} + ')'">
@@ -62,14 +77,17 @@
                                             </button>
                                         </div>
                                         <p class="discount-info" th:if="${item.donViTinh?.discount != null}">
-                                            Giảm ngay <span th:text="${item.donViTinh.discount} + '%'"></span>, áp dụng đến 30/04
+                                            Giảm ngay <span th:text="${item.donViTinh.discount} + '%'"></span>, áp dụng
+                                            đến 30/04
                                         </p>
                                     </div>
                                 </div>
                                 <div class="cart-item-right">
-                                    <p class="unit-price mb-0" th:id="'unit-price-' + ${item.product.id} + '-' + ${item.donViTinh?.id}"
+                                    <p class="unit-price mb-0"
+                                       th:id="'unit-price-' + ${item.product.id} + '-' + ${item.donViTinh?.id}"
                                        th:text="${item.price}"></p>
-                                    <div class="cart-item-price" th:id="'price-' + ${item.product.id} + '-' + ${item.donViTinh?.id}"
+                                    <div class="cart-item-price"
+                                         th:id="'price-' + ${item.product.id} + '-' + ${item.donViTinh?.id}"
                                          th:text="${item.itemTotalPrice}"></div>
                                 </div>
                             </div>
@@ -90,27 +108,33 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="total-label">Giảm giá trực tiếp:</span>
-                                <span class="total" id="direct-discount" style="color: #f7941d;" th:text="${directDiscount}"></span>
+                                <span class="total" id="direct-discount" style="color: #f7941d;"
+                                      th:text="${directDiscount}"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="total-label">Giảm giá voucher:</span>
-                                <span class="total" id="voucher-discount" style="color: #f7941d;" th:text="${voucherDiscount}"></span>
+                                <span class="total" id="voucher-discount" style="color: #f7941d;"
+                                      th:text="${voucherDiscount}"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="total-label">Tiết kiệm được:</span>
-                                <span class="total" id="total-savings" style="color: #f7941d;" th:text="${totalSavings}"></span>
+                                <span class="total" id="total-savings" style="color: #f7941d;"
+                                      th:text="${totalSavings}"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="total-label">Thanh toán:</span>
                                 <span class="total" id="final-total" th:text="${finalTotal}"></span>
                             </div>
                             <div>
-                                <button class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">Mua hàng</button>
+                                <button class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                                    Mua hàng
+                                </button>
                             </div>
                             <p class="text-muted mt-2 small">
                                 Bằng việc tiến hành đặt mua hàng, bạn đồng ý với
                                 <a href="#" style="color: #1a73e8; text-decoration: none;">Điều khoản dịch vụ</a> và
-                                <a href="#" style="color: #1a73e8; text-decoration: none;">Chính sách xử lý dữ liệu cá nhân</a>
+                                <a href="#" style="color: #1a73e8; text-decoration: none;">Chính sách xử lý dữ liệu cá
+                                    nhân</a>
                             </p>
                         </div>
                     </div>
@@ -126,14 +150,16 @@
             </div>
 
             <!-- Modal Mua hàng -->
-            <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+            <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel"
+                 aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="checkoutModalLabel">
                                 <i class="bi bi-cart-check"></i> Xác nhận đơn hàng
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="row">
@@ -173,12 +199,15 @@
                                         <h6><i class="bi bi-person"></i> Thông tin khách hàng</h6>
                                         <div class="form-group">
                                             <label for="customer-name">Họ và tên <span style="color: #dc3545;">*</span></label>
-                                            <input type="text" id="customer-name" class="form-control" placeholder="Nhập họ và tên">
+                                            <input type="text" id="customer-name" class="form-control"
+                                                   placeholder="Nhập họ và tên">
                                             <div class="error-message">Vui lòng nhập họ và tên.</div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="customer-phone">Số điện thoại <span style="color: #dc3545;">*</span></label>
-                                            <input type="tel" id="customer-phone" class="form-control" placeholder="Nhập số điện thoại">
+                                            <label for="customer-phone">Số điện thoại <span
+                                                    style="color: #dc3545;">*</span></label>
+                                            <input type="tel" id="customer-phone" class="form-control"
+                                                   placeholder="Nhập số điện thoại">
                                             <div class="error-message">Vui lòng nhập số điện thoại hợp lệ.</div>
                                         </div>
                                         <div class="form-group">
@@ -189,7 +218,8 @@
                                             <div class="error-message">Vui lòng chọn Tỉnh/Thành phố.</div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="district">Quận/Huyện <span style="color: #dc3545;">*</span></label>
+                                            <label for="district">Quận/Huyện <span
+                                                    style="color: #dc3545;">*</span></label>
                                             <select id="district" class="form-control" disabled>
                                                 <option value="">Chọn Quận/Huyện</option>
                                             </select>
@@ -203,8 +233,10 @@
                                             <div class="error-message">Vui lòng chọn Xã/Phường.</div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="customer-address-detail">ĐịaAscendantly, Địa chỉ chi tiết <span style="color: #dc3545;">*</span></label>
-                                            <input type="text" id="customer-address-detail" class="form-control" placeholder="Nhập số nhà, tên đường">
+                                            <label for="customer-address-detail">ĐịaAscendantly, Địa chỉ chi tiết <span
+                                                    style="color: #dc3545;">*</span></label>
+                                            <input type="text" id="customer-address-detail" class="form-control"
+                                                   placeholder="Nhập số nhà, tên đường">
                                             <div class="error-message">Vui lòng nhập địa chỉ chi tiết.</div>
                                         </div>
                                     </div>
@@ -229,6 +261,8 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
     </div>
 </main>
@@ -258,8 +292,8 @@
         $.ajax({
             url: '/cart/update-quantity',
             type: 'POST',
-            data: { productId: productId, donViTinhId: donViTinhId, quantity: quantity },
-            success: function(response) {
+            data: {productId: productId, donViTinhId: donViTinhId, quantity: quantity},
+            success: function (response) {
                 if (response.success) {
                     let unitPrice = response.price;
                     $('#unit-price-' + productId + '-' + donViTinhId).text(formatPrice(unitPrice));
@@ -271,7 +305,7 @@
                     updateCheckoutModal();
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error updating quantity:', xhr);
             }
         });
@@ -282,7 +316,7 @@
         let directDiscount = 0;
         let voucherDiscount = parseFloat($('#voucher-discount').text().replace(/[^0-9]/g, '')) || 0;
 
-        $('input[id^="item-checkbox-"]').each(function() {
+        $('input[id^="item-checkbox-"]').each(function () {
             if ($(this).is(':checked')) {
                 let productId = $(this).data('product-id');
                 let unitId = $(this).data('unit-id');
@@ -311,7 +345,7 @@
         let total = 0;
         let itemsHtml = '';
 
-        $('input[id^="item-checkbox-"]').each(function() {
+        $('input[id^="item-checkbox-"]').each(function () {
             if ($(this).is(':checked')) {
                 let productId = $(this).data('product-id');
                 let unitId = $(this).data('unit-id');
@@ -374,11 +408,11 @@
             $.ajax({
                 url: '/cart/remove',
                 type: 'POST',
-                data: { cartItemId: cartItemId },
-                success: function() {
+                data: {cartItemId: cartItemId},
+                success: function () {
                     location.reload();
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     console.error('Error removing item:', xhr);
                 }
             });
@@ -390,10 +424,10 @@
             $.ajax({
                 url: '/cart/clear',
                 type: 'POST',
-                success: function() {
+                success: function () {
                     location.reload();
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     console.error('Error clearing cart:', xhr);
                 }
             });
@@ -412,15 +446,15 @@
         }
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         let initialItemCount = /*[[${cartItems != null ? cartItems.size() : 0}]]*/ 0;
         checkCartEmpty(initialItemCount);
 
-        $('p[id^="unit-price-"]').each(function() {
+        $('p[id^="unit-price-"]').each(function () {
             let price = parseFloat($(this).text());
             $(this).text(formatPrice(price));
         });
-        $('div[id^="price-"]').each(function() {
+        $('div[id^="price-"]').each(function () {
             let price = parseFloat($(this).text());
             $(this).text(formatPrice(price));
         });
@@ -440,14 +474,14 @@
         updateCartSummary();
         updateCheckoutModal();
 
-        $('#select-all').on('change', function() {
+        $('#select-all').on('change', function () {
             let isChecked = $(this).is(':checked');
             $('input[id^="item-checkbox-"]').prop('checked', isChecked);
             updateCartSummary();
             updateCheckoutModal();
         });
 
-        $('input[id^="item-checkbox-"]').on('change', function() {
+        $('input[id^="item-checkbox-"]').on('change', function () {
             let allChecked = $('input[id^="item-checkbox-"]').length === $('input[id^="item-checkbox-"]:checked').length;
             $('#select-all').prop('checked', allChecked);
             updateCartSummary();
@@ -455,7 +489,7 @@
         });
 
         // Xử lý khi mở modal
-        $('#checkoutModal').on('show.bs.modal', function() {
+        $('#checkoutModal').on('show.bs.modal', function () {
             updateCheckoutModal();
 
             // Kiểm tra nếu không có sản phẩm nào được chọn
@@ -477,7 +511,7 @@
         });
 
         // Xử lý sự kiện chọn Tỉnh/Thành phố
-        $('#province').on('change', function() {
+        $('#province').on('change', function () {
             let provinceCode = $(this).val();
             if (provinceCode) {
                 loadDistricts(provinceCode);
@@ -488,7 +522,7 @@
         });
 
         // Xử lý sự kiện chọn Quận/Huyện
-        $('#district').on('change', function() {
+        $('#district').on('change', function () {
             let districtCode = $(this).val();
             if (districtCode) {
                 loadWards(districtCode);
@@ -498,7 +532,7 @@
         });
 
         // Xử lý xác nhận đơn hàng
-        $('#confirm-order').on('click', function() {
+        $('#confirm-order').on('click', function () {
             let customerName = $('#customer-name').val().trim();
             let customerPhone = $('#customer-phone').val().trim();
             let province = $('#province').val();
@@ -550,7 +584,7 @@
             // Thu thập danh sách sản phẩm đã chọn
             let selectedItems = [];
             let totalAmount = 0;
-            $('input[id^="item-checkbox-"]:checked').each(function() {
+            $('input[id^="item-checkbox-"]:checked').each(function () {
                 let productId = $(this).data('product-id');
                 let unitId = $(this).data('unit-id');
                 let quantity = parseInt($('#quantity-' + productId + '-' + unitId).val());
@@ -583,7 +617,7 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(orderData),
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success && response.checkoutUrl) {
                             // Chuyển hướng đến URL thanh toán của PayOS
                             window.location.href = response.checkoutUrl;
@@ -591,7 +625,7 @@
                             alert('Không thể tạo link thanh toán: ' + response.message);
                         }
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         console.error('Error creating PayOS payment:', xhr);
                         alert('Đã có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.');
                     }
@@ -603,7 +637,7 @@
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(orderData),
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
                             alert('Đặt hàng thành công!');
                             window.location.href = '/order-confirmation';
@@ -611,7 +645,7 @@
                             alert('Đặt hàng thất bại: ' + response.message);
                         }
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         console.error('Error placing order:', xhr);
                         alert('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
                     }
@@ -621,18 +655,19 @@
             $('#checkoutModal').modal('hide');
         });
     });
+
     // Hàm lấy danh sách Tỉnh/Thành phố
     function loadProvinces() {
         $.ajax({
             url: 'https://provinces.open-api.vn/api/p/',
             method: 'GET',
-            success: function(data) {
+            success: function (data) {
                 $('#province').empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
-                data.forEach(function(province) {
+                data.forEach(function (province) {
                     $('#province').append(`<option value="${province.code}" data-name="${province.name}">${province.name}</option>`);
                 });
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error loading provinces:', xhr);
             }
         });
@@ -643,14 +678,14 @@
         $.ajax({
             url: `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
             method: 'GET',
-            success: function(data) {
+            success: function (data) {
                 $('#district').empty().append('<option value="">Chọn Quận/Huyện</option>').prop('disabled', false);
-                data.districts.forEach(function(district) {
+                data.districts.forEach(function (district) {
                     $('#district').append(`<option value="${district.code}" data-name="${district.name}">${district.name}</option>`);
                 });
                 $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error loading districts:', xhr);
             }
         });
@@ -661,13 +696,13 @@
         $.ajax({
             url: `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
             method: 'GET',
-            success: function(data) {
+            success: function (data) {
                 $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', false);
-                data.wards.forEach(function(ward) {
+                data.wards.forEach(function (ward) {
                     $('#ward').append(`<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`);
                 });
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error loading wards:', xhr);
             }
         });

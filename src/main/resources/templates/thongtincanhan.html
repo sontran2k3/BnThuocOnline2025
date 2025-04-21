@@ -160,14 +160,50 @@
                             <a href="#">Đã hủy</a>
                             <a href="#">Trả hàng</a>
                         </div>
-                        <div class="no-orders text-center">
-                            <img src="/image/donhang.png" alt="Không có đơn hàng" class="no-orders-img">
-                            <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
-                            <p class="mb-3">Cùng khám phá hàng ngàn sản phẩm tại Nhà thuốc FPT Long Châu ngay hôm nay!</p>
-                            <button class="btn btn-primary">Khám phá ngay</button>
+
+                        <!-- Danh sách đơn hàng -->
+                        <div class="order-list">
+                            <!-- Kiểm tra nếu không có đơn hàng -->
+                            <div th:if="${#lists.isEmpty(orders)}" class="no-orders text-center">
+                                <img src="/image/donhang.png" alt="Không có đơn hàng" class="no-orders-img">
+                                <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
+                                <p class="mb-3">Cùng khám phá hàng ngàn sản phẩm ngay hôm nay!</p>
+                                <button class="btn btn-primary">Khám phá ngay</button>
+                            </div>
+
+                            <!-- Hiển thị danh sách đơn hàng -->
+                            <div th:each="order : ${orders}" class="order-item">
+                                <div class="order-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Đơn hàng <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}"></span> - Giao hàng tận nơi</strong>
+                                        <span class="order-id ms-2" th:text="'#' + ${order.id}"></span>
+                                    </div>
+                                    <span class="order-status text-danger" th:text="${order.status}"></span>
+                                </div>
+                                <div class="order-body mt-2">
+                                    <!-- Lặp qua các sản phẩm trong đơn hàng -->
+                                    <div th:each="item : ${order.items}" class="order-product d-flex align-items-center">
+                                        <img th:src="${item.productImage}" alt="Hình sản phẩm" class="product-img me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <div class="product-info flex-grow-1">
+                                            <p class="mb-1" th:text="${item.productName}"></p>
+                                            <small class="text-muted" th:text="${item.description}"></small>
+                                        </div>
+                                        <div class="product-price text-end">
+                                            <p class="mb-1" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + 'đ'"></p>
+                                            <p class="text-muted" th:text="'x' + ${item.quantity}"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="order-footer d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <strong>Tổng tiền: </strong>
+                                        <span th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + 'đ'"></span>
+                                    </div>
+                                    <button class="btn btn-primary btn-reorder">Mua lại</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
 
                     <div class="card-content" id="addresses-content" style="display: none;">
                         <div class="d-flex justify-content-end mb-3">
