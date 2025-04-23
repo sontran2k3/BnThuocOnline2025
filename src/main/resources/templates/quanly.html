@@ -8,14 +8,23 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ExcelJS và jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+    <!-- Toastify -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
     <link rel="stylesheet" href="" th:href="@{/css/quanly.css}">
 </head>
+
 <body>
 <!-- Thanh điều hướng (Sidebar) -->
 <div class="sidebar" id="sidebar">
@@ -28,7 +37,7 @@
     <a href="#users" class="nav-link"><i class="fas fa-users"></i> <span>Quản lý người dùng</span></a>
     <a href="#inventory" class="nav-link"><i class="fas fa-warehouse"></i> <span>Quản lý kho</span></a>
     <a href="#reviews" class="nav-link"><i class="fas fa-star"></i> <span>Quản lý đánh giá</span></a>
-    <a href="#logout" class="nav-link mt-5"><i class="fas fa-sign-out-alt"></i> <span>Đăng xuất</span></a>
+    <a href="#logout" class="nav-link mt-5" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> <span>Đăng xuất</span></a>
 </div>
 
 <!-- Nội dung chính -->
@@ -46,8 +55,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="#">Đăng xuất</a></li>
-                        </ul>
+                            <li><a class="dropdown-item" href="#" onclick="handleAdminLogout()">Đăng xuất</a></li>                        </ul>
                     </li>
                 </ul>
             </div>
@@ -1431,6 +1439,75 @@
 <script src="js/users.js" defer></script>
 <script src="js/orders.js" defer></script>
 <script src="js/dashboard.js" defer></script>
+<script>
+    // Hàm xử lý đăng xuất cho admin
+    function handleAdminLogout() {
+        Swal.fire({
+            title: 'Bạn có chắc chắn muốn đăng xuất?',
+            text: "Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Đăng xuất',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Lấy CSRF token và header từ meta tag
+                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
+                // Gửi yêu cầu đăng xuất qua AJAX
+                fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token // Thêm CSRF token vào header
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Xóa token trong localStorage (nếu có)
+                            localStorage.removeItem('token');
+
+                            // Hiển thị thông báo đăng xuất thành công bằng Toastify
+                            Toastify({
+                                text: "Đăng xuất thành công.",
+                                duration: 2000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#28a745",
+                                stopOnFocus: true
+                            }).showToast();
+
+                            // Chuyển hướng về trang chủ sau khi toast hiển thị
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 1000);
+                        } else {
+                            // Lấy thông tin lỗi từ response
+                            response.text().then(errorMessage => {
+                                Swal.fire({
+                                    title: 'Lỗi!',
+                                    text: errorMessage || 'Đăng xuất không thành công. Vui lòng thử lại.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Lỗi!',
+                            text: 'Có lỗi xảy ra khi đăng xuất: ' + error.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            }
+        });
+    }
+</script>
 </body>
 </html>

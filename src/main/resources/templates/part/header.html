@@ -1,12 +1,17 @@
- <div th:fragment="header">
-     <link rel="stylesheet" href="" th:href="@{/css/header.css}">
-     <div th:replace="~{iconssvg/icons-fragment :: icons}"></div>
-     <meta name="_csrf" th:content="${_csrf.token}" />
-     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-     <!-- Thêm SweetAlert2 CDN -->
-     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<div th:fragment="header">
+    <link rel="stylesheet" href="" th:href="@{/css/header.css}">
+    <div th:replace="~{iconssvg/icons-fragment :: icons}"></div>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <!-- Thêm các thư viện cần thiết -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+    <!-- Thêm Toastify -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-     <div class="header-container">
+    <div class="header-container">
         <div class="container-fluid">
             <div class="row align-items-center py-3">
                 <!-- Logo và tên thương hiệu -->
@@ -83,7 +88,7 @@
                                 <a href="/cart" class="btn btn-primary w-100 mt-2">Xem giỏ hàng</a>
                             </div>
                         </div>
-                        <!-- Sửa liên kết đăng xuất thành onclick để gọi hàm JavaScript -->
+                        <!-- Liên kết đăng xuất -->
                         <a href="#" th:if="${loggedInUser != null}" class="ms-2" onclick="handleLogout()">
                             <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#logout"></use></svg>
                         </a>
@@ -119,16 +124,20 @@
                         <div class="tab-content" id="loginTabContent">
                             <!-- Tab Đăng nhập -->
                             <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-                                <form action="/login" method="post">
+                                <form id="loginForm" method="post">
                                     <div class="mb-3 text-start">
                                         <label for="loginPhone" class="form-label">Số điện thoại</label>
-                                        <input type="tel" class="form-control" id="loginPhone" name="phone" placeholder="Nhập số điện thoại" required>
+                                        <input type="tel" class="form-control" id="loginPhone" name="phone" placeholder="Nhập số điện thoại" required pattern="[0-9]{10}">
                                     </div>
                                     <div class="mb-3 text-start">
                                         <label for="loginPassword" class="form-label">Mật khẩu</label>
                                         <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Nhập mật khẩu" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-login w-100">Đăng nhập</button>
+                                    <div class="mb-3">
+                                        <div id="loginRecaptcha" class="g-recaptcha"></div>
+                                        <small class="text-muted">Vui lòng xác minh reCAPTCHA để tiếp tục.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-login w-100" id="loginButton" disabled>Đăng nhập</button>
                                 </form>
                                 <p class="text-muted mt-3">Hoặc đăng nhập bằng:</p>
                                 <a href="/oauth2/authorization/google" class="btn btn-light btn-login btn-google d-flex align-items-center justify-content-center mt-2">
@@ -141,10 +150,10 @@
 
                             <!-- Tab Đăng ký -->
                             <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-                                <form action="/register" method="post">
+                                <form id="registerForm" method="post">
                                     <div class="mb-3 text-start">
                                         <label for="registerPhone" class="form-label">Số điện thoại</label>
-                                        <input type="tel" class="form-control" id="registerPhone" name="phone" placeholder="Nhập số điện thoại" required>
+                                        <input type="tel" class="form-control" id="registerPhone" name="phone" placeholder="Nhập số điện thoại" required pattern="[0-9]{10}">
                                     </div>
                                     <div class="mb-3 text-start">
                                         <label for="registerPassword" class="form-label">Mật khẩu</label>
@@ -154,7 +163,11 @@
                                         <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
                                         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-login w-100">Đăng ký</button>
+                                    <div class="mb-3">
+                                        <div id="registerRecaptcha" class="g-recaptcha"></div>
+                                        <small class="text-muted">Vui lòng xác minh reCAPTCHA để tiếp tục.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-login w-100" id="registerButton" disabled>Đăng ký</button>
                                 </form>
                                 <p class="text-muted mt-3">Hoặc đăng ký bằng:</p>
                                 <a href="/oauth2/authorization/google" class="btn btn-light btn-login btn-google d-flex align-items-center justify-content-center mt-2">
@@ -172,8 +185,6 @@
                 </div>
             </div>
         </div>
-
-
 
         <!-- Offcanvas giỏ hàng -->
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel">
@@ -223,31 +234,31 @@
             </div>
         </div>
     </div>
+
     <script>
-        function removeFromCart(cartItemId) {
-            $.ajax({
-                url: '/cart/remove',
-                type: 'POST',
-                data: { cartItemId: cartItemId },
-                success: function(response) {
-                    alert('Sản phẩm đã được xóa khỏi giỏ hàng!');
-                    location.reload(); // Tải lại trang để cập nhật giỏ hàng
-                },
-                error: function(xhr, status, error) {
-                    console.error('Lỗi khi xóa sản phẩm:', error);
-                    alert('Đã xảy ra lỗi khi xóa sản phẩm!');
-                }
-            });
+        // Biến để lưu trữ widget ID của reCAPTCHA
+        let loginRecaptchaId;
+        let registerRecaptchaId;
+
+        // Hàm callback khi reCAPTCHA được hoàn thành
+        function onRecaptchaSuccess(widgetId) {
+            if (widgetId === loginRecaptchaId) {
+                document.getElementById('loginButton').disabled = false;
+            } else if (widgetId === registerRecaptchaId) {
+                document.getElementById('registerButton').disabled = false;
+            }
         }
-        $(document).ready(function() {
-            $.ajax({
-                url: '/cart/count',
-                type: 'GET',
-                success: function(response) {
-                    updateCartCount(response.cartItemCount);
-                }
-            });
-        });
+
+        // Hàm callback khi reCAPTCHA hết hạn
+        function onRecaptchaExpired(widgetId) {
+            if (widgetId === loginRecaptchaId) {
+                document.getElementById('loginButton').disabled = true;
+            } else if (widgetId === registerRecaptchaId) {
+                document.getElementById('registerButton').disabled = true;
+            }
+        }
+
+        // Định nghĩa hàm handleLogout ở phạm vi toàn cục
         function handleLogout() {
             Swal.fire({
                 title: 'Bạn có chắc chắn muốn đăng xuất?',
@@ -261,34 +272,56 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Lấy CSRF token và header từ meta tags
-                    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-                    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                    const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+                    // Kiểm tra xem token và header có tồn tại không
+                    if (!token || !header) {
+                        Swal.fire({
+                            title: 'Lỗi!',
+                            text: 'Không tìm thấy CSRF token. Vui lòng tải lại trang và thử lại.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
 
                     // Gửi yêu cầu đăng xuất qua AJAX
                     fetch('/logout', {
                         method: 'POST',
                         headers: {
-                            [header]: token // Gửi CSRF token trong header
+                            [header]: token, // Gửi CSRF token trong header
+                            'Content-Type': 'application/json'
                         }
                     })
                         .then(response => {
                             if (response.ok) {
-                                // Hiển thị thông báo đăng xuất thành công
-                                Swal.fire({
-                                    title: 'Đăng xuất thành công!',
-                                    text: 'Bạn đã đăng xuất khỏi hệ thống.',
-                                    icon: 'success',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    // Chuyển hướng về trang chủ
+                                // Xóa token trong localStorage (nếu có)
+                                localStorage.removeItem('token');
+
+                                // Hiển thị thông báo đăng xuất thành công bằng Toastify
+                                Toastify({
+                                    text: "Đăng xuất thành công!",
+                                    duration: 2000, // Thời gian hiển thị (2 giây)
+                                    gravity: "top", // Vị trí: trên cùng
+                                    position: "right", // Căn phải
+                                    backgroundColor: "#28a745", // Màu nền xanh lá (thành công)
+                                    stopOnFocus: true // Dừng thời gian khi di chuột vào toast
+                                }).showToast();
+
+                                // Chuyển hướng về trang chủ sau khi toast hiển thị
+                                setTimeout(() => {
                                     window.location.href = '/';
-                                });
+                                }, 1000); // Chuyển hướng sau 1 giây
                             } else {
-                                Swal.fire({
-                                    title: 'Lỗi!',
-                                    text: 'Đăng xuất không thành công. Vui lòng thử lại.',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
+                                // Lấy thông tin lỗi từ response
+                                response.text().then(errorMessage => {
+                                    Swal.fire({
+                                        title: 'Lỗi!',
+                                        text: errorMessage || 'Đăng xuất không thành công. Vui lòng thử lại.',
+                                        icon: 'error',
+                                        confirmButtonText: 'OK'
+                                    });
                                 });
                             }
                         })
@@ -296,7 +329,7 @@
                             console.error('Error:', error);
                             Swal.fire({
                                 title: 'Lỗi!',
-                                text: 'Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.',
+                                text: 'Có lỗi xảy ra khi đăng xuất: ' + error.message,
                                 icon: 'error',
                                 confirmButtonText: 'OK'
                             });
@@ -305,30 +338,191 @@
             });
         }
 
-        function removeFromCart(cartItemId) {
-            $.ajax({
-                url: '/cart/remove',
-                type: 'POST',
-                data: { cartItemId: cartItemId },
-                success: function(response) {
-                    alert('Sản phẩm đã được xóa khỏi giỏ hàng!');
-                    location.reload(); // Tải lại trang để cập nhật giỏ hàng
-                },
-                error: function(xhr, status, error) {
-                    console.error('Lỗi khi xóa sản phẩm:', error);
-                    alert('Đã xảy ra lỗi khi xóa sản phẩm!');
+        $(document).ready(function() {
+            // Render reCAPTCHA khi modal được mở
+            $('#loginModal').on('shown.bs.modal', function () {
+                // Render reCAPTCHA cho tab Đăng nhập
+                loginRecaptchaId = grecaptcha.render('loginRecaptcha', {
+                    'sitekey': '6Lf6DyIrAAAAAP2Za-ymNYkvOAh0Qla_6KLJxVZp',
+                    'callback': function() { onRecaptchaSuccess(loginRecaptchaId); },
+                    'expired-callback': function() { onRecaptchaExpired(loginRecaptchaId); }
+                });
+
+                // Render reCAPTCHA cho tab Đăng ký
+                registerRecaptchaId = grecaptcha.render('registerRecaptcha', {
+                    'sitekey': '6Lf6DyIrAAAAAP2Za-ymNYkvOAh0Qla_6KLJxVZp',
+                    'callback': function() { onRecaptchaSuccess(registerRecaptchaId); },
+                    'expired-callback': function() { onRecaptchaExpired(registerRecaptchaId); }
+                });
+            });
+
+            // Reset reCAPTCHA khi modal đóng
+            $('#loginModal').on('hidden.bs.modal', function () {
+                grecaptcha.reset(loginRecaptchaId);
+                grecaptcha.reset(registerRecaptchaId);
+                document.getElementById('loginButton').disabled = true;
+                document.getElementById('registerButton').disabled = true;
+                // Reset các trường nhập liệu
+                $('#loginForm')[0].reset();
+                $('#registerForm')[0].reset();
+            });
+
+            $.ajaxSetup({
+                beforeSend: function(xhr) {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
                 }
             });
-        }
 
-        $(document).ready(function() {
+            // Xử lý form đăng nhập
+            $('#loginForm').submit(function(event) {
+                event.preventDefault();
+                var phone = $('#loginPhone').val();
+                var password = $('#loginPassword').val();
+                var recaptchaResponse = grecaptcha.getResponse(loginRecaptchaId);
+
+                if (!recaptchaResponse) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng xác minh reCAPTCHA!'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    url: '/api/login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        phoneNumber: phone,
+                        password: password,
+                        recaptchaResponse: recaptchaResponse
+                    }),
+                    success: function(response) {
+                        localStorage.setItem('token', response.token);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: 'Đăng nhập thành công!',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.href = '/';
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: xhr.responseJSON?.error || 'Đăng nhập thất bại!'
+                        });
+                    }
+                });
+            });
+
+            // Xử lý form đăng ký
+            $('#registerForm').submit(function(event) {
+                event.preventDefault();
+                var phone = $('#registerPhone').val();
+                var password = $('#registerPassword').val();
+                var confirmPassword = $('#confirmPassword').val();
+                var recaptchaResponse = grecaptcha.getResponse(registerRecaptchaId);
+
+                if (password !== confirmPassword) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Mật khẩu xác nhận không khớp!'
+                    });
+                    return;
+                }
+
+                if (!recaptchaResponse) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng xác minh reCAPTCHA!'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    url: '/api/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        phoneNumber: phone,
+                        password: password,
+                        recaptchaResponse: recaptchaResponse
+                    }),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: 'Đăng ký thành công! Vui lòng đăng nhập.',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            $('#login-tab').click(); // Chuyển về tab đăng nhập
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: xhr.responseJSON?.error || 'Đăng ký thất bại!'
+                        });
+                    }
+                });
+            });
+
+            // Xử lý xóa sản phẩm khỏi giỏ hàng
+            function removeFromCart(cartItemId) {
+                $.ajax({
+                    url: '/cart/remove',
+                    type: 'POST',
+                    data: { cartItemId: cartItemId },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: 'Sản phẩm đã được xóa khỏi giỏ hàng!',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload(); // Tải lại trang để cập nhật giỏ hàng
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Lỗi khi xóa sản phẩm:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: 'Đã xảy ra lỗi khi xóa sản phẩm!',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            // Cập nhật số lượng giỏ hàng khi tải trang
             $.ajax({
                 url: '/cart/count',
                 type: 'GET',
                 success: function(response) {
                     updateCartCount(response.cartItemCount);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi lấy số lượng giỏ hàng:', error);
                 }
             });
+
+            // Hàm cập nhật số lượng giỏ hàng trên giao diện
+            function updateCartCount(count) {
+                $('.cart-count').text(count);
+            }
         });
+
+
     </script>
 </div>

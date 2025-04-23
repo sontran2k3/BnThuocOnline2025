@@ -22,6 +22,7 @@ public class UserService {
         this.userAddressRepository = userAddressRepository;
     }
 
+
     public User saveOrUpdateUser(String providerId, String name, String picture, String email, String provider) {
         Optional<User> existingUser;
         if ("google".equals(provider)) {
@@ -105,5 +106,31 @@ public class UserService {
         userAddressRepository.deleteById(addressId);
     }
 
+    // Đăng ký người dùng mới bằng số điện thoại
+    public User registerUser(String phoneNumber, String password) throws Exception {
+        if (userRepository.findByPhoneNumber(phoneNumber).isPresent()) {
+            throw new Exception("Số điện thoại đã được đăng ký!");
+        }
+        User newUser = new User();
+        newUser.setPhoneNumber(phoneNumber);
+        newUser.setPassword(passwordEncoder.encode(password));
+        newUser.setRole("USER");
+        return userRepository.save(newUser);
+    }
+
+    // Xác thực người dùng bằng số điện thoại và mật khẩu
+    public User authenticateUser(String phoneNumber, String password) throws Exception {
+        Optional<User> userOpt = userRepository.findByPhoneNumber(phoneNumber);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return user;
+            } else {
+                throw new Exception("Mật khẩu không đúng!");
+            }
+        } else {
+            throw new Exception("Số điện thoại không tồn tại!");
+        }
+    }
 
 }

@@ -22,6 +22,8 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
+
+    @Autowired
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final GioHangService gioHangService;
@@ -43,6 +45,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/dangkyaccount",
                                 "/register",
+                                "/api/register",
                                 "/save-profile",
                                 "/update-price",
                                 "/api/quanly/**",
@@ -77,6 +80,7 @@ public class SecurityConfig {
                                 "/save-profile",
                                 "/products",
                                 "/api/login",
+                                "/api/register",
                                 "/thanhtoan/payos", // Nếu gửi JSON từ frontend
                                 "/thanhtoan/payos/webhook", // Webhook từ PayOS
                                 "/submit-review",
