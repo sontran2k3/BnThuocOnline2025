@@ -3,7 +3,9 @@ package com.example.BnThuocOnline2025.controller;
 import com.example.BnThuocOnline2025.dto.CartItemDTO;
 import com.example.BnThuocOnline2025.model.Cart;
 import com.example.BnThuocOnline2025.model.CartItem;
+import com.example.BnThuocOnline2025.model.DonViTinh;
 import com.example.BnThuocOnline2025.model.User;
+import com.example.BnThuocOnline2025.repository.DonViTinhRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
 import com.example.BnThuocOnline2025.service.GioHangService;
 import org.slf4j.Logger;
@@ -20,10 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -37,6 +36,9 @@ public class GioHangController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DonViTinhRepository donViTinhRepository;
 
 
 
@@ -175,27 +177,32 @@ public class GioHangController {
             Cart cart = gioHangService.getOrCreateCart(user, session);
             List<CartItem> cartItems = gioHangService.getCartItems(user, session);
 
-            // Tính giá từng sản phẩm và tổng tiền
-            BigDecimal cartTotal = BigDecimal.ZERO;
+            // Tính giá từng sản phẩm, tổng tiền gốc và tổng tiền sau giảm giá
+            BigDecimal originalCartTotal = BigDecimal.ZERO; // Tổng tiền gốc
+            BigDecimal cartTotal = BigDecimal.ZERO; // Tổng tiền sau giảm giá
             BigDecimal directDiscount = BigDecimal.ZERO; // Giảm giá trực tiếp
             BigDecimal voucherDiscount = BigDecimal.ZERO; // Giảm giá voucher (hiện tại là 0)
 
             for (CartItem item : cartItems) {
                 BigDecimal unitPrice = item.getDonViTinh().getGia(); // Giá gốc
-                BigDecimal discountedPrice = item.getPrice(); // Giá sau giảm giá (từ getDiscountedPrice)
+                BigDecimal discountedPrice = item.getPrice(); // Giá sau giảm giá
                 BigDecimal quantity = new BigDecimal(item.getQuantity());
 
-                // Tính tổng giá của sản phẩm (sau giảm giá)
+                // Tính tổng giá gốc của sản phẩm
+                BigDecimal itemOriginalTotalPrice = unitPrice.multiply(quantity);
+                // Tính tổng giá sau giảm giá của sản phẩm
                 BigDecimal itemTotalPrice = discountedPrice.multiply(quantity);
                 item.setItemTotalPrice(itemTotalPrice);
+
+                // Cộng vào tổng tiền gốc và tổng tiền sau giảm giá
+                originalCartTotal = originalCartTotal.add(itemOriginalTotalPrice);
+                cartTotal = cartTotal.add(itemTotalPrice);
 
                 // Tính giảm giá trực tiếp cho sản phẩm này
                 if (item.getDonViTinh().hasDiscount()) {
                     BigDecimal discountAmount = (unitPrice.subtract(discountedPrice)).multiply(quantity);
                     directDiscount = directDiscount.add(discountAmount);
                 }
-
-                cartTotal = cartTotal.add(itemTotalPrice);
             }
 
             // Tính tổng tiết kiệm
@@ -207,6 +214,7 @@ public class GioHangController {
             model.addAttribute("loggedInUser", user);
             model.addAttribute("cartItems", cartItems);
             model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+            model.addAttribute("originalCartTotal", originalCartTotal); // Thêm tổng tiền gốc
             model.addAttribute("cartTotal", cartTotal);
             model.addAttribute("directDiscount", directDiscount);
             model.addAttribute("voucherDiscount", voucherDiscount);
@@ -217,6 +225,7 @@ public class GioHangController {
             model.addAttribute("error", "Không thể tải giỏ hàng. Vui lòng thử lại sau.");
             model.addAttribute("cartItems", Collections.emptyList());
             model.addAttribute("cartItemCount", 0);
+            model.addAttribute("originalCartTotal", BigDecimal.ZERO); // Thêm tổng tiền gốc
             model.addAttribute("cartTotal", BigDecimal.ZERO);
             model.addAttribute("directDiscount", BigDecimal.ZERO);
             model.addAttribute("voucherDiscount", BigDecimal.ZERO);
@@ -232,5 +241,30 @@ public class GioHangController {
             return userRepository.findByEmail(userDetails.getUsername()).orElse(null);
         }
         return null;
+    }
+
+    @GetMapping("/get-unit-price")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getUnitPrice(
+            @RequestParam("productId") int productId,
+            @RequestParam("donViTinhId") int donViTinhId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Optional<DonViTinh> donViTinhOpt = donViTinhRepository.findById(donViTinhId);
+            if (donViTinhOpt.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Đơn vị tính không tồn tại");
+                return ResponseEntity.badRequest().body(response);
+            }
+            DonViTinh donViTinh = donViTinhOpt.get();
+            response.put("success", true);
+            response.put("originalPrice", donViTinh.getGia());
+            response.put("discountedPrice", donViTinh.getDiscountedPrice());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
