@@ -281,25 +281,26 @@
     }
 
     function updateCartSummary() {
-        let originalTotal = 0; // Tổng tiền gốc
+        let originalTotal = 0;
         let directDiscount = 0;
         let voucherDiscount = parseFloat($('#voucher-discount').text().replace(/[^0-9]/g, '')) || 0;
 
+        console.log('Updating cart summary...');
         $('input[id^="item-checkbox-"]').each(function() {
             if ($(this).is(':checked')) {
                 let productId = $(this).data('product-id');
                 let unitId = $(this).data('unit-id');
                 let quantity = parseInt($('#quantity-' + productId + '-' + unitId).val());
 
-                // Lấy giá gốc từ server
                 $.ajax({
                     url: '/cart/get-unit-price',
                     type: 'GET',
-                    async: false, // Đồng bộ để đảm bảo giá được lấy trước khi tính toán
+                    async: false,
                     data: { productId: productId, donViTinhId: unitId },
                     success: function(response) {
-                        let originalUnitPrice = parseFloat(response.originalPrice); // Giá gốc
-                        let discountedUnitPrice = parseFloat(response.discountedPrice); // Giá sau giảm giá
+                        console.log('Unit price response:', response);
+                        let originalUnitPrice = parseFloat(response.originalPrice);
+                        let discountedUnitPrice = parseFloat(response.discountedPrice);
                         let itemOriginalTotalPrice = originalUnitPrice * quantity;
                         let itemTotalPrice = discountedUnitPrice * quantity;
 
@@ -322,7 +323,6 @@
         $('#total-savings').text(formatPrice(totalSavings));
         $('#final-total').text(formatPrice(finalTotal));
     }
-
 
 
     function updateCheckoutModal() {

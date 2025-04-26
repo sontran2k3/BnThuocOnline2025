@@ -13,16 +13,15 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
+    private String SECRET_KEY = "L2cUlPEXrmxeuzaYhNcJWicZh6sME8eFQPmnsUWeyJbSVnq7DMjt8CYA5yhbi1cg\n";
+    private long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24 giờ
 
-    private String SECRET_KEY = "L2cUlPEXrmxeuzaYhNcJWicZh6sME8eFQPmnsUWeyJbSVnq7DMjt8CYA5yhbi1cg\n"; // Thay bằng một khóa bí mật mạnh hơn
-    private long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 giờ
-
-    // Tạo JWT token
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());
-        claims.put("email", user.getEmail());
-        return createToken(claims, user.getEmail());
+        String subject = user.getEmail() != null ? user.getEmail() : user.getPhoneNumber();
+        claims.put("subject", subject);
+        return createToken(claims, subject);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -35,14 +34,12 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Xác thực token
-    public Boolean validateToken(String token, String email) {
-        final String extractedEmail = extractEmail(token);
-        return (extractedEmail.equals(email) && !isTokenExpired(token));
+    public Boolean validateToken(String token, String subject) {
+        final String extractedSubject = extractSubject(token);
+        return (extractedSubject.equals(subject) && !isTokenExpired(token));
     }
 
-    // Trích xuất thông tin từ token
-    public String extractEmail(String token) {
+    public String extractSubject(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 

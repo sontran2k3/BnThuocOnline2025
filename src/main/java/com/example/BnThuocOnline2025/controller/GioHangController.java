@@ -1,19 +1,19 @@
 package com.example.BnThuocOnline2025.controller;
 
 import com.example.BnThuocOnline2025.dto.CartItemDTO;
-import com.example.BnThuocOnline2025.model.Cart;
-import com.example.BnThuocOnline2025.model.CartItem;
-import com.example.BnThuocOnline2025.model.DonViTinh;
-import com.example.BnThuocOnline2025.model.User;
+import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.repository.DonViTinhRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
 import com.example.BnThuocOnline2025.service.GioHangService;
+import com.example.BnThuocOnline2025.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,6 +36,9 @@ public class GioHangController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private DonViTinhRepository donViTinhRepository;
@@ -161,60 +164,75 @@ public class GioHangController {
     public String viewCart(
             @AuthenticationPrincipal Object principal,
             HttpSession session, Model model) {
-        User user = null;
+        User loggedInUser = null;
+
+        // Kiểm tra đăng nhập qua OAuth2 hoặc UserDetails
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
             org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) principal;
-            user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+            Optional<User> userOpt = userRepository.findByEmail(userDetails.getUsername());
+            if (userOpt.isEmpty()) {
+                userOpt = userRepository.findByPhoneNumber(userDetails.getUsername());
+            }
+            loggedInUser = userOpt.orElse(null);
         } else if (principal instanceof OAuth2User) {
             OAuth2User oAuth2User = (OAuth2User) principal;
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
-            user = "google".equals(provider) ? userRepository.findByGoogleId(providerId).orElse(null)
-                    : userRepository.findByFacebookId(providerId).orElse(null);
+            Optional<User> userOpt = "google".equals(provider) ? userRepository.findByGoogleId(providerId) : userRepository.findByFacebookId(providerId);
+            loggedInUser = userOpt.orElse(null);
+        } else {
+            // Kiểm tra đăng nhập qua SecurityContextHolder
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String principalName = authentication.getName();
+                Optional<User> userOpt = userRepository.findByPhoneNumber(principalName);
+                if (userOpt.isEmpty()) {
+                    userOpt = userRepository.findByEmail(principalName);
+                }
+                loggedInUser = userOpt.orElse(null);
+            }
         }
 
         try {
-            Cart cart = gioHangService.getOrCreateCart(user, session);
-            List<CartItem> cartItems = gioHangService.getCartItems(user, session);
+            Cart cart = gioHangService.getOrCreateCart(loggedInUser, session);
+            List<CartItem> cartItems = gioHangService.getCartItems(loggedInUser, session);
 
             // Tính giá từng sản phẩm, tổng tiền gốc và tổng tiền sau giảm giá
-            BigDecimal originalCartTotal = BigDecimal.ZERO; // Tổng tiền gốc
-            BigDecimal cartTotal = BigDecimal.ZERO; // Tổng tiền sau giảm giá
-            BigDecimal directDiscount = BigDecimal.ZERO; // Giảm giá trực tiếp
-            BigDecimal voucherDiscount = BigDecimal.ZERO; // Giảm giá voucher (hiện tại là 0)
+            BigDecimal originalCartTotal = BigDecimal.ZERO;
+            BigDecimal cartTotal = BigDecimal.ZERO;
+            BigDecimal directDiscount = BigDecimal.ZERO;
+            BigDecimal voucherDiscount = BigDecimal.ZERO;
 
             for (CartItem item : cartItems) {
-                BigDecimal unitPrice = item.getDonViTinh().getGia(); // Giá gốc
-                BigDecimal discountedPrice = item.getPrice(); // Giá sau giảm giá
+                BigDecimal unitPrice = item.getDonViTinh().getGia();
+                BigDecimal discountedPrice = item.getPrice();
                 BigDecimal quantity = new BigDecimal(item.getQuantity());
 
-                // Tính tổng giá gốc của sản phẩm
                 BigDecimal itemOriginalTotalPrice = unitPrice.multiply(quantity);
-                // Tính tổng giá sau giảm giá của sản phẩm
                 BigDecimal itemTotalPrice = discountedPrice.multiply(quantity);
                 item.setItemTotalPrice(itemTotalPrice);
 
-                // Cộng vào tổng tiền gốc và tổng tiền sau giảm giá
                 originalCartTotal = originalCartTotal.add(itemOriginalTotalPrice);
                 cartTotal = cartTotal.add(itemTotalPrice);
 
-                // Tính giảm giá trực tiếp cho sản phẩm này
                 if (item.getDonViTinh().hasDiscount()) {
                     BigDecimal discountAmount = (unitPrice.subtract(discountedPrice)).multiply(quantity);
                     directDiscount = directDiscount.add(discountAmount);
                 }
             }
 
-            // Tính tổng tiết kiệm
             BigDecimal totalSavings = directDiscount.add(voucherDiscount);
-
-            // Tính tổng thanh toán
             BigDecimal finalTotal = cartTotal.subtract(totalSavings);
 
-            model.addAttribute("loggedInUser", user);
+            // Thêm thông tin vào model
+            model.addAttribute("loggedInUser", loggedInUser);
+            if (loggedInUser != null) {
+                List<UserAddress> addresses = userService.getAddressesByUserId(loggedInUser.getId());
+                model.addAttribute("addresses", addresses);
+            }
             model.addAttribute("cartItems", cartItems);
             model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-            model.addAttribute("originalCartTotal", originalCartTotal); // Thêm tổng tiền gốc
+            model.addAttribute("originalCartTotal", originalCartTotal);
             model.addAttribute("cartTotal", cartTotal);
             model.addAttribute("directDiscount", directDiscount);
             model.addAttribute("voucherDiscount", voucherDiscount);
@@ -225,7 +243,7 @@ public class GioHangController {
             model.addAttribute("error", "Không thể tải giỏ hàng. Vui lòng thử lại sau.");
             model.addAttribute("cartItems", Collections.emptyList());
             model.addAttribute("cartItemCount", 0);
-            model.addAttribute("originalCartTotal", BigDecimal.ZERO); // Thêm tổng tiền gốc
+            model.addAttribute("originalCartTotal", BigDecimal.ZERO);
             model.addAttribute("cartTotal", BigDecimal.ZERO);
             model.addAttribute("directDiscount", BigDecimal.ZERO);
             model.addAttribute("voucherDiscount", BigDecimal.ZERO);

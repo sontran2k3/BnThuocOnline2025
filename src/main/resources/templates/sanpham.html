@@ -9,9 +9,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <!-- Thêm Toastify CSS và JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" defer></script>
     <script src="/js/quanly/sanpham.js"></script>
-    <link rel="stylesheet" href="" th:href="@{/css/sanpham.css}">
+    <link rel="stylesheet" th:href="@{/css/sanpham.css}">
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
@@ -61,7 +64,7 @@
                 <div class="col-md-6">
                     <h5 class="text-primary" th:text="'Thương hiệu: ' + ${product.thuongHieu ?: 'Không xác định'}"></h5>
                     <h2 class="product-title" th:text="${product.tenSanPham}"></h2>
-                    <p class="text-muted" th:text="${product.moTaNgan ?: 'Không có mô tả'}"></p>
+                    <p class="text-muted" th:text="${product.congDung ?: 'Không có mô tả'}"></p>
                     <h3 class="product-price">
                         <span th:text="${#numbers.formatDecimal(product.getDiscountedPrice(), 0, 0)} + 'đ'"></span>
                         <small class="old-price" th:if="${product.hasDiscount()}"
@@ -304,7 +307,7 @@
                         </button>
                     </div>
                     <div th:if="${loggedInUser == null}" class="text-muted">
-                        Vui lòng <a href="/login">đăng nhập</a> để gửi đánh giá.
+                        Vui lòng <a href="javascript:void(0);" onclick="scrollToLogin()">đăng nhập</a> để gửi đánh giá.
                     </div>
 
                     <div class="filters mt-3">
@@ -621,7 +624,8 @@
             });
         });
 
-        // Xử lý gửi đánh giá qua AJAX
+// Xử lý gửi đánh giá qua AJAX
+// Xử lý gửi đánh giá qua AJAX
         $('#submitReview').on('click', function () {
             var productId = $(this).data('product-id');
             var rating = $('.rating-stars span.active').length || 5; // Mặc định 5 sao nếu không chọn
@@ -632,11 +636,13 @@
             // Kiểm tra dữ liệu trước khi gửi
             if (rating < 1 && reviewContent.length === 0) {
                 $('#reviewError').text('Vui lòng chọn số sao hoặc nhập nội dung đánh giá.').removeClass('d-none');
+                showToast('Vui lòng chọn số sao hoặc nhập nội dung đánh giá.', 'error'); // Hiển thị toast lỗi
                 return;
             }
 
             if (reviewContent.length > 500) {
                 $('#reviewError').text('Nội dung đánh giá không được vượt quá 500 ký tự.').removeClass('d-none');
+                showToast('Nội dung đánh giá không được vượt quá 500 ký tự.', 'error'); // Hiển thị toast lỗi
                 return;
             }
 
@@ -651,11 +657,15 @@
                 beforeSend: function (xhr) {
                     if (csrfHeader && csrfToken) {
                         xhr.setRequestHeader(csrfHeader, csrfToken);
+                    } else {
+                        console.error('CSRF token hoặc header không được định nghĩa.');
+                        showToast('Lỗi cấu hình bảo mật. Vui lòng thử lại.', 'error');
+                        return false; // Hủy yêu cầu nếu không có CSRF
                     }
                 },
                 success: function (response) {
                     if (response.success) {
-                        showToast(response.message, 'success');
+                        showToast('Cảm ơn đánh giá của bạn!', 'success'); // Hiển thị toast thành công
                         $('#reviewModal').modal('hide');
                         $('#reviewContent').val(''); // Xóa nội dung textarea
                         stars.removeClass('active').last().addClass('active'); // Reset số sao về 5
@@ -664,29 +674,30 @@
                         updateReviewSection(productId); // Cập nhật danh sách và tóm tắt đánh giá
                     } else {
                         $('#reviewError').text(response.message).removeClass('d-none');
+                        showToast(response.message, 'error'); // Hiển thị toast lỗi từ server
                     }
                 },
                 error: function (xhr) {
-                    $('#reviewError').text(xhr.responseJSON?.message || 'Đã xảy ra lỗi khi gửi đánh giá.').removeClass('d-none');
+                    var errorMessage = xhr.responseJSON?.message || 'Đã xảy ra lỗi khi gửi đánh giá.';
+                    $('#reviewError').text(errorMessage).removeClass('d-none');
+                    showToast(errorMessage, 'error'); // Hiển thị toast lỗi
+                    console.error('Lỗi AJAX:', xhr.status, xhr.responseText);
                 }
             });
         });
-
         // Hàm hiển thị toast
+        // Hàm hiển thị toast sử dụng Toastify
         function showToast(message, type) {
-            var toastHtml = `
-                <div class="toast align-items-center text-white ${type === 'success' ? 'bg-success' : 'bg-danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">${message}</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>`;
-            $('body').append(toastHtml);
-            var toast = new bootstrap.Toast($('.toast').last());
-            toast.show();
-            setTimeout(() => $('.toast').remove(), 3000);
+            Toastify({
+                text: message,
+                duration: 3000, // Thời gian hiển thị (3 giây)
+                close: true, // Hiển thị nút đóng
+                gravity: "top", // Vị trí (trên cùng)
+                position: "right", // Căn phải
+                backgroundColor: type === 'success' ? "#28a745" : "#dc3545", // Màu nền: xanh cho success, đỏ cho error
+                stopOnFocus: true, // Dừng khi hover
+            }).showToast();
         }
-
         // Hàm cập nhật danh sách và tóm tắt đánh giá
         function updateReviewSection(productId, rating = 0) {
             $.ajax({
@@ -781,6 +792,24 @@
             updateReviewSection(productId, selectedRating || 0); // Khởi tạo với rating từ URL hoặc tất cả
         }
     });
+    // Hàm cuộn lên đầu trang và làm nổi bật nút đăng nhập
+    function scrollToLogin() {
+        // Cuộn lên đầu trang
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth' // Cuộn mượt mà
+        });
+
+        // Làm nổi bật nút đăng nhập trong header
+        var loginButton = $('#loginButton'); // Giả định nút đăng nhập có ID là loginButton
+        if (loginButton.length) {
+            // Thêm hiệu ứng làm nổi bật (ví dụ: thêm class tạm thời)
+            loginButton.addClass('highlight-login');
+            setTimeout(function () {
+                loginButton.removeClass('highlight-login');
+            }, 2000); // Xóa hiệu ứng sau 2 giây
+        }
+    }
 </script>
 </body>
 </html>

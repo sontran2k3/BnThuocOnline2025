@@ -608,6 +608,13 @@
                                     }
                                 }).then(response => {
                                     if (response.ok) {
+                                        // Xóa cookie JWT_TOKEN phía client
+                                        document.cookie = "JWT_TOKEN=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+
+                                        // Xóa sessionStorage hoặc localStorage nếu có
+                                        sessionStorage.clear();
+                                        localStorage.clear();
+
                                         Toastify({
                                             text: "Đăng xuất thành công!",
                                             duration: 3000,
@@ -617,10 +624,30 @@
                                             stopOnFocus: true
                                         }).showToast();
 
-                                        // Chuyển hướng về trang chủ sau 1 giây để người dùng thấy thông báo
-                                        setTimeout(() => {
-                                            window.location.href = '/';
-                                        }, 1000);
+                                        // Kiểm tra trạng thái xác thực sau khi đăng xuất
+                                        fetch('/check-auth', {
+                                            method: 'GET'
+                                        }).then(authResponse => authResponse.json())
+                                            .then(authData => {
+                                                if (!authData.authenticated) {
+                                                    // Chuyển hướng về trang chủ sau khi xác nhận đăng xuất
+                                                    setTimeout(() => {
+                                                        window.location.href = '/';
+                                                    }, 1000);
+                                                } else {
+                                                    throw new Error("Đăng xuất không thành công!");
+                                                }
+                                            }).catch(error => {
+                                            console.error('Error checking auth:', error);
+                                            Toastify({
+                                                text: "Đăng xuất không thành công. Vui lòng thử lại.",
+                                                duration: 3000,
+                                                gravity: "top",
+                                                position: "right",
+                                                backgroundColor: "#dc3545",
+                                                stopOnFocus: true
+                                            }).showToast();
+                                        });
                                     } else {
                                         Toastify({
                                             text: "Đã có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.",
@@ -644,8 +671,7 @@
                                 });
                             }
                         });
-                        return;
-                }
+                        return;                }
 
                 // Cập nhật breadcrumb
                 if (breadcrumbActive) {

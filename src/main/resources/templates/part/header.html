@@ -9,6 +9,7 @@
     <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
     <!-- Thêm Toastify -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     <div class="header-container">
@@ -52,6 +53,10 @@
                         <!-- Icon đăng nhập / ảnh đại diện -->
                         <a th:href="@{''}" data-bs-toggle="modal" data-bs-target="#loginModal" th:unless="${loggedInUser != null}">
                             <svg width="24" height="24" viewBox="0 0 24 24"><use xlink:href="#user"></use></svg>
+                        </a>
+                        <a th:href="@{/home(providerId=${loggedInUser.phoneNumber}, provider='phone')}"
+                           th:if="${loggedInUser != null and loggedInUser.googleId == null and loggedInUser.facebookId == null}">
+                            <img src="/image/profile.png" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; text-align: center"/>
                         </a>
                         <a th:href="@{/home(providerId=${loggedInUser.googleId != null ? loggedInUser.googleId : loggedInUser.facebookId}, provider=${loggedInUser.googleId != null ? 'google' : 'facebook'})}" th:if="${loggedInUser != null}">
                             <img th:src="${loggedInUser.picture}" alt="User Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
@@ -258,7 +263,78 @@
             }
         }
 
-        // Định nghĩa hàm handleLogout ở phạm vi toàn cục
+        // Hàm cập nhật giao diện người dùng
+        function updateUserInterface(user) {
+            if (user) {
+                $('.action-icons a[data-bs-toggle="modal"]').hide(); // Ẩn nút đăng nhập
+                $('.action-icons a[href*="/home"]').remove(); // Xóa các liên kết cũ
+                $('.action-icons a[onclick="handleLogout()"]').show(); // Hiển thị nút đăng xuất
+
+                let providerId = user.googleId || user.facebookId || user.phoneNumber;
+                let provider = user.googleId ? 'google' : (user.facebookId ? 'facebook' : 'phone');
+                let picture = user.picture || '/image/profile.png';
+
+                // Thêm liên kết đến trang thông tin cá nhân
+                $('.action-icons').prepend(`
+            <a href="/home?providerId=${providerId}&provider=${provider}">
+                <img src="${picture}" alt="User Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+            </a>
+        `);
+            } else {
+                $('.action-icons a[data-bs-toggle="modal"]').show();
+                $('.action-icons a[href*="/home"]').remove();
+                $('.action-icons a[onclick="handleLogout()"]').hide();
+            }
+        }
+        function loadUserInfo() {
+            $.ajax({
+                url: '/check-auth',
+                type: 'GET',
+                success: function(response) {
+                    if (response.authenticated && response.user) {
+                        updateUserInterface(response.user);
+                    } else {
+                        updateUserInterface(null);
+                        localStorage.removeItem('token');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi kiểm tra xác thực:', error);
+                    updateUserInterface(null);
+                    localStorage.removeItem('token');
+                }
+            });
+        }
+
+
+        function updateCartCount(count) {
+            $('.cart-count').text(count);
+        }
+
+        function loadUserInfo() {
+            $.ajax({
+                url: '/check-auth',
+                type: 'GET',
+                success: function(response) {
+                    if (response.authenticated && response.user) {
+                        updateUserInterface(response.user);
+                    } else {
+                        $('.action-icons a[data-bs-toggle="modal"]').show();
+                        $('.action-icons a[href*="/home"]').remove();
+                        $('.action-icons a[onclick="handleLogout()"]').hide();
+                        localStorage.removeItem('token');
+                    }
+                },
+                error: function() {
+                    $('.action-icons a[data-bs-toggle="modal"]').show();
+                    $('.action-icons a[href*="/home"]').remove();
+                    $('.action-icons a[onclick="handleLogout()"]').hide();
+                    localStorage.removeItem('token');
+                }
+            });
+        }
+
+        // Hàm xử lý đăng xuất
         function handleLogout() {
             Swal.fire({
                 title: 'Bạn có chắc chắn muốn đăng xuất?',
@@ -271,11 +347,9 @@
                 cancelButtonText: 'Hủy'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Lấy CSRF token và header từ meta tags
                     const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
                     const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
 
-                    // Kiểm tra xem token và header có tồn tại không
                     if (!token || !header) {
                         Swal.fire({
                             title: 'Lỗi!',
@@ -286,35 +360,28 @@
                         return;
                     }
 
-                    // Gửi yêu cầu đăng xuất qua AJAX
                     fetch('/logout', {
                         method: 'POST',
                         headers: {
-                            [header]: token, // Gửi CSRF token trong header
+                            [header]: token,
                             'Content-Type': 'application/json'
                         }
                     })
                         .then(response => {
                             if (response.ok) {
-                                // Xóa token trong localStorage (nếu có)
                                 localStorage.removeItem('token');
-
-                                // Hiển thị thông báo đăng xuất thành công bằng Toastify
                                 Toastify({
                                     text: "Đăng xuất thành công!",
-                                    duration: 2000, // Thời gian hiển thị (2 giây)
-                                    gravity: "top", // Vị trí: trên cùng
-                                    position: "right", // Căn phải
-                                    backgroundColor: "#28a745", // Màu nền xanh lá (thành công)
-                                    stopOnFocus: true // Dừng thời gian khi di chuột vào toast
+                                    duration: 2000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#28a745",
+                                    stopOnFocus: true
                                 }).showToast();
-
-                                // Chuyển hướng về trang chủ sau khi toast hiển thị
                                 setTimeout(() => {
                                     window.location.href = '/';
-                                }, 1000); // Chuyển hướng sau 1 giây
+                                }, 1000);
                             } else {
-                                // Lấy thông tin lỗi từ response
                                 response.text().then(errorMessage => {
                                     Swal.fire({
                                         title: 'Lỗi!',
@@ -341,14 +408,11 @@
         $(document).ready(function() {
             // Render reCAPTCHA khi modal được mở
             $('#loginModal').on('shown.bs.modal', function () {
-                // Render reCAPTCHA cho tab Đăng nhập
                 loginRecaptchaId = grecaptcha.render('loginRecaptcha', {
                     'sitekey': '6Lf6DyIrAAAAAP2Za-ymNYkvOAh0Qla_6KLJxVZp',
                     'callback': function() { onRecaptchaSuccess(loginRecaptchaId); },
                     'expired-callback': function() { onRecaptchaExpired(loginRecaptchaId); }
                 });
-
-                // Render reCAPTCHA cho tab Đăng ký
                 registerRecaptchaId = grecaptcha.render('registerRecaptcha', {
                     'sitekey': '6Lf6DyIrAAAAAP2Za-ymNYkvOAh0Qla_6KLJxVZp',
                     'callback': function() { onRecaptchaSuccess(registerRecaptchaId); },
@@ -356,13 +420,12 @@
                 });
             });
 
-            // Reset reCAPTCHA khi modal đóng
+            // Reset reCAPTCHA và form khi modal đóng
             $('#loginModal').on('hidden.bs.modal', function () {
                 grecaptcha.reset(loginRecaptchaId);
                 grecaptcha.reset(registerRecaptchaId);
                 document.getElementById('loginButton').disabled = true;
                 document.getElementById('registerButton').disabled = true;
-                // Reset các trường nhập liệu
                 $('#loginForm')[0].reset();
                 $('#registerForm')[0].reset();
             });
@@ -376,7 +439,6 @@
                 }
             });
 
-            // Xử lý form đăng nhập
             $('#loginForm').submit(function(event) {
                 event.preventDefault();
                 var phone = $('#loginPhone').val();
@@ -403,13 +465,24 @@
                     }),
                     success: function(response) {
                         localStorage.setItem('token', response.token);
+                        updateCartCount(response.cartItemCount);
+                        updateUserInterface({
+                            phoneNumber: response.phoneNumber,
+                            name: response.name || 'Người dùng',
+                            picture: response.picture || '/images/default-avatar.png',
+                            role: response.role
+                        });
                         Swal.fire({
                             icon: 'success',
                             title: 'Thành công',
                             text: 'Đăng nhập thành công!',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            window.location.href = '/';
+                            if (response.role === 'ADMIN') {
+                                window.location.href = '/quanly';
+                            } else {
+                                window.location.href = '/';
+                            }
                         });
                     },
                     error: function(xhr) {
@@ -422,7 +495,6 @@
                 });
             });
 
-            // Xử lý form đăng ký
             $('#registerForm').submit(function(event) {
                 event.preventDefault();
                 var phone = $('#registerPhone').val();
@@ -464,7 +536,7 @@
                             text: 'Đăng ký thành công! Vui lòng đăng nhập.',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            $('#login-tab').click(); // Chuyển về tab đăng nhập
+                            $('#login-tab').click();
                         });
                     },
                     error: function(xhr) {
@@ -477,7 +549,6 @@
                 });
             });
 
-            // Xử lý xóa sản phẩm khỏi giỏ hàng
             function removeFromCart(cartItemId) {
                 $.ajax({
                     url: '/cart/remove',
@@ -490,7 +561,7 @@
                             text: 'Sản phẩm đã được xóa khỏi giỏ hàng!',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            location.reload(); // Tải lại trang để cập nhật giỏ hàng
+                            location.reload();
                         });
                     },
                     error: function(xhr, status, error) {
@@ -505,7 +576,6 @@
                 });
             }
 
-            // Cập nhật số lượng giỏ hàng khi tải trang
             $.ajax({
                 url: '/cart/count',
                 type: 'GET',
@@ -517,12 +587,8 @@
                 }
             });
 
-            // Hàm cập nhật số lượng giỏ hàng trên giao diện
-            function updateCartCount(count) {
-                $('.cart-count').text(count);
-            }
+            loadUserInfo();
         });
-
-
     </script>
+
 </div>

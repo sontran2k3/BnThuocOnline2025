@@ -6,7 +6,10 @@ import com.example.BnThuocOnline2025.service.ProductService;
 import com.example.BnThuocOnline2025.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,16 +45,32 @@ public class HomeController {
                        @AuthenticationPrincipal OAuth2User oAuth2User,
                        HttpSession session) {
         User loggedInUser = null;
+
+        // Kiểm tra đăng nhập qua OAuth2 (Google/Facebook)
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
             Optional<User> userOpt = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
             if (userOpt.isPresent()) {
                 loggedInUser = userOpt.get();
-                model.addAttribute("loggedInUser", loggedInUser);
-                if ("ADMIN".equals(loggedInUser.getRole())) {
-                    return "quanly"; // ADMIN vào trang quanly.html
+            }
+        } else {
+            // Kiểm tra đăng nhập bằng số điện thoại/mật khẩu
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String phoneNumber = authentication.getName(); // Số điện thoại từ SecurityContextHolder
+                Optional<User> userOpt = userService.findByPhoneNumber(phoneNumber);
+                if (userOpt.isPresent()) {
+                    loggedInUser = userOpt.get();
                 }
+            }
+        }
+
+        // Nếu người dùng đã đăng nhập
+        if (loggedInUser != null) {
+            model.addAttribute("loggedInUser", loggedInUser);
+            if ("ADMIN".equals(loggedInUser.getRole())) {
+                return "quanly"; // ADMIN vào trang quanly.html
             }
         }
 
@@ -88,7 +107,6 @@ public class HomeController {
                 }
                 model.addAttribute("loggedInUser", user);
 
-                // Logic sản phẩm và đối tượng
                 Page<Product> productPage = productService.getProducts(page);
                 List<DoiTuong> doiTuongList = productService.getAllDoiTuong();
 
@@ -97,12 +115,11 @@ public class HomeController {
                 model.addAttribute("currentPage", page);
                 model.addAttribute("doiTuongList", doiTuongList);
 
-                // Logic giỏ hàng (nếu cần cho trang quản lý)
                 Cart cart = gioHangService.getOrCreateCart(user, session);
                 model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
                 model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
 
-                return "quanly"; // Trả về quanly.html
+                return "quanly";
             } else {
                 return "redirect:/"; // Nếu không tìm thấy user, chuyển về trang chủ
             }
@@ -127,14 +144,35 @@ public class HomeController {
 
         // Thêm thông tin người dùng vào model
         User loggedInUser = null;
+
+        // Kiểm tra đăng nhập qua OAuth2
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
             Optional<User> userOpt = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
             if (userOpt.isPresent()) {
                 loggedInUser = userOpt.get();
-                model.addAttribute("loggedInUser", loggedInUser);
             }
+        } else {
+            // Kiểm tra đăng nhập bằng số điện thoại/mật khẩu
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String principal = authentication.getName();
+                Optional<User> userOpt = userService.findByPhoneNumber(principal);
+                if (userOpt.isEmpty()) {
+                    userOpt = userService.findByEmail(principal);
+                }
+                if (userOpt.isPresent()) {
+                    loggedInUser = userOpt.get();
+                }
+            }
+        }
+
+        // Thêm thông tin người dùng vào model
+        if (loggedInUser != null) {
+            model.addAttribute("loggedInUser", loggedInUser);
+            List<UserAddress> addresses = userService.getAddressesByUserId(loggedInUser.getId());
+            model.addAttribute("addresses", addresses);
         }
 
         // Thêm thông tin giỏ hàng
@@ -191,50 +229,60 @@ public class HomeController {
             @RequestParam("productId") int productId,
             @RequestParam("rating") float rating,
             @RequestParam("reviewContent") String reviewContent,
-            @AuthenticationPrincipal OAuth2User oAuth2User) {
+            @AuthenticationPrincipal Object principal) {
         Map<String, Object> response = new HashMap<>();
+        User loggedInUser = null;
 
-        // Kiểm tra đăng nhập
-        if (oAuth2User == null) {
+        // Kiểm tra trạng thái đăng nhập
+        if (principal instanceof OAuth2User) {
+            OAuth2User oAuth2User = (OAuth2User) principal;
+            String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+            String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+            Optional<User> userOpt = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
+            loggedInUser = userOpt.orElse(null);
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String principalName = authentication.getName();
+                Optional<User> userOpt = userService.findByPhoneNumber(principalName);
+                if (userOpt.isEmpty()) {
+                    userOpt = userService.findByEmail(principalName);
+                }
+                loggedInUser = userOpt.orElse(null);
+            }
+        }
+
+        // Kiểm tra người dùng đã đăng nhập chưa
+        if (loggedInUser == null) {
             response.put("success", false);
             response.put("message", "Vui lòng đăng nhập để gửi đánh giá.");
             return response;
         }
 
-        // Lấy thông tin người dùng
-        String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
-        String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
-        Optional<User> userOpt = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
-
-        if (!userOpt.isPresent()) {
-            response.put("success", false);
-            response.put("message", "Không tìm thấy thông tin người dùng.");
-            return response;
-        }
-
-        User user = userOpt.get();
         Product product = productService.getProductById(productId);
-
         if (product == null) {
             response.put("success", false);
             response.put("message", "Sản phẩm không tồn tại.");
             return response;
         }
 
-        // Kiểm tra đánh giá trùng lặp
+        // Sử dụng biến final để lưu loggedInUser
+        final User finalLoggedInUser = loggedInUser;
         List<ProductReview> existingReviews = productService.getProductReviews(productId);
-        if (existingReviews.stream().anyMatch(review -> review.getUser().getId().equals(user.getId()))) {
+        if (existingReviews.stream().anyMatch(review -> review.getUser().getId().equals(finalLoggedInUser.getId()))) {
             response.put("success", false);
             response.put("message", "Bạn đã đánh giá sản phẩm này rồi.");
             return response;
         }
 
-        // Kiểm tra dữ liệu đầu vào
+        // Kiểm tra số sao
         if (rating < 1 || rating > 5) {
             response.put("success", false);
             response.put("message", "Số sao phải từ 1 đến 5.");
             return response;
         }
+
+        // Kiểm tra độ dài nội dung đánh giá
         if (reviewContent.length() > 500) {
             response.put("success", false);
             response.put("message", "Nội dung đánh giá không được vượt quá 500 ký tự.");
@@ -244,14 +292,14 @@ public class HomeController {
         // Lưu đánh giá
         ProductReview review = new ProductReview();
         review.setProduct(product);
-        review.setUser(user);
+        review.setUser(loggedInUser);
         review.setRating(rating);
         review.setReviewContent(reviewContent.isEmpty() ? null : reviewContent);
 
         productService.saveProductReview(review);
 
         response.put("success", true);
-        response.put("message", "Đánh giá đã được gửi thành công!");
+        response.put("message", "Cảm ơn đánh giá của bạn!"); // Cập nhật thông báo (tùy chọn)
         return response;
     }
 
@@ -287,12 +335,60 @@ public class HomeController {
     }
 
 
-
     @GetMapping("/check-auth")
     @ResponseBody
-    public Map<String, Boolean> checkAuth(@AuthenticationPrincipal OAuth2User oAuth2User) {
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("authenticated", oAuth2User != null);
+    public Map<String, Object> checkAuth(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal());
+        response.put("authenticated", isAuthenticated);
+
+        if (isAuthenticated) {
+            String principal = authentication.getName(); // phoneNumber, email, hoặc providerId
+            Optional<User> userOpt = userService.findByPhoneNumber(principal);
+            if (userOpt.isEmpty()) {
+                userOpt = userService.findByEmail(principal);
+            }
+            if (userOpt.isEmpty()) {
+                userOpt = userService.findByGoogleId(principal);
+            }
+            if (userOpt.isEmpty()) {
+                userOpt = userService.findByFacebookId(principal);
+            }
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                response.put("user", Map.of(
+                        "phoneNumber", user.getPhoneNumber() != null ? user.getPhoneNumber() : "",
+                        "name", user.getName() != null ? user.getName() : "Người dùng",
+                        "picture", user.getPicture() != null ? user.getPicture() : "/image/profile.png",
+                        "role", user.getRole(),
+                        "googleId", user.getGoogleId() != null ? user.getGoogleId() : "",
+                        "facebookId", user.getFacebookId() != null ? user.getFacebookId() : ""
+                ));
+            }
+        }
         return response;
+    }
+
+
+    @GetMapping("/api/user")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getUserInfo(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            String phoneNumber = authentication.getName();
+            Optional<User> userOpt = userService.findByPhoneNumber(phoneNumber);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                response.put("phoneNumber", user.getPhoneNumber());
+                response.put("name", user.getName());
+                response.put("picture", user.getPicture() != null ? user.getPicture() : "");
+                response.put("role", user.getRole());
+                return ResponseEntity.ok(response);
+            }
+        }
+
+        response.put("error", "Người dùng chưa đăng nhập!");
+        return ResponseEntity.status(401).body(response);
     }
 }
