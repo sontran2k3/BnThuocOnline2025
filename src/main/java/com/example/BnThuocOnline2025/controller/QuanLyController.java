@@ -1,8 +1,6 @@
 package com.example.BnThuocOnline2025.controller;
 
-import com.example.BnThuocOnline2025.dto.InventoryResponseDTO;
-import com.example.BnThuocOnline2025.dto.InventoryTransactionDTO;
-import com.example.BnThuocOnline2025.dto.ProductDTO;
+import com.example.BnThuocOnline2025.dto.*;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.service.QuanLyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,10 +166,11 @@ public class QuanLyController {
     public ResponseEntity<Map<String, Long>> getProductByCategoryStats() {
         return ResponseEntity.ok(quanLyService.getProductByCategoryStats());
     }
-    // Lấy danh sách người dùng
+
+
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = quanLyService.getAllUsers();
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = quanLyService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
@@ -179,7 +178,7 @@ public class QuanLyController {
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable UUID id) {
         try {
-            Optional<User> user = quanLyService.getUserById(id);
+            Optional<UserDTO> user = quanLyService.getUserById(id);
             if (user.isPresent()) {
                 return ResponseEntity.ok(user.get());
             } else {
@@ -203,11 +202,12 @@ public class QuanLyController {
         }
     }
 
+
     // Cập nhật thông tin người dùng
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody User user) {
+    public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody UserDTO userDTO) {
         try {
-            User updatedUser = quanLyService.updateUser(id, user);
+            UserDTO updatedUser = quanLyService.updateUser(id, userDTO);
             return ResponseEntity.ok(updatedUser);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
@@ -217,24 +217,34 @@ public class QuanLyController {
     }
 
 
-
-    // Lấy danh sách đơn hàng theo userId
-    @GetMapping("/orders")
-    public ResponseEntity<List<Orders>> getOrdersByUserId(@RequestParam("user_id") UUID userId) {
-        try {
-            List<Orders> orders = quanLyService.getOrdersByUserId(userId);
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    // Lấy chi tiết đơn hàng theo ID
+    // Lấy chi tiết đơn hàng
     @GetMapping("/orders/{orderId}")
-    public ResponseEntity<?> getOrderDetails(@PathVariable int orderId) {
+    public ResponseEntity<?> getOrderById(@PathVariable Integer orderId) {
         try {
             Orders order = quanLyService.getOrderDetails(orderId);
-            return ResponseEntity.ok(order);
+            OrderDetailDTO orderDetailDTO = new OrderDetailDTO();
+            orderDetailDTO.setId(order.getId());
+            orderDetailDTO.setOrderDate(order.getOrderDate());
+            orderDetailDTO.setTotalPrice(order.getTotalPrice());
+            orderDetailDTO.setStatus(order.getStatus().toString());
+            orderDetailDTO.setCustomerName(order.getCustomerName());
+            orderDetailDTO.setCustomerPhone(order.getCustomerPhone());
+            orderDetailDTO.setCustomerAddress(order.getCustomerAddress());
+            orderDetailDTO.setPaymentMethod(order.getPaymentMethod());
+
+            List<OrderItemDTO> orderItemDTOs = order.getOrderItems().stream().map(item -> {
+                OrderItemDTO itemDTO = new OrderItemDTO();
+                itemDTO.setId(item.getId());
+                itemDTO.setProductName(item.getProduct() != null ? item.getProduct().getTenSanPham() : "N/A");
+                itemDTO.setProductImageUrl(item.getProduct() != null ? item.getProduct().getMainImageUrl() : "");
+                itemDTO.setDonViTinh(item.getDonViTinh() != null ? item.getDonViTinh().getDonViTinh() : "N/A");
+                itemDTO.setQuantity(item.getQuantity());
+                itemDTO.setPrice(item.getPrice());
+                return itemDTO;
+            }).collect(Collectors.toList());
+
+            orderDetailDTO.setOrderItems(orderItemDTOs);
+            return ResponseEntity.ok(orderDetailDTO);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         } catch (Exception e) {
@@ -242,36 +252,34 @@ public class QuanLyController {
         }
     }
 
-    // Lấy tất cả đơn hàng với phân trang, tìm kiếm và lọc
-    @GetMapping("/orders/all")
-    public ResponseEntity<List<Orders>> getAllOrders(
-            @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "status", required = false) String status) {
+    // Lấy danh sách đơn hàng theo userId
+    @GetMapping("/orders")
+    public ResponseEntity<?> getOrdersByUserId(@RequestParam("user_id") UUID userId) {
         try {
-            List<Orders> orders = quanLyService.getAllOrders(page, size, search, status);
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
+            List<Orders> orders = quanLyService.getOrdersByUserId(userId);
+            List<OrderDTO> orderDTOs = orders.stream().map(order -> {
+                OrderDTO orderDTO = new OrderDTO();
+                orderDTO.setId(order.getId());
+                orderDTO.setOrderDate(order.getOrderDate());
+                orderDTO.setTotalPrice(order.getTotalPrice());
+                orderDTO.setStatus(order.getStatus().toString());
 
-    @GetMapping("/orders/{orderId}/items")
-    public ResponseEntity<?> getOrderItems(@PathVariable int orderId) {
-        try {
-            List<OrderItem> items = quanLyService.getOrderItems(orderId);
-            List<Map<String, Object>> itemDTOs = items.stream().map(item -> {
-                Map<String, Object> dto = new HashMap<>();
-                dto.put("id", item.getId());
-                dto.put("productName", item.getProduct().getTenSanPham());
-                dto.put("donViTinh", item.getDonViTinh() != null ? item.getDonViTinh().getDonViTinh() : "N/A");
-                dto.put("quantity", item.getQuantity());
-                dto.put("price", item.getPrice());
-                dto.put("totalPrice", item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-                return dto;
+                List<OrderItemDTO> orderItemDTOs = order.getOrderItems().stream().map(item -> {
+                    OrderItemDTO itemDTO = new OrderItemDTO();
+                    itemDTO.setId(item.getId());
+                    itemDTO.setProductName(item.getProduct() != null ? item.getProduct().getTenSanPham() : "N/A");
+                    itemDTO.setProductImageUrl(item.getProduct() != null ? item.getProduct().getMainImageUrl() : "");
+                    itemDTO.setDonViTinh(item.getDonViTinh() != null ? item.getDonViTinh().getDonViTinh() : "N/A");
+                    itemDTO.setQuantity(item.getQuantity());
+                    itemDTO.setPrice(item.getPrice());
+                    return itemDTO;
+                }).collect(Collectors.toList());
+
+                orderDTO.setOrderItems(orderItemDTOs);
+                return orderDTO;
             }).collect(Collectors.toList());
-            return ResponseEntity.ok(itemDTOs);
+
+            return ResponseEntity.ok(orderDTOs);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         } catch (Exception e) {
@@ -294,9 +302,4 @@ public class QuanLyController {
             return ResponseEntity.status(500).body(null);
         }
     }
-
-
-
-
-
 }

@@ -1,5 +1,6 @@
 package com.example.BnThuocOnline2025.controller;
 
+import com.example.BnThuocOnline2025.dto.OrderDTO;
 import com.example.BnThuocOnline2025.model.Cart;
 import com.example.BnThuocOnline2025.model.User;
 import com.example.BnThuocOnline2025.model.UserAddress;
@@ -53,37 +54,40 @@ public class UserController {
 
     @ModelAttribute
     public void addUserToModel(Model model, @AuthenticationPrincipal OAuth2User oAuth2User) {
-        // Kiểm tra người dùng đăng nhập qua OAuth2
+        User user = null;
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
-            Optional<User> user = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
-            if (user.isPresent()) {
-                model.addAttribute("loggedInUser", user.get());
-                List<UserAddress> addresses = userService.getAddressesByUserId(user.get().getId());
-                model.addAttribute("addresses", addresses);
+            Optional<User> userOptional = "google".equals(provider) ? userService.findByGoogleId(providerId) : userService.findByFacebookId(providerId);
+            if (userOptional.isPresent()) {
+                user = userOptional.get();
             }
         } else {
-            // Kiểm tra người dùng đăng nhập bằng số điện thoại/mật khẩu
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-                String phoneNumber = authentication.getName(); // Số điện thoại từ SecurityContextHolder
-                Optional<User> user = userService.findByPhoneNumber(phoneNumber);
-                if (user.isPresent()) {
-                    model.addAttribute("loggedInUser", user.get());
-                    List<UserAddress> addresses = userService.getAddressesByUserId(user.get().getId());
-                    model.addAttribute("addresses", addresses);
+                String phoneNumber = authentication.getName();
+                Optional<User> userOptional = userService.findByPhoneNumber(phoneNumber);
+                if (userOptional.isPresent()) {
+                    user = userOptional.get();
                 }
             }
+        }
+
+        if (user != null) {
+            model.addAttribute("loggedInUser", user);
+            List<UserAddress> addresses = userService.getAddressesByUserId(user.getId());
+            model.addAttribute("addresses", addresses);
+            List<OrderDTO> orders = userService.getOrdersByUserId(user.getId());
+            model.addAttribute("orders", orders);
         }
     }
 
     @GetMapping("/login")
     public String showLoginPage(@AuthenticationPrincipal OAuth2User oAuth2User) {
         if (oAuth2User != null) {
-            return "redirect:/"; // Người dùng đã đăng nhập, chuyển về trang chủ
+            return "redirect:/";
         }
-        return "/"; // Hiển thị trang chủ với modal đăng nhập
+        return "/";
     }
 
     @GetMapping("/register")
@@ -91,7 +95,7 @@ public class UserController {
                                    @RequestParam(required = false) String provider,
                                    @AuthenticationPrincipal OAuth2User oAuth2User,
                                    Model model) {
-        return "redirect:/"; // Luôn chuyển hướng về trang chủ
+        return "redirect:/";
     }
 
     @PostMapping("/save-profile")
@@ -140,8 +144,9 @@ public class UserController {
             model.addAttribute("address", currentUser.getAddress());
             List<UserAddress> addresses = userService.getAddressesByUserId(currentUser.getId());
             model.addAttribute("addresses", addresses);
+            List<OrderDTO> orders = userService.getOrdersByUserId(currentUser.getId());
+            model.addAttribute("orders", orders);
 
-            // Thêm dữ liệu giỏ hàng
             Cart cart = gioHangService.getOrCreateCart(currentUser, session);
             model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
             model.addAttribute("cartItems", gioHangService.getCartItems(currentUser, session));
@@ -160,13 +165,11 @@ public class UserController {
 
         Map<String, Object> responseMap = new HashMap<>();
 
-        // Xác minh reCAPTCHA
         if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
             responseMap.put("error", "Xác minh reCAPTCHA không thành công!");
             return ResponseEntity.status(400).body(responseMap);
         }
 
-        // Kiểm tra định dạng số điện thoại
         if (!phoneNumber.matches("[0-9]{10}")) {
             responseMap.put("error", "Số điện thoại phải có 10 chữ số!");
             return ResponseEntity.status(400).body(responseMap);
@@ -198,7 +201,7 @@ public class UserController {
             responseMap.put("name", user.getName() != null ? user.getName() : "Người dùng");
             responseMap.put("picture", user.getPicture() != null ? user.getPicture() : "/image/profile.png");
             responseMap.put("cartItemCount", cartItemCount);
-            responseMap.put("redirectUrl", "/"); // Thêm URL chuyển hướng
+            responseMap.put("redirectUrl", "/");
 
             return ResponseEntity.ok(responseMap);
         } catch (Exception e) {
@@ -206,8 +209,6 @@ public class UserController {
             return ResponseEntity.status(401).body(responseMap);
         }
     }
-
-
 
     @PostMapping("/api/register")
     @ResponseBody
@@ -217,32 +218,27 @@ public class UserController {
                                                         @RequestBody(required = false) Map<String, String> registerRequest) {
         Map<String, String> response = new HashMap<>();
 
-        // Xử lý dữ liệu từ form hoặc JSON
         if (registerRequest != null) {
             phoneNumber = registerRequest.get("phoneNumber");
             password = registerRequest.get("password");
             recaptchaResponse = registerRequest.get("recaptchaResponse");
         }
 
-        // Kiểm tra dữ liệu đầu vào
         if (phoneNumber == null || password == null || recaptchaResponse == null) {
             response.put("error", "Thiếu thông tin bắt buộc!");
             return ResponseEntity.status(400).body(response);
         }
 
-        // Xác minh reCAPTCHA
         if (!recaptchaService.verifyRecaptcha(recaptchaResponse)) {
             response.put("error", "Xác minh reCAPTCHA không thành công!");
             return ResponseEntity.status(400).body(response);
         }
 
-        // Kiểm tra định dạng số điện thoại
         if (!phoneNumber.matches("[0-9]{10}")) {
             response.put("error", "Số điện thoại phải có 10 chữ số!");
             return ResponseEntity.status(400).body(response);
         }
 
-        // Kiểm tra độ mạnh của mật khẩu
         if (!isStrongPassword(password)) {
             response.put("error", "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
             return ResponseEntity.status(400).body(response);
@@ -251,7 +247,7 @@ public class UserController {
         try {
             User user = userService.registerUser(phoneNumber, password);
             response.put("message", "Đăng ký thành công! Vui lòng đăng nhập.");
-            response.put("redirectUrl", "/"); // Thêm URL chuyển hướng
+            response.put("redirectUrl", "/");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("error", e.getMessage());
@@ -266,18 +262,16 @@ public class UserController {
             @RequestParam String gender,
             @RequestParam String birthDate,
             @AuthenticationPrincipal OAuth2User oAuth2User,
-            Authentication authentication) { // Thêm Authentication để xử lý JWT
+            Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         User user = null;
 
-        // Kiểm tra trạng thái đăng nhập
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             response.put("success", false);
             response.put("message", "Bạn cần đăng nhập để cập nhật thông tin!");
             return response;
         }
 
-        // Xử lý xác thực OAuth2
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
@@ -286,22 +280,19 @@ public class UserController {
                 user = userOptional.get();
             }
         } else {
-            // Xử lý xác thực JWT (số điện thoại/mật khẩu)
-            String principal = authentication.getName(); // Số điện thoại
+            String principal = authentication.getName();
             Optional<User> userOptional = userService.findByPhoneNumber(principal);
             if (userOptional.isPresent()) {
                 user = userOptional.get();
             }
         }
 
-        // Kiểm tra xem người dùng có được tìm thấy không
         if (user == null) {
             response.put("success", false);
             response.put("message", "Không tìm thấy người dùng!");
             return response;
         }
 
-        // Cập nhật thông tin người dùng
         user.setName(fullName);
         user.setGender(gender);
         try {
@@ -313,10 +304,8 @@ public class UserController {
             return response;
         }
 
-        // Lưu thông tin người dùng
         userService.saveUser(user);
 
-        // Chuẩn bị phản hồi
         response.put("success", true);
         response.put("message", "Cập nhật thông tin thành công!");
         response.put("user", Map.of(
@@ -336,18 +325,16 @@ public class UserController {
     public Map<String, Object> addAddress(
             @ModelAttribute UserAddress address,
             @AuthenticationPrincipal OAuth2User oAuth2User,
-            Authentication authentication) { // Thêm Authentication để xử lý JWT
+            Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         User user = null;
 
-        // Kiểm tra trạng thái đăng nhập
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             response.put("success", false);
             response.put("message", "Bạn cần đăng nhập để thêm địa chỉ!");
             return response;
         }
 
-        // Xử lý xác thực OAuth2
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
@@ -356,22 +343,19 @@ public class UserController {
                 user = userOptional.get();
             }
         } else {
-            // Xử lý xác thực JWT (số điện thoại/mật khẩu)
-            String principal = authentication.getName(); // Số điện thoại
+            String principal = authentication.getName();
             Optional<User> userOptional = userService.findByPhoneNumber(principal);
             if (userOptional.isPresent()) {
                 user = userOptional.get();
             }
         }
 
-        // Kiểm tra xem người dùng có được tìm thấy không
         if (user == null) {
             response.put("success", false);
             response.put("message", "Không tìm thấy người dùng!");
             return response;
         }
 
-        // Kiểm tra dữ liệu đầu vào
         if (address.getFullName() == null || address.getFullName().trim().isEmpty()) {
             response.put("success", false);
             response.put("message", "Họ và tên không được để trống!");
@@ -393,11 +377,9 @@ public class UserController {
             return response;
         }
 
-        // Thiết lập người dùng cho địa chỉ
         address.setUser(user);
         address.setIsDefault(address.getIsDefault() != null && address.getIsDefault());
 
-        // Nếu địa chỉ mới được đặt làm mặc định, cập nhật các địa chỉ khác
         if (address.getIsDefault()) {
             List<UserAddress> existingAddresses = userService.getAddressesByUserId(user.getId());
             existingAddresses.forEach(addr -> {
@@ -408,10 +390,8 @@ public class UserController {
             });
         }
 
-        // Lưu địa chỉ
         userService.saveAddress(address);
 
-        // Lấy danh sách địa chỉ cập nhật
         List<UserAddress> updatedAddresses = userService.getAddressesByUserId(user.getId());
         response.put("success", true);
         response.put("message", "Thêm địa chỉ thành công!");
@@ -432,18 +412,16 @@ public class UserController {
     public Map<String, Object> deleteAddress(
             @PathVariable("id") Long addressId,
             @AuthenticationPrincipal OAuth2User oAuth2User,
-            Authentication authentication) { // Thêm Authentication để xử lý JWT
+            Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         User user = null;
 
-        // Kiểm tra trạng thái đăng nhập
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             response.put("success", false);
             response.put("message", "Bạn cần đăng nhập để xóa địa chỉ!");
             return response;
         }
 
-        // Xử lý xác thực OAuth2
         if (oAuth2User != null) {
             String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
             String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
@@ -452,22 +430,19 @@ public class UserController {
                 user = userOptional.get();
             }
         } else {
-            // Xử lý xác thực JWT (số điện thoại/mật khẩu)
-            String principal = authentication.getName(); // Số điện thoại
+            String principal = authentication.getName();
             Optional<User> userOptional = userService.findByPhoneNumber(principal);
             if (userOptional.isPresent()) {
                 user = userOptional.get();
             }
         }
 
-        // Kiểm tra xem người dùng có được tìm thấy không
         if (user == null) {
             response.put("success", false);
             response.put("message", "Không tìm thấy người dùng!");
             return response;
         }
 
-        // Kiểm tra địa chỉ và quyền xóa
         Optional<UserAddress> addressOptional = userAddressRepository.findById(addressId);
         if (addressOptional.isPresent() && addressOptional.get().getUser().getId().equals(user.getId())) {
             userService.deleteAddress(addressId);
@@ -490,7 +465,6 @@ public class UserController {
         return response;
     }
 
-    // Hàm kiểm tra độ mạnh của mật khẩu
     private boolean isStrongPassword(String password) {
         if (password == null || password.length() < 8) {
             return false;
@@ -498,5 +472,4 @@ public class UserController {
         Pattern pattern = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
         return pattern.matcher(password).matches();
     }
-
 }

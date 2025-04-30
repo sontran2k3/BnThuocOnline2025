@@ -15,8 +15,8 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
 </head>
 <body>
@@ -41,19 +41,34 @@
             <div class="col-md-3">
                 <div class="profile-card text-center">
                     <!-- Chỉ hiển thị avatar nếu người dùng đã đăng nhập và có picture -->
-                    <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto" th:style="'background-image: url(' + ${picture} + ');'"></div>
+                    <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto"
+                         th:style="'background-image: url(' + ${picture} + ');'"></div>
                     <h5 class="mt-2"><span th:text="${name != null ? name : 'Tên người dùng'}"></span></h5>
                     <p><span th:text="${phoneNumber != null ? phoneNumber : 'Không có số điện thoại'}"></span></p>
                 </div>
                 <div class="sidebar">
                     <ul class="list-group list-group-flush" id="sidebar-menu">
-                        <li class="list-group-item menu-item active" data-section="personal"><i class="bi bi-person"></i> Thông tin cá nhân</li>
-                        <li class="list-group-item menu-item" data-section="orders"><i class="bi bi-box"></i> Đơn hàng của tôi</li>
-                        <li class="list-group-item menu-item" data-section="addresses"><i class="bi bi-geo-alt"></i> Quản lý số địa chỉ</li>
-                        <li class="list-group-item menu-item" data-section="appointments"><i class="bi bi-calendar-check"></i> Lịch hẹn tiêm chủng</li>
-                        <li class="list-group-item menu-item" data-section="vaccination-orders"><i class="bi bi-shield"></i> Đơn hàng tiêm chủng</li>
-                        <li class="list-group-item menu-item" data-section="prescriptions"><i class="bi bi-capsule"></i> Đơn thuốc của tôi</li>
-                        <li class="list-group-item text-danger menu-item" data-section="logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</li>
+                        <li class="list-group-item menu-item active" data-section="personal"><i
+                                class="bi bi-person"></i> Thông tin cá nhân
+                        </li>
+                        <li class="list-group-item menu-item" data-section="orders"><i class="bi bi-box"></i> Đơn hàng
+                            của tôi
+                        </li>
+                        <li class="list-group-item menu-item" data-section="addresses"><i class="bi bi-geo-alt"></i>
+                            Quản lý số địa chỉ
+                        </li>
+                        <li class="list-group-item menu-item" data-section="appointments"><i
+                                class="bi bi-calendar-check"></i> Lịch hẹn tiêm chủng
+                        </li>
+                        <li class="list-group-item menu-item" data-section="vaccination-orders"><i
+                                class="bi bi-shield"></i> Đơn hàng tiêm chủng
+                        </li>
+                        <li class="list-group-item menu-item" data-section="prescriptions"><i class="bi bi-capsule"></i>
+                            Đơn thuốc của tôi
+                        </li>
+                        <li class="list-group-item text-danger menu-item" data-section="logout"><i
+                                class="bi bi-box-arrow-right"></i> Đăng xuất
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -77,28 +92,35 @@
                         <!-- Chế độ hiển thị thông tin -->
                         <div id="personal-display">
                             <!-- Chỉ hiển thị avatar nếu người dùng đã đăng nhập và có picture -->
-                            <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto" th:style="'background-image: url(' + ${picture} + ');'"></div>
+                            <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto"
+                                 th:style="'background-image: url(' + ${picture} + ');'"></div>
                             <table class="table personal-table">
                                 <tr>
                                     <th>Họ và tên</th>
-                                    <td style="text-align: right"><span th:text="${name != null ? name : 'Chưa cập nhật'}"></span></td>
+                                    <td style="text-align: right"><span
+                                            th:text="${name != null ? name : 'Chưa cập nhật'}"></span></td>
                                 </tr>
                                 <tr>
                                     <th>Số điện thoại</th>
-                                    <td style="text-align: right"><span th:text="${phoneNumber != null ? phoneNumber : 'Chưa cập nhật'}"></span></td>
+                                    <td style="text-align: right"><span
+                                            th:text="${phoneNumber != null ? phoneNumber : 'Chưa cập nhật'}"></span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th>Giới tính</th>
                                     <td style="text-align: right">
                                         <span th:if="${gender != null}" th:text="${gender}"></span>
-                                        <a th:if="${gender == null}" href="#" class="text-primary" onclick="showEditForm()">Thêm thông tin</a>
+                                        <a th:if="${gender == null}" href="#" class="text-primary"
+                                           onclick="showEditForm()">Thêm thông tin</a>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Ngày sinh</th>
                                     <td style="text-align: right">
-                                        <span th:if="${dateOfBirth != null}" th:text="${#temporals.format(dateOfBirth, 'dd/MM/yyyy')}"></span>
-                                        <a th:if="${dateOfBirth == null}" href="#" class="text-primary" onclick="showEditForm()">Thêm thông tin</a>
+                                        <span th:if="${dateOfBirth != null}"
+                                              th:text="${#temporals.format(dateOfBirth, 'dd/MM/yyyy')}"></span>
+                                        <a th:if="${dateOfBirth == null}" href="#" class="text-primary"
+                                           onclick="showEditForm()">Thêm thông tin</a>
                                     </td>
                                 </tr>
                             </table>
@@ -109,33 +131,43 @@
                         <div id="personal-edit" style="display: none;">
                             <div class="profile-img-container">
                                 <!-- Chỉ hiển thị avatar nếu người dùng đã đăng nhập và có picture -->
-                                <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto" th:style="'background-image: url(' + ${picture} + ');'"></div>
+                                <div th:if="${loggedInUser != null and picture != null}" class="profile-img mx-auto"
+                                     th:style="'background-image: url(' + ${picture} + ');'"></div>
                             </div>
-                            <form id="update-personal-info" th:action="@{/updatePersonalInfo}" method="POST" onsubmit="updatePersonalInfo(event)">
+                            <form id="update-personal-info" th:action="@{/updatePersonalInfo}" method="POST"
+                                  onsubmit="updatePersonalInfo(event)">
                                 <div class="mb-3 form-group-centered">
                                     <label for="fullName" class="form-label">Họ và tên</label>
-                                    <input type="text" class="form-control custom-input" id="fullName" name="fullName" th:value="${name}" placeholder="Nhập họ và tên" required>
+                                    <input type="text" class="form-control custom-input" id="fullName" name="fullName"
+                                           th:value="${name}" placeholder="Nhập họ và tên" required>
                                 </div>
                                 <div class="mb-3 form-group-centered">
                                     <label for="phoneNumber" class="form-label">Số điện thoại</label>
-                                    <input type="text" class="form-control custom-input" id="phoneNumber" name="phoneNumber" th:value="${phoneNumber != null ? phoneNumber : ''}" placeholder="Số điện thoại" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control custom-input" id="phoneNumber"
+                                           name="phoneNumber" th:value="${phoneNumber != null ? phoneNumber : ''}"
+                                           placeholder="Số điện thoại"  style="background-color: #e9ecef;">
                                 </div>
                                 <div class="mb-3 form-group-centered">
                                     <label class="form-label">Giới tính</label>
                                     <div class="d-flex justify-content-center gap-4">
                                         <div class="form-check form-check-inline custom-radio">
-                                            <input class="form-check-input" type="radio" name="gender" id="male" value="Nam" th:checked="${gender == 'Nam'}" required>
+                                            <input class="form-check-input" type="radio" name="gender" id="male"
+                                                   value="Nam" th:checked="${gender == 'Nam'}" required>
                                             <label class="form-check-label" for="male">Nam</label>
                                         </div>
                                         <div class="form-check form-check-inline custom-radio">
-                                            <input class="form-check-input" type="radio" name="gender" id="female" value="Nữ" th:checked="${gender == 'Nữ'}">
+                                            <input class="form-check-input" type="radio" name="gender" id="female"
+                                                   value="Nữ" th:checked="${gender == 'Nữ'}">
                                             <label class="form-check-label" for="female">Nữ</label>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mb-3 form-group-centered position-relative">
                                     <label for="birthDate" class="form-label">Ngày sinh</label>
-                                    <input type="text" class="form-control custom-input date-input" id="birthDate" name="birthDate" th:value="${dateOfBirth != null ? #temporals.format(dateOfBirth, 'dd/MM/yyyy') : ''}" placeholder="dd/MM/yyyy" required>
+                                    <input type="text" class="form-control custom-input date-input" id="birthDate"
+                                           name="birthDate"
+                                           th:value="${dateOfBirth != null ? #temporals.format(dateOfBirth, 'dd/MM/yyyy') : ''}"
+                                           placeholder="dd/MM/yyyy" required>
                                     <span class="calendar-icon"><i class="bi bi-calendar3"></i></span>
                                 </div>
                                 <div class="d-flex justify-content-center gap-3 mt-4">
@@ -149,16 +181,24 @@
                     <!-- Các phần khác (Đơn hàng, Địa chỉ, v.v.) -->
                     <div class="card-content" id="orders-content" style="display: none;">
                         <div class="search-bar">
-                            <input type="text" class="search-input" placeholder="Tìm theo tên đơn, hóa đơn, tên sản phẩm...">
+                            <input type="text" class="search-input"
+                                   placeholder="Tìm theo tên đơn, mã đơn hàng, tên sản phẩm..."
+                                   onkeyup="filterOrders()">
                             <i class="bi bi-search search-icon"></i>
                         </div>
                         <div class="tab-nav">
-                            <a href="#" class="active">Tất cả</a>
-                            <a href="#">Đang xử lý</a>
-                            <a href="#">Đang giao</a>
-                            <a href="#">Đã giao</a>
-                            <a href="#">Đã hủy</a>
-                            <a href="#">Trả hàng</a>
+                            <a href="#" class="tab-link active" data-status="all"
+                               onclick="filterByStatus(event, 'all')">Tất cả</a>
+                            <a href="#" class="tab-link" data-status="PENDING"
+                               onclick="filterByStatus(event, 'PENDING')">Đang xử lý</a>
+                            <a href="#" class="tab-link" data-status="PROCESSING"
+                               onclick="filterByStatus(event, 'PROCESSING')">Đang giao</a>
+                            <a href="#" class="tab-link" data-status="DELIVERED"
+                               onclick="filterByStatus(event, 'DELIVERED')">Đã giao</a>
+                            <a href="#" class="tab-link" data-status="CANCELED"
+                               onclick="filterByStatus(event, 'CANCELED')">Đã hủy</a>
+                            <a href="#" class="tab-link" data-status="RETURNED"
+                               onclick="filterByStatus(event, 'RETURNED')">Trả hàng</a>
                         </div>
 
                         <!-- Danh sách đơn hàng -->
@@ -168,25 +208,33 @@
                                 <img src="/image/donhang.png" alt="Không có đơn hàng" class="no-orders-img">
                                 <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
                                 <p class="mb-3">Cùng khám phá hàng ngàn sản phẩm ngay hôm nay!</p>
-                                <button class="btn btn-primary">Khám phá ngay</button>
+                                <button class="btn btn-primary" onclick="window.location.href='/'">Khám phá ngay
+                                </button>
                             </div>
 
                             <!-- Hiển thị danh sách đơn hàng -->
-                            <div th:each="order : ${orders}" class="order-item">
+                            <div th:each="order : ${orders}" class="order-item" th:data-status="${order.status}">
                                 <div class="order-header d-flex justify-content-between align-items-center">
                                     <div>
                                         <strong>Đơn hàng <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}"></span> - Giao hàng tận nơi</strong>
                                         <span class="order-id ms-2" th:text="'#' + ${order.id}"></span>
                                     </div>
-                                    <span class="order-status text-danger" th:text="${order.status}"></span>
+                                    <span class="order-status text-danger">
+                                     <span th:if="${order.status == 'PENDING'}" th:text="'Đang xử lý'"></span>
+                                        <span th:if="${order.status == 'PROCESSING'}" th:text="'Đang giao'"></span>
+                                          <span th:if="${order.status == 'DELIVERED'}" th:text="'Đã giao'"></span>
+                                             <span th:if="${order.status == 'CANCELED'}" th:text="'Đã hủy'"></span>
+                                                <span th:if="${order.status == 'RETURNED'}" th:text="'Trả hàng'"></span>
+                                    </span>
                                 </div>
                                 <div class="order-body mt-2">
                                     <!-- Lặp qua các sản phẩm trong đơn hàng -->
-                                    <div th:each="item : ${order.items}" class="order-product d-flex align-items-center">
-                                        <img th:src="${item.productImage}" alt="Hình sản phẩm" class="product-img me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
-                                        <div class="product-info flex-grow-1">
+                                    <div th:each="item : ${order.orderItems}" class="order-product d-flex align-items-center">
+                                        <img th:src="${item.productImageUrl != null and item.productImageUrl != ''} ? ${item.productImageUrl} : '/images/placeholder.png'"
+                                             alt="Hình sản phẩm" class="product-img me-3"
+                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">                                        <div class="product-info flex-grow-1">
                                             <p class="mb-1" th:text="${item.productName}"></p>
-                                            <small class="text-muted" th:text="${item.description}"></small>
+                                            <small class="text-muted" th:text="${item.donViTinh}"></small>
                                         </div>
                                         <div class="product-price text-end">
                                             <p class="mb-1" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + 'đ'"></p>
@@ -199,21 +247,26 @@
                                         <strong>Tổng tiền: </strong>
                                         <span th:text="${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')} + 'đ'"></span>
                                     </div>
-                                    <button class="btn btn-primary btn-reorder">Mua lại</button>
+                                    <button class="btn btn-primary btn-reorder" th:onclick="'reorder(' + ${order.id} + ')'">Mua lại</button>
                                 </div>
                             </div>
+
                         </div>
                     </div>
-
                     <div class="card-content" id="addresses-content" style="display: none;">
                         <div class="d-flex justify-content-end mb-3">
-                            <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#newAddress" aria-controls="newAddress">Thêm địa chỉ mới</button>
+                            <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#newAddress"
+                                    aria-controls="newAddress">Thêm địa chỉ mới
+                            </button>
                         </div>
                         <div class="address-list">
-                            <div th:each="address : ${addresses}" class="address-item" th:data-address-id="${address.id}">
+                            <div th:each="address : ${addresses}" class="address-item"
+                                 th:data-address-id="${address.id}">
                                 <h5>
-                                    <span th:text="${address.fullName}"></span> | <span th:text="${address.phoneNumber}"></span>
-                                    <a href="#" class="text-danger ms-2 delete-address" th:onclick="'deleteAddress(event, ' + ${address.id} + ')'">
+                                    <span th:text="${address.fullName}"></span> | <span
+                                        th:text="${address.phoneNumber}"></span>
+                                    <a href="#" class="text-danger ms-2 delete-address"
+                                       th:onclick="'deleteAddress(event, ' + ${address.id} + ')'">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </h5>
@@ -236,7 +289,6 @@
                                 <img src="https://via.placeholder.com/200" alt="QR Code">
                             </div>
                             <p class="mt-3 mb-1">Quét QR bằng camera điện thoại để tải ứng dụng</p>
-                            <p class="mb-1">Long Châu QR</p>
                             <p>Tìm ứng dụng trên App Store hoặc Google Play</p>
                         </div>
                     </div>
@@ -253,9 +305,10 @@
                             <a href="#">Chưa liên lạc</a>
                         </div>
                         <div class="no-orders text-center">
-                            <img src="https://via.placeholder.com/100" alt="No vaccination orders" style="opacity: 0.7;">
+                            <img src="/image/donhang.png" alt="No prescriptions" style="height: 200px; width: auto">
+
                             <p class="mt-3 mb-1">Bạn chưa có đơn hàng nào.</p>
-                            <p class="mb-3">Đặt lịch tiêm chủng ngay để nhận ưu đãi từ Long Châu</p>
+                            <p class="mb-3">Đặt lịch tiêm chủng ngay để nhận ưu đãi </p>
                             <button class="btn btn-primary">Đặt lịch ngay</button>
                         </div>
                     </div>
@@ -267,8 +320,8 @@
                             <a href="#">Đã tư vấn</a>
                             <a href="#">Chưa liên lạc</a>
                         </div>
-                        <div class="no-prescriptions text-center">
-                            <img src="https://via.placeholder.com/100" alt="No prescriptions" style="opacity: 0.7;">
+                        <div class="no-orders text-center">
+                            <img src="/image/donhang.png" alt="No prescriptions" style="height: 200px; width: auto">
                             <p class="mt-3 mb-1">Bạn chưa có yêu cầu nào.</p>
                             <p class="mb-3">Gửi yêu cầu đơn thuốc ngay</p>
                             <button class="btn btn-primary">Gửi yêu cầu mới</button>
@@ -276,20 +329,25 @@
                     </div>
 
 
-                    <div class="offcanvas offcanvas-end" tabindex="-1" id="newAddress" aria-labelledby="offcanvasCartLabel">
+                    <div class="offcanvas offcanvas-end" tabindex="-1" id="newAddress"
+                         aria-labelledby="offcanvasCartLabel">
                         <div class="offcanvas-header">
                             <h5 class="offcanvas-title" id="offcanvasCartLabel">Địa chỉ mới</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                                    aria-label="Close"></button>
                         </div>
                         <div class="offcanvas-body">
-                            <form id="addAddressForm" th:action="@{/addAddress}" method="POST" onsubmit="addAddress(event)">
+                            <form id="addAddressForm" th:action="@{/addAddress}" method="POST"
+                                  onsubmit="addAddress(event)">
                                 <div class="mb-3">
                                     <label for="fullNameAddress" class="form-label">Họ và tên</label>
-                                    <input type="text" class="form-control" id="fullNameAddress" name="fullName" placeholder="Họ và tên" required>
+                                    <input type="text" class="form-control" id="fullNameAddress" name="fullName"
+                                           placeholder="Họ và tên" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="phoneNumberAddress" class="form-label">Số điện thoại</label>
-                                    <input type="text" class="form-control" id="phoneNumberAddress" name="phoneNumber" placeholder="Số điện thoại" required>
+                                    <input type="text" class="form-control" id="phoneNumberAddress" name="phoneNumber"
+                                           placeholder="Số điện thoại" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="city" class="form-label">Tỉnh/Thành phố</label>
@@ -311,27 +369,34 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="addressDetail" class="form-label">Địa chỉ nhận hàng</label>
-                                    <input type="text" class="form-control" id="addressDetail" name="addressDetail" placeholder="Nhập địa chỉ cụ thể" required>
+                                    <input type="text" class="form-control" id="addressDetail" name="addressDetail"
+                                           placeholder="Nhập địa chỉ cụ thể" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Loại địa chỉ</label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check form-check-inline custom-radio">
-                                            <input class="form-check-input" type="radio" name="addressType" id="home" value="Nhà" required>
+                                            <input class="form-check-input" type="radio" name="addressType" id="home"
+                                                   value="Nhà" required>
                                             <label class="form-check-label" for="home">Nhà</label>
                                         </div>
                                         <div class="form-check form-check-inline custom-radio">
-                                            <input class="form-check-input" type="radio" name="addressType" id="office" value="Văn phòng">
+                                            <input class="form-check-input" type="radio" name="addressType" id="office"
+                                                   value="Văn phòng">
                                             <label class="form-check-label" for="office">Văn phòng</label>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <input type="checkbox" class="form-check-input" id="defaultAddress" name="isDefault" style="margin-right: 8px;">
-                                    <label class="form-check-label" for="defaultAddress">Đặt làm địa chỉ mặc định</label>
+                                    <input type="checkbox" class="form-check-input" id="defaultAddress" name="isDefault"
+                                           style="margin-right: 8px;">
+                                    <label class="form-check-label" for="defaultAddress">Đặt làm địa chỉ mặc
+                                        định</label>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary w-100 mt-3" style="margin-bottom: 20px">Thêm địa chỉ mới</button>
+                                    <button type="submit" class="btn btn-primary w-100 mt-3"
+                                            style="margin-bottom: 20px">Thêm địa chỉ mới
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -533,7 +598,7 @@
     }
 
     // Xử lý các sự kiện khi trang được tải
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Khởi tạo DatePicker cho ngày sinh
         flatpickr("#birthDate", {
             dateFormat: "d/m/Y",
@@ -547,7 +612,7 @@
         const breadcrumbActive = document.querySelector('.breadcrumb-item.active');
 
         menuItems.forEach(item => {
-            item.addEventListener('click', function(e) {
+            item.addEventListener('click', function (e) {
                 e.preventDefault();
                 const section = this.getAttribute('data-section');
 
@@ -560,7 +625,7 @@
                 contents.forEach(content => content.style.display = 'none');
 
                 let title = 'Thông tin cá nhân';
-                switch(section) {
+                switch (section) {
                     case 'personal':
                         document.getElementById('personal-content').style.display = 'block';
                         title = 'Thông tin cá nhân';
@@ -671,7 +736,8 @@
                                 });
                             }
                         });
-                        return;                }
+                        return;
+                }
 
                 // Cập nhật breadcrumb
                 if (breadcrumbActive) {
@@ -710,7 +776,7 @@
             });
 
         // Khi chọn tỉnh/thành, lấy danh sách quận/huyện
-        citySelect.addEventListener('change', function() {
+        citySelect.addEventListener('change', function () {
             const cityCode = this.options[this.selectedIndex].dataset.code;
             districtSelect.innerHTML = '<option value="" disabled selected>Chọn Quận/Huyện</option>';
             wardSelect.innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
@@ -742,7 +808,7 @@
         });
 
         // Khi chọn quận/huyện, lấy danh sách phường/xã
-        districtSelect.addEventListener('change', function() {
+        districtSelect.addEventListener('change', function () {
             const districtCode = this.options[this.selectedIndex].dataset.code;
             wardSelect.innerHTML = '<option value="" disabled selected>Chọn Phường/Xã</option>';
 
@@ -860,6 +926,85 @@
                         }).showToast();
                     });
             }
+        });
+    }
+
+    function filterByStatus(event, status) {
+        event.preventDefault();
+
+        // Cập nhật tab active
+        document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Lọc đơn hàng
+        const orderItems = document.querySelectorAll('.order-item');
+        orderItems.forEach(item => {
+            const itemStatus = item.getAttribute('data-status');
+            if (status === 'all' || itemStatus === status) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Kiểm tra nếu không có đơn hàng hiển thị
+        checkNoOrdersVisible();
+    }
+
+    // Hàm tìm kiếm đơn hàng
+    function filterOrders() {
+        const searchInput = document.querySelector('.search-input').value.toLowerCase();
+        const orderItems = document.querySelectorAll('.order-item');
+
+        orderItems.forEach(item => {
+            const orderId = item.querySelector('.order-id').textContent.toLowerCase();
+            const productNames = item.querySelectorAll('.product-info p');
+            let match = false;
+
+            if (orderId.includes(searchInput)) {
+                match = true;
+            } else {
+                productNames.forEach(name => {
+                    if (name.textContent.toLowerCase().includes(searchInput)) {
+                        match = true;
+                    }
+                });
+            }
+
+            // Kết hợp với bộ lọc trạng thái
+            const activeTab = document.querySelector('.tab-link.active').getAttribute('data-status');
+            const itemStatus = item.getAttribute('data-status');
+            const statusMatch = activeTab === 'all' || itemStatus === activeTab;
+
+            if (match && statusMatch) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Kiểm tra nếu không có đơn hàng hiển thị
+        checkNoOrdersVisible();
+    }
+
+    // Hàm kiểm tra nếu không có đơn hàng nào hiển thị
+    function checkNoOrdersVisible() {
+        const visibleOrders = document.querySelectorAll('.order-item[style="display: block;"]');
+        const noOrdersDiv = document.querySelector('.no-orders');
+        if (visibleOrders.length === 0 && noOrdersDiv) {
+            noOrdersDiv.style.display = 'block';
+        } else if (noOrdersDiv) {
+            noOrdersDiv.style.display = 'none';
+        }
+    }
+
+    // Hàm xử lý mua lại đơn hàng (tạm thời hiển thị thông báo)
+    function reorder(orderId) {
+        Swal.fire({
+            title: 'Tính năng đang phát triển',
+            text: 'Chức năng mua lại đơn hàng sẽ sớm được triển khai!',
+            icon: 'info',
+            confirmButtonText: 'OK'
         });
     }
 

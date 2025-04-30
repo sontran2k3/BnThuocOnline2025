@@ -64,19 +64,76 @@ public class PaymentController {
             HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
+            // Lấy thông tin từ orderData
             String customerName = (String) orderData.get("customerName");
             String customerPhone = (String) orderData.get("customerPhone");
             String customerAddress = (String) orderData.get("customerAddress");
             int totalAmount = ((Number) orderData.get("totalAmount")).intValue();
             List<Map<String, Object>> items = (List<Map<String, Object>>) orderData.get("items");
 
-            // Tạo mã đơn hàng duy nhất
+            // Tạo mã đơn hàng
             String currentTimeString = String.valueOf(new Date().getTime());
             long orderCode = Long.parseLong(currentTimeString.substring(currentTimeString.length() - 6));
 
-            // Chuẩn bị dữ liệu thanh toán
+            // Lấy thông tin người dùng
+            User user = null;
+            if (oAuth2User != null) {
+                String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
+                String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
+                user = "google".equals(provider) ? userRepository.findByGoogleId(providerId).orElse(null)
+                        : userRepository.findByFacebookId(providerId).orElse(null);
+                logger.info("OAuth2User provider: {}, providerId: {}, user: {}", provider, providerId, user != null ? user.getId() : "null");
+            } else if (request.getUserPrincipal() != null) {
+                String emailOrPhone = request.getUserPrincipal().getName();
+                user = userRepository.findByEmail(emailOrPhone).orElse(null);
+                if (user == null) {
+                    user = userRepository.findByPhoneNumber(emailOrPhone).orElse(null);
+                }
+                logger.info("Principal name: {}, user: {}", emailOrPhone, user != null ? user.getId() : "null");
+            } else {
+                logger.warn("No authenticated user found. Proceeding as guest.");
+            }
+
+            // Tạo đơn hàng
+            Orders order = new Orders();
+            order.setOrderDate(LocalDateTime.now());
+            order.setTotalPrice(new BigDecimal(totalAmount));
+            order.setStatus(Orders.OrderStatus.pending);
+            order.setCustomerName(customerName);
+            order.setCustomerPhone(customerPhone);
+            order.setCustomerAddress(customerAddress);
+            order.setPaymentMethod("payos");
+
+            // Gán user_id nếu người dùng tồn tại
+            if (user != null) {
+                order.setUserId(user.getId());
+                order.setUser(user);
+                logger.info("Assigned user ID {} to order {}", user.getId(), orderCode);
+            } else {
+                logger.info("Order {} created without user_id (guest)", orderCode);
+                // Nếu cột user_id không cho phép null, cần xử lý tại đây
+                order.setUserId(null); // Hoặc tạo một UUID mặc định nếu cần
+            }
+
+            // Lưu đơn hàng
+            order = ordersRepository.save(order);
+            logger.info("Order saved with ID: {}, user_id: {}", order.getId(), order.getUserId());
+
+            // Lưu chi tiết đơn hàng
+            for (Map<String, Object> item : items) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setProduct(productRepository.findById(((Number) item.get("productId")).intValue()).orElse(null));
+                orderItem.setDonViTinh(donViTinhRepository.findById(((Number) item.get("donViTinhId")).intValue()).orElse(null));
+                orderItem.setQuantity(((Number) item.get("quantity")).intValue());
+                orderItem.setPrice(new BigDecimal(((Number) item.get("price")).doubleValue()));
+                orderItem.setAddedAt(LocalDateTime.now());
+                orderItemRepository.save(orderItem);
+            }
+
+            // Chuẩn bị dữ liệu thanh toán PayOS
             String baseUrl = getBaseUrl(request);
-            String returnUrl = baseUrl + "/thanhtoan/success?orderCode=" + orderCode;
+            String returnUrl = baseUrl + "/thanhtoan/success?orderCode=" + order.getId();
             String cancelUrl = baseUrl + "/thanhtoan/cancel";
 
             List<ItemData> itemList = new ArrayList<>();
@@ -91,13 +148,13 @@ public class PaymentController {
                         .build());
             }
 
-            String description = "ĐH #" + orderCode;
+            String description = "ĐH #" + order.getId();
             if (description.length() > 25) {
                 description = description.substring(0, 25);
             }
 
             PaymentData paymentData = PaymentData.builder()
-                    .orderCode(orderCode)
+                    .orderCode((long) order.getId())
                     .amount(totalAmount)
                     .description(description)
                     .returnUrl(returnUrl)
@@ -108,54 +165,9 @@ public class PaymentController {
             // Tạo link thanh toán
             CheckoutResponseData data = payOS.createPaymentLink(paymentData);
 
-            // Lưu thông tin đơn hàng
-            Orders order = new Orders();
-            order.setOrderDate(LocalDateTime.now());
-            order.setTotalPrice(new BigDecimal(totalAmount));
-            order.setStatus(Orders.OrderStatus.pending);
-            order.setCustomerName(customerName);
-            order.setCustomerPhone(customerPhone);
-            order.setCustomerAddress(customerAddress);
-            order.setPaymentMethod("payos");
-
-            // Lấy thông tin người dùng
-            User user = null;
-            if (oAuth2User != null) {
-                String providerId = oAuth2User.getAttribute("sub") != null ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
-                String provider = oAuth2User.getAttribute("sub") != null ? "google" : "facebook";
-                user = "google".equals(provider) ? userRepository.findByGoogleId(providerId).orElse(null)
-                        : userRepository.findByFacebookId(providerId).orElse(null);
-            } else if (request.getUserPrincipal() != null) {
-                String email = request.getUserPrincipal().getName();
-                user = userRepository.findByEmail(email).orElse(null);
-            }
-
-            if (user != null) {
-                order.setUserId(user.getId());
-                order.setUser(user);
-                logger.info("User ID {} assigned to order {}", user.getId(), orderCode);
-            } else {
-                logger.warn("No user found for order {}. Proceeding as guest.", orderCode);
-            }
-
-            // Lưu đơn hàng
-            order = ordersRepository.save(order);
-
-            // Lưu chi tiết đơn hàng vào order_items
-            for (Map<String, Object> item : items) {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setProduct(productRepository.findById(((Number) item.get("productId")).intValue()).orElse(null));
-                orderItem.setDonViTinh(donViTinhRepository.findById(((Number) item.get("donViTinhId")).intValue()).orElse(null));
-                orderItem.setQuantity(((Number) item.get("quantity")).intValue());
-                orderItem.setPrice(new BigDecimal(((Number) item.get("price")).doubleValue()));
-                orderItem.setAddedAt(LocalDateTime.now());
-                orderItemRepository.save(orderItem);
-            }
-
             response.put("success", true);
             response.put("checkoutUrl", data.getCheckoutUrl());
-            response.put("orderCode", orderCode);
+            response.put("orderCode", order.getId());
         } catch (Exception e) {
             logger.error("Error creating payment link: {}", e.getMessage(), e);
             response.put("success", false);

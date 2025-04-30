@@ -125,7 +125,6 @@ $(document).ready(function () {
         });
     });
 
-    // Hàm tải danh sách đơn hàng
     function loadUserOrders(userId) {
         $.ajax({
             url: `/api/quanly/orders?user_id=${userId}`,
@@ -140,19 +139,21 @@ $(document).ready(function () {
                 }
 
                 orders.forEach(order => {
-                    const productList = 'Danh sách sản phẩm';
+                    const productList = order.orderItems && order.orderItems.length > 0
+                        ? order.orderItems.map(item => item.productName || 'N/A').join(', ')
+                        : 'Không có sản phẩm';
                     const row = `
-                        <tr>
-                            <td>${order.id}</td>
-                            <td>${order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
-                            <td>${order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0'}</td>
-                            <td>${order.status || 'N/A'}</td>
-                            <td>${productList}</td>
-                            <td>
-                                <button class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
-                            </td>
-                        </tr>
-                    `;
+                <tr>
+                    <td>${order.id}</td>
+                    <td>${order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
+                    <td>${order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0'}</td>
+                    <td>${order.status || 'N/A'}</td>
+                    <td>${productList}</td>
+                    <td>
+                        <button type="button" class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
+                    </td>
+                </tr>
+            `;
                     tbody.append(row);
                 });
             },
@@ -162,6 +163,8 @@ $(document).ready(function () {
             }
         });
     }
+
+
 
     // Xử lý nút "Xóa"
     $('#users-table').on('click', '.delete-user', function () {
@@ -229,84 +232,104 @@ $(document).ready(function () {
         });
     });
 
-    // Xử lý nút "Xem" chi tiết đơn hàng
-    $('#user_orders_table').on('click', '.view-order-details', function (e) {
-        e.preventDefault(); // Ngăn chặn hành vi mặc định
-        console.log('Nút Xem được nhấn'); // Debug
+    // Xử lý khi nhấn nút "Xem" chi tiết đơn hàng
+    $('#user_orders_table').on('click', '.view-order-details', function () {
         const orderId = $(this).data('order-id');
-        console.log('Order ID:', orderId); // Debug
-
         $.ajax({
             url: `/api/quanly/orders/${orderId}`,
             method: 'GET',
             success: function (order) {
-                console.log('Dữ liệu đơn hàng:', order); // Debug
-                // Gán thông tin đơn hàng vào modal
-                $('#order_detail_id').text(order.id || 'N/A');
+                // Hiển thị thông tin đơn hàng
+                $('#order_detail_id').text(order.id);
                 $('#order_detail_date').text(order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A');
                 $('#order_detail_total').text(order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0');
                 $('#order_detail_status').text(order.status || 'N/A');
 
-                // Tải danh sách sản phẩm trong đơn hàng
-                loadOrderItems(order.id);
+                // Hiển thị danh sách sản phẩm
+                const tbody = $('#order_items_table_body');
+                tbody.empty();
 
-                // Mở modal
-                try {
-                    $('#orderDetailModal').modal('show');
-                    console.log('Modal được mở'); // Debug
-                } catch (err) {
-                    console.error('Lỗi khi mở modal:', err);
-                    Utils.showAlert('error', 'Lỗi', 'Không thể mở modal chi tiết đơn hàng.');
+                if (!order.orderItems || order.orderItems.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào.</td></tr>');
+                } else {
+                    order.orderItems.forEach(item => {
+                        const row = `
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.product?.tenSanPham || 'N/A'}</td>
+                            <td>${item.donViTinh?.donViTinh || 'N/A'}</td>
+                            <td>${item.quantity || 0}</td>
+                            <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
+                            <td>${(item.price && item.quantity) ? (item.price * item.quantity).toLocaleString('vi-VN') : '0'}</td>
+                        </tr>
+                    `;
+                        tbody.append(row);
+                    });
                 }
+
+                // Mở modal chi tiết đơn hàng
+                $('#orderDetailModal').modal('show');
             },
             error: function (xhr) {
-                console.error('Lỗi tải thông tin đơn hàng:', xhr);
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin đơn hàng: ' + (xhr.responseText || 'Unknown error'));
+                console.error('Lỗi tải chi tiết đơn hàng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải chi tiết đơn hàng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
     });
 
-    function loadOrderItems(orderId) {
-        console.log('Tải danh sách sản phẩm cho orderId:', orderId); // Debug
-        const tbody = $('#order_items_table_body');
-        tbody.html('<tr><td colspan="6" class="text-center">Đang tải...</td></tr>');
+
+    $('#user_orders_table').on('click', '.view-order-details', function (event) {
+        event.preventDefault();
+        const orderId = $(this).data('order-id');
+
+        // Lấy CSRF token và header từ meta tag
+        const token = $('meta[name="_csrf"]').attr('content');
+        const header = $('meta[name="_csrf_header"]').attr('content');
 
         $.ajax({
-            url: `/api/quanly/orders/${orderId}/items`,
+            url: `/api/quanly/orders/${orderId}`,
             method: 'GET',
-            success: function (response) {
-                console.log('Phản hồi API:', response); // Debug chi tiết
+            headers: {
+                [header]: token // Thêm CSRF token vào header
+            },
+            success: function (order) {
+                // Hiển thị thông tin đơn hàng
+                $('#order_detail_id').text(order.id);
+                $('#order_detail_date').text(order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A');
+                $('#order_detail_total').text(order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0');
+                $('#order_detail_status').text(order.status || 'N/A');
+
+                // Hiển thị danh sách sản phẩm
+                const tbody = $('#order_items_table_body');
                 tbody.empty();
 
-                // Kiểm tra nếu response không phải là mảng hoặc rỗng
-                if (!response || !Array.isArray(response) || response.length === 0) {
-                    console.log('Dữ liệu rỗng hoặc không phải mảng:', response);
-                    tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào trong đơn hàng.</td></tr>');
-                    return;
-                }
-
-                // Duyệt qua danh sách sản phẩm
-                response.forEach(item => {
-                    const row = `
+                if (!order.orderItems || order.orderItems.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào.</td></tr>');
+                } else {
+                    order.orderItems.forEach(item => {
+                        const row = `
                     <tr>
-                        <td>${item.id || 'N/A'}</td>
+                        <td>${item.id}</td>
                         <td>${item.productName || 'N/A'}</td>
                         <td>${item.donViTinh || 'N/A'}</td>
                         <td>${item.quantity || 0}</td>
                         <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
-                        <td>${item.totalPrice ? item.totalPrice.toLocaleString('vi-VN') : '0'}</td>
+                        <td>${(item.price && item.quantity) ? (item.price * item.quantity).toLocaleString('vi-VN') : '0'}</td>
                     </tr>
                 `;
-                    tbody.append(row);
-                });
+                        tbody.append(row);
+                    });
+                }
+
+                // Mở modal chi tiết đơn hàng
+                $('#orderDetailModal').modal('show');
             },
             error: function (xhr) {
-                console.error('Lỗi tải danh sách sản phẩm:', xhr.responseText); // Ghi lỗi chi tiết
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách sản phẩm: ' + (xhr.responseText || 'Unknown error'));
-                tbody.empty().append('<tr><td colspan="6" class="text-center">Không thể tải sản phẩm.</td></tr>');
+                console.error('Lỗi tải chi tiết đơn hàng:', xhr);
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải chi tiết đơn hàng: ' + (xhr.responseText || 'Unknown error'));
             }
         });
-    }
+    });
 
 
 });

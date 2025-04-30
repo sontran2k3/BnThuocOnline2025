@@ -486,26 +486,40 @@
             updateCheckoutModal();
         });
 
-        // Xử lý khi mở modal
         $('#checkoutModal').on('show.bs.modal', function() {
-            updateCheckoutModal();
-
-            // Kiểm tra nếu không có sản phẩm nào được chọn
-            let selectedItems = $('input[id^="item-checkbox-"]:checked').length;
-            if (selectedItems === 0) {
-                alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng.');
-                return false; // Ngăn modal mở
-            }
-
-            // Reset trạng thái form
-            $('.form-group').removeClass('invalid');
-            $('#customer-name, #customer-phone, #customer-address-detail').val('');
-            $('#province').val('');
-            $('#district').val('').prop('disabled', true);
-            $('#ward').val('').prop('disabled', true);
-
-            // Load danh sách Tỉnh/Thành phố
-            loadProvinces();
+            // Kiểm tra trạng thái đăng nhập
+            $.ajax({
+                url: '/check-auth',
+                type: 'GET',
+                success: function(response) {
+                    if (!response.authenticated) {
+                        alert('Vui lòng đăng nhập để đặt hàng!');
+                        $('#checkoutModal').modal('hide'); // Đóng modal
+                        window.location.href = '/login'; // Chuyển hướng đến trang đăng nhập
+                    } else {
+                        updateCheckoutModal();
+                        // Kiểm tra nếu không có sản phẩm nào được chọn
+                        let selectedItems = $('input[id^="item-checkbox-"]:checked').length;
+                        if (selectedItems === 0) {
+                            alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng.');
+                            $('#checkoutModal').modal('hide');
+                            return;
+                        }
+                        // Reset trạng thái form
+                        $('.form-group').removeClass('invalid');
+                        $('#customer-name, #customer-phone, #customer-address-detail').val('');
+                        $('#province').val('');
+                        $('#district').val('').prop('disabled', true);
+                        $('#ward').val('').prop('disabled', true);
+                        loadProvinces();
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error checking auth:', xhr);
+                    alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+                    $('#checkoutModal').modal('hide');
+                }
+            });
         });
 
         // Xử lý sự kiện chọn Tỉnh/Thành phố

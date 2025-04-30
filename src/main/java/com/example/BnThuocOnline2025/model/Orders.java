@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -53,6 +54,9 @@ public class Orders {
     @ManyToOne
     @JoinColumn(name = "cart_id")
     private Cart cart;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<OrderItem> orderItems;
 
     public enum OrderStatus {
         pending,

@@ -746,3 +746,9 @@ body {
     box-shadow: 0 2px 5px rgba(53, 122, 189, 0.3);
 }
 
+.order-product .product-img {
+    border: 1px solid #e9ecef; /* Vòng bo nhẹ màu xám nhạt */
+    border-radius: 4px; /* Bo góc nhẹ */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Hiệu ứng đổ bóng nhẹ */
+}
+

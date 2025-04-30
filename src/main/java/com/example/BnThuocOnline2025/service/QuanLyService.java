@@ -3,6 +3,7 @@ package com.example.BnThuocOnline2025.service;
 import com.example.BnThuocOnline2025.dto.InventoryResponseDTO;
 import com.example.BnThuocOnline2025.dto.InventoryTransactionDTO;
 import com.example.BnThuocOnline2025.dto.ProductDTO;
+import com.example.BnThuocOnline2025.dto.UserDTO;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.repository.*;
 import jakarta.transaction.Transactional;
@@ -66,6 +67,10 @@ public class QuanLyService {
 
     @Autowired
     private OrderItemRepository orderItemRepository;
+
+
+    @Autowired
+    private UserAddressRepository userAddressRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -495,16 +500,73 @@ public class QuanLyService {
         return stats;
     }
 
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(user -> {
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setName(user.getName());
+            userDTO.setEmail(user.getEmail());
+            userDTO.setPhoneNumber(user.getPhoneNumber());
+            userDTO.setRole(user.getRole());
+            userDTO.setPicture(user.getPicture());
+            userDTO.setDateOfBirth(user.getDateOfBirth());
 
-    // Lấy danh sách tất cả người dùng
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+            // Lấy địa chỉ mặc định từ UserAddress
+            Optional<UserAddress> defaultAddress = userAddressRepository.findByUserIdAndIsDefaultTrue(user.getId());
+            if (defaultAddress.isPresent()) {
+                UserAddress address = defaultAddress.get();
+                String fullAddress = String.format("%s, %s, %s, %s",
+                        address.getAddressDetail(),
+                        address.getWard(),
+                        address.getDistrict(),
+                        address.getCity());
+                userDTO.setAddress(fullAddress);
+            } else {
+                userDTO.setAddress("N/A");
+            }
+
+            return userDTO;
+        }).collect(Collectors.toList());
     }
 
-    // Lấy người dùng theo ID
-    public Optional<User> getUserById(UUID id) {
-        return userRepository.findById(id);
+    public Optional<UserDTO> getUserById(UUID id) {
+        Optional<User> userOptional = userRepository.findById(id);
+        if (!userOptional.isPresent()) {
+            return Optional.empty();
+        }
+
+        User user = userOptional.get();
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setName(user.getName());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setPhoneNumber(user.getPhoneNumber());
+        userDTO.setRole(user.getRole());
+        userDTO.setPicture(user.getPicture());
+        userDTO.setDateOfBirth(user.getDateOfBirth());
+
+        // Lấy địa chỉ mặc định từ UserAddress
+        Optional<UserAddress> defaultAddress = userAddressRepository.findByUserIdAndIsDefaultTrue(user.getId());
+        if (defaultAddress.isPresent()) {
+            UserAddress address = defaultAddress.get();
+            String fullAddress = String.format("%s, %s, %s, %s",
+                    address.getAddressDetail(),
+                    address.getWard(),
+                    address.getDistrict(),
+                    address.getCity());
+            userDTO.setAddress(fullAddress);
+        } else {
+            userDTO.setAddress("N/A");
+        }
+
+        return Optional.of(userDTO);
     }
+
+//    // Lấy người dùng theo ID
+//    public Optional<User> getUserById(UUID id) {
+//        return userRepository.findById(id);
+//    }
 
     // Xóa người dùng
     @Transactional
@@ -521,9 +583,8 @@ public class QuanLyService {
 
 
 
-    // Cập nhật thông tin người dùng
     @Transactional
-    public User updateUser(UUID id, User updatedUser) {
+    public UserDTO updateUser(UUID id, UserDTO updatedUserDTO) {
         Optional<User> userOptional = userRepository.findById(id);
         if (!userOptional.isPresent()) {
             throw new RuntimeException("Người dùng không tồn tại!");
@@ -531,29 +592,29 @@ public class QuanLyService {
 
         User user = userOptional.get();
         // Cập nhật các trường
-        if (updatedUser.getName() != null) {
-            user.setName(updatedUser.getName());
+        if (updatedUserDTO.getName() != null) {
+            user.setName(updatedUserDTO.getName());
         }
-        if (updatedUser.getEmail() != null) {
-            user.setEmail(updatedUser.getEmail());
+        if (updatedUserDTO.getEmail() != null) {
+            user.setEmail(updatedUserDTO.getEmail());
         }
-        if (updatedUser.getPhoneNumber() != null) {
-            user.setPhoneNumber(updatedUser.getPhoneNumber());
+        if (updatedUserDTO.getPhoneNumber() != null) {
+            user.setPhoneNumber(updatedUserDTO.getPhoneNumber());
         }
-        if (updatedUser.getAddress() != null) {
-            user.setAddress(updatedUser.getAddress());
+        if (updatedUserDTO.getDateOfBirth() != null) {
+            user.setDateOfBirth(updatedUserDTO.getDateOfBirth());
         }
-        if (updatedUser.getDateOfBirth() != null) {
-            user.setDateOfBirth(updatedUser.getDateOfBirth());
+        if (updatedUserDTO.getRole() != null) {
+            user.setRole(updatedUserDTO.getRole());
         }
-        if (updatedUser.getRole() != null) {
-            user.setRole(updatedUser.getRole());
-        }
-        if (updatedUser.getPicture() != null) {
-            user.setPicture(updatedUser.getPicture());
+        if (updatedUserDTO.getPicture() != null) {
+            user.setPicture(updatedUserDTO.getPicture());
         }
 
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        // Trả về UserDTO với địa chỉ mặc định
+        return getUserById(id).orElseThrow(() -> new RuntimeException("Lỗi khi lấy thông tin người dùng sau cập nhật!"));
     }
 
 

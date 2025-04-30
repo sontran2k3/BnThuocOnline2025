@@ -159,18 +159,23 @@ body {
     flex: 0 0 auto;
     width: 200px;
     min-width: 200px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Chỉnh sửa transition */
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #007bff !important; /* Viền xanh dương */
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3); /* Bóng đổ xanh nhạt */
 }
 
 .product-card .card {
     border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
+    transition: border-color 0.3s ease; /* Thêm transition cho viền */
+}
+
+.product-card .card:hover {
+    border-color: #007bff !important; /* Viền xanh dương khi hover */
 }
 
 .discount-badge {
@@ -259,10 +264,7 @@ body {
     margin-bottom: 2px;
 }
 
-.unit-info {
-    font-size: 0.8em;
-    color: #6c757d;
-}
+
 
 /* Button Primary */
 .btn-primary {
@@ -503,6 +505,7 @@ body {
         font-size: 1rem;
     }
 }
+
 /* Staff Reply */
 .staff-reply {
     margin-left: 30px;

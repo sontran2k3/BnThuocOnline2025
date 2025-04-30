@@ -1,18 +1,30 @@
 package com.example.BnThuocOnline2025.service;
 
+import com.example.BnThuocOnline2025.dto.OrderDTO;
+import com.example.BnThuocOnline2025.dto.OrderItemDTO;
+import com.example.BnThuocOnline2025.model.Orders;
+import com.example.BnThuocOnline2025.model.OrderItem;
 import com.example.BnThuocOnline2025.model.User;
 import com.example.BnThuocOnline2025.model.UserAddress;
+import com.example.BnThuocOnline2025.repository.OrdersRepository;
 import com.example.BnThuocOnline2025.repository.UserAddressRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    @Autowired
+    private OrdersRepository orderRepository;
+
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -21,7 +33,6 @@ public class UserService {
         this.userRepository = userRepository;
         this.userAddressRepository = userAddressRepository;
     }
-
 
     public User saveOrUpdateUser(String providerId, String name, String picture, String email, String provider) {
         Optional<User> existingUser;
@@ -85,7 +96,6 @@ public class UserService {
     }
 
     public UserAddress saveAddress(UserAddress address) {
-        // Nếu địa chỉ được đặt làm mặc định, bỏ mặc định của các địa chỉ khác
         if (address.getIsDefault()) {
             List<UserAddress> defaultAddresses = userAddressRepository.findByUserAndIsDefault(address.getUser(), true);
             for (UserAddress defaultAddress : defaultAddresses) {
@@ -101,12 +111,10 @@ public class UserService {
         return user.map(userAddressRepository::findByUser).orElse(List.of());
     }
 
-
     public void deleteAddress(Long addressId) {
         userAddressRepository.deleteById(addressId);
     }
 
-    // Đăng ký người dùng mới bằng số điện thoại
     public User registerUser(String phoneNumber, String password) throws Exception {
         if (userRepository.findByPhoneNumber(phoneNumber).isPresent()) {
             throw new Exception("Số điện thoại đã được đăng ký!");
@@ -118,7 +126,6 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
-    // Xác thực người dùng bằng số điện thoại và mật khẩu
     public User authenticateUser(String phoneNumber, String password) throws Exception {
         Optional<User> userOpt = userRepository.findByPhoneNumber(phoneNumber);
         if (userOpt.isPresent()) {
@@ -133,8 +140,30 @@ public class UserService {
         }
     }
 
-    public void updateUser(User user) {
-        userRepository.save(user);
+    @Transactional
+    public List<OrderDTO> getOrdersByUserId(UUID userId) {
+        List<Orders> orders = orderRepository.findByUserId(userId);
+        return orders.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    private OrderDTO mapToDTO(Orders order) {
+        OrderDTO orderDTO = new OrderDTO();
+        orderDTO.setId(order.getId());
+        orderDTO.setOrderDate(order.getOrderDate());
+        orderDTO.setTotalPrice(order.getTotalPrice());
+        orderDTO.setStatus(order.getStatus().toString());
+        orderDTO.setOrderItems(order.getOrderItems().stream().map(this::mapToItemDTO).collect(Collectors.toList()));
+        return orderDTO;
+    }
+
+    private OrderItemDTO mapToItemDTO(OrderItem item) {
+        OrderItemDTO itemDTO = new OrderItemDTO();
+        itemDTO.setId(item.getId());
+        itemDTO.setProductName(item.getProduct().getTenSanPham());
+        itemDTO.setProductImageUrl(item.getProduct().getMainImageUrl()); // Đảm bảo gọi đúng phương thức
+        itemDTO.setDonViTinh(item.getDonViTinh().getDonViTinh());
+        itemDTO.setQuantity(item.getQuantity());
+        itemDTO.setPrice(item.getPrice());
+        return itemDTO;
+    }
 }

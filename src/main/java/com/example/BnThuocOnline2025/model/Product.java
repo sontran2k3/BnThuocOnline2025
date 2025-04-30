@@ -67,9 +67,9 @@ public class Product {
     @JsonManagedReference(value = "product-donvitinh")
     private List<DonViTinh> donViTinhList;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference(value = "product-images")
+    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER)
     private List<ProductImage> productImages;
+
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference(value = "product-chitiet")
@@ -110,4 +110,20 @@ public class Product {
     public BigDecimal getGia() {
         return getDefaultDonViTinh().getGia();
     }
+
+
+
+    // Getter cho mainImageUrl
+    public String getMainImageUrl() {
+        if (mainImageUrl == null && productImages != null) {
+            // Tìm hình ảnh có isMain = true
+            mainImageUrl = productImages.stream()
+                    .filter(ProductImage::isMain)
+                    .map(ProductImage::getImageUrl)
+                    .findFirst()
+                    .orElse(productImages.isEmpty() ? "/images/placeholder.png" : productImages.get(0).getImageUrl());
+        }
+        return mainImageUrl != null ? mainImageUrl : "/images/placeholder.png";
+    }
+
 }

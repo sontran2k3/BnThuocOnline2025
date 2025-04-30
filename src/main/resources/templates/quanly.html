@@ -28,7 +28,7 @@
 <body>
 <!-- Thanh điều hướng (Sidebar) -->
 <div class="sidebar" id="sidebar">
-    <a href="#" class="text-center mb-4">
+    <a href="#" class="text-center mb-4" style="margin-top: 1px">
         <img src="/logonewT.png" alt="Logo" class="navbar-brand-img" style="height: 64px">
         <h4 class="text-white"><span>Admin Panel</span></h4>
     </a>
@@ -36,27 +36,35 @@
     <a href="#products" class="nav-link"><i class="fas fa-box"></i> <span>Quản lý sản phẩm</span></a>
     <a href="#users" class="nav-link"><i class="fas fa-users"></i> <span>Quản lý người dùng</span></a>
     <a href="#inventory" class="nav-link"><i class="fas fa-warehouse"></i> <span>Quản lý kho</span></a>
-    <a href="#reviews" class="nav-link"><i class="fas fa-star"></i> <span>Quản lý đánh giá</span></a>
+    <a href="#reviews" class="nav-link"><i class="fas fa-star"></i> <span>Hỏi đáp, đánh giá</span></a>
     <a href="#logout" class="nav-link mt-5" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> <span>Đăng xuất</span></a>
 </div>
 
 <!-- Nội dung chính -->
 <div class="main-content" id="main-content">
-    <!-- Thanh điều hướng trên (Navbar) -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+
+    <!-- Thanh Navbar cố định -->
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light shadow-sm">
         <div class="container-fluid">
-            <button class="btn btn-outline-secondary me-2" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-            <a class="navbar-brand" href="#">Quản lý bán thuốc online</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="handleAdminLogout()">Đăng xuất</a></li>                        </ul>
-                    </li>
+            <!-- Nút toggle sidebar (có thể thêm nếu cần) -->
+            <button class="btn btn-outline-secondary me-2" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Thanh tìm kiếm -->
+            <form class="d-flex mx-auto" style="max-width: 500px; width: 100%;">
+                <input class="form-control me-2" type="search" placeholder="Tìm kiếm (Ctrl + K)" aria-label="Tìm kiếm">
+            </form>
+
+            <!-- Thông tin người dùng -->
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="me-2">Admin TranK.Son</span>
+                    <i class="fas fa-user-circle fa-lg"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="handleAdminLogout()">Đăng xuất</a></li>
                 </ul>
             </div>
         </div>
@@ -64,7 +72,6 @@
 
     <!-- Dashboard -->
     <div class="container-fluid content-section" id="dashboard">
-        <h2>Dashboard</h2>
         <div class="row">
             <div class="col-md-3">
                 <div class="card text-white bg-primary mb-3">
@@ -135,27 +142,31 @@
         </div>
     </div>
     <!-- Quản lý sản phẩm -->
-    <!-- Quản lý sản phẩm -->
     <div class="container-fluid content-section" id="products" style="display: none;">
-        <h3 class="mt-5">Danh sách sản phẩm</h3>
         <div class="mb-3">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">Thêm sản phẩm</button>
-            <div class="dropdown d-inline-block">
-                <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Xuất dữ liệu
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-                    <li><a class="dropdown-item" href="#" id="exportProductsPDF">Xuất PDF</a></li>
-                    <li><a class="dropdown-item" href="#" id="exportProductsExcel">Xuất Excel</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="filter-box">
-            <div class="row">
-                <div class="col-md-4">
+            <div class="row align-items-center">
+                <!-- Nút Thêm sản phẩm -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addProductModal">Thêm sản phẩm</button>
+                </div>
+                <!-- Nút Xuất dữ liệu -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <div class="dropdown d-inline-block w-100">
+                        <button class="btn btn-success dropdown-toggle w-100" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Xuất dữ liệu
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li><a class="dropdown-item" href="#" id="exportProductsPDF">Xuất PDF</a></li>
+                            <li><a class="dropdown-item" href="#" id="exportProductsExcel">Xuất Excel</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Thanh tìm kiếm -->
+                <div class="col-md-3 mb-2 mb-md-0">
                     <input type="text" class="form-control" id="search-products" placeholder="Tìm kiếm sản phẩm...">
                 </div>
-                <div class="col-md-4">
+                <!-- Bộ lọc danh mục -->
+                <div class="col-md-3 mb-2 mb-md-0">
                     <select class="form-select" id="filter-category">
                         <option value="">Lọc theo danh mục</option>
                         <!-- Danh mục sẽ được load động -->
@@ -163,6 +174,7 @@
                 </div>
             </div>
         </div>
+
         <div class="table-responsive">
             <table class="table table-bordered table-hover" id="products-table">
                 <thead class="thead-dark">
@@ -190,13 +202,15 @@
     </div>
     <!-- Quản lý người dùng -->
     <div class="container-fluid content-section" id="users" style="display: none;">
-        <h3 class="mt-5">Danh sách người dùng</h3>
         <div class="mb-3">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Thêm người dùng</button>
-            <button class="btn btn-success">Xuất PDF</button>
-        </div>
-        <div class="mb-3">
-            <input type="text" class="form-control" id="search-users" placeholder="Tìm kiếm người dùng...">
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <button class="btn btn-success w-100">Xuất PDF</button>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <input type="text" class="form-control" id="search-users" placeholder="Tìm kiếm người dùng...">
+                </div>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-bordered table-hover" id="users-table">
@@ -332,9 +346,7 @@
 
     <!-- Quản lý kho -->
     <div class="container-fluid content-section" id="inventory" style="display: none;">
-        <h3 class="mt-5">Quản lý kho</h3>
 
-        <!-- Thanh công cụ -->
         <div class="mb-3 d-flex justify-content-between align-items-center">
             <div>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInventoryModal">
@@ -1368,8 +1380,6 @@
     </div>
 
 
-    <!-- Modal Chi tiết Đơn hàng -->
-    <!-- Modal Chi tiết Đơn hàng -->
     <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -1425,7 +1435,6 @@
             </div>
         </div>
     </div>
-
 
 </div>
 
