@@ -99,8 +99,8 @@ public class QuanLyController {
     }
 
     @GetMapping("/inventory-by-product/{productId}")
-    public ResponseEntity<List<Inventory>> getInventoryByProductId(@PathVariable Integer productId) {
-        List<Inventory> inventories = quanLyService.getInventoryByProductId(productId);
+    public ResponseEntity<List<InventoryResponseDTO>> getInventoryByProductId(@PathVariable Integer productId) {
+        List<InventoryResponseDTO> inventories = quanLyService.getInventoryByProductIdDTO(productId);
         return ResponseEntity.ok(inventories);
     }
 

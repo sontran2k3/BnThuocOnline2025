@@ -160,7 +160,7 @@ $(document).ready(function () {
             modal.hide();
         }
 
-        loadDoiTuong(selectId = '#doi_tuong_id') {
+        loadDoiTuong(selectId = '#doi_tuong_id', onSuccess = null, onError = null) {
             $.ajax({
                 url: '/api/quanly/doituong',
                 method: 'GET',
@@ -174,10 +174,20 @@ $(document).ready(function () {
                     if (selectId === '#doi_tuong_id') {
                         select.append('<option value="add-doi-tuong">Thêm đối tượng sử dụng mới...</option>');
                     }
+                    if (typeof onSuccess === 'function') {
+                        onSuccess(data);
+                    }
                 },
-                error: () => Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách đối tượng!')
+                error: (xhr) => {
+                    Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách đối tượng!');
+                    if (typeof onError === 'function') {
+                        onError(xhr);
+                    }
+                }
             });
         }
+
+
 
         showAddDoiTuongModal() {
             $('#addDoiTuongForm')[0].reset();
@@ -545,8 +555,6 @@ $(document).ready(function () {
             $('#detail_ten_san_pham').val(data.tenSanPham || '');
             $('#detail_thuong_hieu').val(data.thuongHieu || '');
             $('#detail_cong_dung').val(data.congDung || '');
-            $('#detail_doi_tuong').val(data.doiTuongId || '');
-            $('#detail_danh_muc').val(data.danhMucId || '');
             $('#detail_dang_bao_che').val(data.dangBaoChe || '');
             $('#detail_quy_cach').val(data.quyCach || '');
             $('#detail_xuat_xu_thuong_hieu').val(data.xuatXuThuongHieu || '');
@@ -556,80 +564,127 @@ $(document).ready(function () {
             $('#detail_thanh_phan').val(data.thanhPhan || '');
             $('#detail_mo_ta_ngan').val(data.moTaNgan || '');
 
-            this.imageList = data.images || [];
-            this.updateDetailImageTable();
+            // Tải danh sách đối tượng sử dụng và danh mục trước khi gán giá trị
+            Promise.all([
+                new Promise((resolve, reject) => {
+                    this.loadDoiTuong('#detail_doi_tuong', () => {
+                        $('#detail_doi_tuong').val(data.doiTuongId || '');
+                        resolve();
+                    }, reject);
+                }),
+                new Promise((resolve, reject) => {
+                    Utils.loadCategories('#detail_danh_muc', 'Chọn danh mục', {
+                        onSuccess: () => {
+                            $('#detail_danh_muc').val(data.danhMucId || '');
+                            resolve();
+                        },
+                        onError: reject
+                    });
+                })
+            ]).then(() => {
+                // Tiếp tục các thao tác khác sau khi đã gán giá trị
+                this.imageList = data.images || [];
+                this.updateDetailImageTable();
 
-            this.unitDataList = data.donViTinhList || [];
-            this.updateDetailUnitTable();
+                this.unitDataList = data.donViTinhList || [];
+                this.updateDetailUnitTable();
 
-            const unitSelect = $('#detail_unit_name');
-            unitSelect.empty();
-            unitSelect.append('<option value="">Chọn đơn vị tính</option>');
-            this.unitList.forEach(unit => {
-                unitSelect.append(`<option value="${unit}">${unit}</option>`);
-            });
+                const unitSelect = $('#detail_unit_name');
+                unitSelect.empty();
+                unitSelect.append('<option value="">Chọn đơn vị tính</option>');
+                this.unitList.forEach(unit => {
+                    unitSelect.append(`<option value="${unit}">${unit}</option>`);
+                });
 
-            const chiTiet = data.chiTietSanPham || {};
-            $('#detail_mota_chi_tiet').val(chiTiet.moTaChiTiet || '');
-            $('#detail_thanhphan_chi_tiet').val(chiTiet.thanhPhanChiTiet || '');
-            $('#detail_cong_dung_chi_tiet').val(chiTiet.congDungChiTiet || '');
-            $('#detail_cach_dung_chi_tiet').val(chiTiet.cachDungChiTiet || '');
-            $('#detail_tac_dung_phu').val(chiTiet.tacDungPhu || '');
-            $('#detail_luu_y').val(chiTiet.luuY || '');
-            $('#detail_ban_quan').val(chiTiet.baoQuan || '');
+                const chiTiet = data.chiTietSanPham || {};
+                $('#detail_mota_chi_tiet').val(chiTiet.moTaChiTiet || '');
+                $('#detail_thanhphan_chi_tiet').val(chiTiet.thanhPhanChiTiet || '');
+                $('#detail_cong_dung_chi_tiet').val(chiTiet.congDungChiTiet || '');
+                $('#detail_cach_dung_chi_tiet').val(chiTiet.cachDungChiTiet || '');
+                $('#detail_tac_dung_phu').val(chiTiet.tacDungPhu || '');
+                $('#detail_luu_y').val(chiTiet.luuY || '');
+                $('#detail_ban_quan').val(chiTiet.baoQuan || '');
 
-            const inventoryTbody = $('#detail_inventory_table_body');
-            inventoryTbody.empty();
-            $.ajax({
-                url: `/api/quanly/inventory-by-product/${data.id}`,
-                method: 'GET',
-                success: (inventoryList) => {
-                    if (inventoryList.length === 0) {
-                        inventoryTbody.append('<tr><td colspan="6">Không có dữ liệu kho</td></tr>');
-                    } else {
-                        inventoryList.forEach(item => {
-                            const today = new Date();
-                            const expiryDate = new Date(item.expiryDate);
-                            let statusClass = '';
-                            let statusText = '';
-                            const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const inventoryTbody = $('#detail_inventory_table_body');
+                inventoryTbody.empty();
+                $.ajax({
+                    url: `/api/quanly/inventory-by-product/${data.id}`,
+                    method: 'GET',
+                    success: (inventoryList) => {
+                        if (inventoryList.length === 0) {
+                            inventoryTbody.append('<tr><td colspan="6">Không có dữ liệu kho</td></tr>');
+                        } else {
+                            inventoryList.forEach(item => {
+                                const today = new Date();
+                                const expiryDate = new Date(item.expiryDate);
+                                let statusClass = '';
+                                let statusText = '';
+                                const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 
-                            if (daysLeft < 0) {
-                                statusClass = 'inventory-status-expired';
-                                statusText = 'Hết hạn';
-                            } else if (daysLeft <= 30) {
-                                statusClass = 'inventory-status-near-expiry';
-                                statusText = 'Sắp hết hạn';
-                            } else {
-                                statusClass = 'inventory-status-valid';
-                                statusText = 'Còn hạn';
-                            }
+                                if (daysLeft < 0) {
+                                    statusClass = 'inventory-status-expired';
+                                    statusText = 'Hết hạn';
+                                } else if (daysLeft <= 30) {
+                                    statusClass = 'inventory-status-near-expiry';
+                                    statusText = 'Sắp hết hạn';
+                                } else {
+                                    statusClass = 'inventory-status-valid';
+                                    statusText = 'Còn hạn';
+                                }
 
-                            inventoryTbody.append(`
-                                <tr>
-                                    <td>${item.kho?.tenKho || 'N/A'}</td>
-                                    <td>${item.batchNumber}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>${item.manufactureDate || 'N/A'}</td>
-                                    <td>${item.expiryDate || 'N/A'}</td>
-                                    <td><span class="${statusClass}">${statusText}</span></td>
-                                </tr>
-                            `);
-                        });
-                    }
-                },
-                error: () => inventoryTbody.append('<tr><td colspan="6">Không có dữ liệu kho</td></tr>')
+                                inventoryTbody.append(`
+                    <tr>
+                        <td>${item.kho?.tenKho || 'N/A'}</td>
+                        <td>${item.batchNumber}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.manufactureDate || 'N/A'}</td>
+                        <td>${item.expiryDate || 'N/A'}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                    </tr>
+                `);
+                            });
+                        }
+                    },
+                    error: () => inventoryTbody.append('<tr><td colspan="6">Không có dữ liệu kho</td></tr>')
+                });
+            }).catch((error) => {
+                Utils.showAlert('error', 'Lỗi', 'Không thể tải danh sách đối tượng hoặc danh mục!');
+                console.error('Error loading dropdowns:', error);
             });
         }
 
+
+
         enableEditMode() {
+            const productId = $('#productDetailModal').data('productId');
+
+            // Kích hoạt các trường input/select
             $('#productDetailForm input, #productDetailForm textarea, #productDetailForm select').prop('readonly', false).prop('disabled', false);
             $('.remove-detail-image, .remove-detail-unit').prop('disabled', false);
             $('#editProductBtn').hide();
             $('#saveProduc').show();
 
-            this.loadDoiTuong('#detail_doi_tuong');
-            Utils.loadCategories('#detail_danh_muc');
+            // Tải danh sách đối tượng và danh mục, sau đó gán giá trị
+            $.ajax({
+                url: `/api/quanly/products/${productId}`,
+                method: 'GET',
+                success: (data) => {
+                    // Tải danh sách đối tượng
+                    this.loadDoiTuong('#detail_doi_tuong', () => {
+                        $('#detail_doi_tuong').val(data.doiTuongId || '');
+                    });
+
+                    // Tải danh sách danh mục
+                    Utils.loadCategories('#detail_danh_muc', 'Chọn danh mục', {
+                        onSuccess: () => {
+                            $('#detail_danh_muc').val(data.danhMucId || '');
+                        }
+                    });
+                },
+                error: () => {
+                    Utils.showAlert('error', 'Lỗi', 'Không thể tải dữ liệu sản phẩm!');
+                }
+            });
         }
 
         saveProductChanges() {
@@ -892,4 +947,27 @@ $(document).ready(function () {
 
     }
     new ProductManager();
+
+
+    $('#productDetailModal').on('hidden.bs.modal', function () {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+    });
+    $('#productDetailModal').on('shown.bs.modal', function () {
+        const productId = $(this).data('productId');
+        if (productId) {
+            $.ajax({
+                url: `/api/quanly/products/${productId}`,
+                method: 'GET',
+                success: (data) => {
+                    // Đảm bảo các trường select được làm mới
+                    $('#detail_doi_tuong').val(data.doiTuongId || '');
+                    $('#detail_danh_muc').val(data.danhMucId || '');
+                },
+                error: () => {
+                    Utils.showAlert('error', 'Lỗi', 'Không thể làm mới dữ liệu sản phẩm!');
+                }
+            });
+        }
+    });
 });

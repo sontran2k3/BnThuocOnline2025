@@ -9,7 +9,8 @@ import java.util.List;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
-    @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId")
+
+    @Query("SELECT i FROM Inventory i JOIN FETCH i.kho WHERE i.product.id = :productId")
     List<Inventory> findByProductId(Integer productId);
 
     boolean existsByKhoIdAndBatchNumber(Integer khoId, String batchNumber);

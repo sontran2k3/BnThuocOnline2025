@@ -842,4 +842,11 @@ public class QuanLyService {
         return dto;
     }
 
+    public List<InventoryResponseDTO> getInventoryByProductIdDTO(Integer productId) {
+        List<Inventory> inventories = inventoryRepository.findByProductId(productId);
+        return inventories.stream()
+                .map(this::mapToInventoryResponseDTO)
+                .collect(Collectors.toList());
+    }
+
 }
