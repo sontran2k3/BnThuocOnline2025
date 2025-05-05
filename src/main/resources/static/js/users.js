@@ -1,10 +1,66 @@
-// Trong users.js
 $(document).ready(function () {
     let currentPage = 1;
     const pageSize = 10;
+    let stompClient = null;
 
-    // Tải danh sách người dùng khi vào trang
+    // Kết nối WebSocket
+    function connectWebSocket() {
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/orders', function (notification) {
+                const data = JSON.parse(notification.body);
+                updateOrderStatus(data.orderId, data.status);
+                showToast(data.message);
+            });
+        });
+    }
+
+    // Hiển thị toast
+    function showToast(message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#28a745",
+            stopOnFocus: true
+        }).showToast();
+    }
+
+    // Cập nhật trạng thái đơn hàng trong bảng
+    function updateOrderStatus(orderId, status) {
+        const statusCell = $(`#user_orders_table_body tr[data-order-id="${orderId}"] td:nth-child(4)`);
+        if (statusCell.length) {
+            let statusText = '';
+            let statusClass = '';
+            switch (status.toLowerCase()) {
+                case 'completed':
+                    statusText = 'Đã thanh toán';
+                    statusClass = 'text-success';
+                    break;
+                case 'canceled':
+                    statusText = 'Đã hủy';
+                    statusClass = 'text-danger';
+                    break;
+                case 'pending':
+                    statusText = 'Đang chờ';
+                    statusClass = 'text-warning';
+                    break;
+                default:
+                    statusText = 'Không xác định';
+                    statusClass = 'text-muted';
+            }
+            statusCell.html(`<span class="${statusClass}">${statusText}</span>`);
+        }
+    }
+
+    // Tải danh sách người dùng
     loadUsers(currentPage, '');
+
+    // Kết nối WebSocket khi trang được tải
+    connectWebSocket();
 
     // Xử lý tìm kiếm
     $('#search-users').on('input', function () {
@@ -125,6 +181,7 @@ $(document).ready(function () {
         });
     });
 
+    // Tải danh sách đơn hàng của người dùng
     function loadUserOrders(userId) {
         $.ajax({
             url: `/api/quanly/orders?user_id=${userId}`,
@@ -142,18 +199,37 @@ $(document).ready(function () {
                     const productList = order.orderItems && order.orderItems.length > 0
                         ? order.orderItems.map(item => item.productName || 'N/A').join(', ')
                         : 'Không có sản phẩm';
+                    let statusText = '';
+                    let statusClass = '';
+                    switch (order.status.toLowerCase()) {
+                        case 'completed':
+                            statusText = 'Đã thanh toán';
+                            statusClass = 'text-success';
+                            break;
+                        case 'canceled':
+                            statusText = 'Đã hủy';
+                            statusClass = 'text-danger';
+                            break;
+                        case 'pending':
+                            statusText = 'Đang chờ';
+                            statusClass = 'text-warning';
+                            break;
+                        default:
+                            statusText = 'Không xác định';
+                            statusClass = 'text-muted';
+                    }
                     const row = `
-                <tr>
-                    <td>${order.id}</td>
-                    <td>${order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
-                    <td>${order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0'}</td>
-                    <td>${order.status || 'N/A'}</td>
-                    <td>${productList}</td>
-                    <td>
-                        <button type="button" class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
-                    </td>
-                </tr>
-            `;
+                        <tr data-order-id="${order.id}">
+                            <td>${order.id}</td>
+                            <td>${order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A'}</td>
+                            <td>${order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0'}</td>
+                            <td><span class="${statusClass}">${statusText}</span></td>
+                            <td>${productList}</td>
+                            <td>
+                                <button type="button" class="btn btn-info btn-sm view-order-details" data-order-id="${order.id}">Xem</button>
+                            </td>
+                        </tr>
+                    `;
                     tbody.append(row);
                 });
             },
@@ -163,8 +239,6 @@ $(document).ready(function () {
             }
         });
     }
-
-
 
     // Xử lý nút "Xóa"
     $('#users-table').on('click', '.delete-user', function () {
@@ -233,56 +307,9 @@ $(document).ready(function () {
     });
 
     // Xử lý khi nhấn nút "Xem" chi tiết đơn hàng
-    $('#user_orders_table').on('click', '.view-order-details', function () {
-        const orderId = $(this).data('order-id');
-        $.ajax({
-            url: `/api/quanly/orders/${orderId}`,
-            method: 'GET',
-            success: function (order) {
-                // Hiển thị thông tin đơn hàng
-                $('#order_detail_id').text(order.id);
-                $('#order_detail_date').text(order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A');
-                $('#order_detail_total').text(order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0');
-                $('#order_detail_status').text(order.status || 'N/A');
-
-                // Hiển thị danh sách sản phẩm
-                const tbody = $('#order_items_table_body');
-                tbody.empty();
-
-                if (!order.orderItems || order.orderItems.length === 0) {
-                    tbody.append('<tr><td colspan="6" class="text-center">Không có sản phẩm nào.</td></tr>');
-                } else {
-                    order.orderItems.forEach(item => {
-                        const row = `
-                        <tr>
-                            <td>${item.id}</td>
-                            <td>${item.product?.tenSanPham || 'N/A'}</td>
-                            <td>${item.donViTinh?.donViTinh || 'N/A'}</td>
-                            <td>${item.quantity || 0}</td>
-                            <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
-                            <td>${(item.price && item.quantity) ? (item.price * item.quantity).toLocaleString('vi-VN') : '0'}</td>
-                        </tr>
-                    `;
-                        tbody.append(row);
-                    });
-                }
-
-                // Mở modal chi tiết đơn hàng
-                $('#orderDetailModal').modal('show');
-            },
-            error: function (xhr) {
-                console.error('Lỗi tải chi tiết đơn hàng:', xhr);
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải chi tiết đơn hàng: ' + (xhr.responseText || 'Unknown error'));
-            }
-        });
-    });
-
-
     $('#user_orders_table').on('click', '.view-order-details', function (event) {
         event.preventDefault();
         const orderId = $(this).data('order-id');
-
-        // Lấy CSRF token và header từ meta tag
         const token = $('meta[name="_csrf"]').attr('content');
         const header = $('meta[name="_csrf_header"]').attr('content');
 
@@ -290,16 +317,14 @@ $(document).ready(function () {
             url: `/api/quanly/orders/${orderId}`,
             method: 'GET',
             headers: {
-                [header]: token // Thêm CSRF token vào header
+                [header]: token
             },
             success: function (order) {
-                // Hiển thị thông tin đơn hàng
                 $('#order_detail_id').text(order.id);
                 $('#order_detail_date').text(order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : 'N/A');
                 $('#order_detail_total').text(order.totalPrice ? order.totalPrice.toLocaleString('vi-VN') : '0');
                 $('#order_detail_status').text(order.status || 'N/A');
 
-                // Hiển thị danh sách sản phẩm
                 const tbody = $('#order_items_table_body');
                 tbody.empty();
 
@@ -308,20 +333,19 @@ $(document).ready(function () {
                 } else {
                     order.orderItems.forEach(item => {
                         const row = `
-                    <tr>
-                        <td>${item.id}</td>
-                        <td>${item.productName || 'N/A'}</td>
-                        <td>${item.donViTinh || 'N/A'}</td>
-                        <td>${item.quantity || 0}</td>
-                        <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
-                        <td>${(item.price && item.quantity) ? (item.price * item.quantity).toLocaleString('vi-VN') : '0'}</td>
-                    </tr>
-                `;
+                            <tr>
+                                <td>${item.id}</td>
+                                <td>${item.productName || 'N/A'}</td>
+                                <td>${item.donViTinh || 'N/A'}</td>
+                                <td>${item.quantity || 0}</td>
+                                <td>${item.price ? item.price.toLocaleString('vi-VN') : '0'}</td>
+                                <td>${(item.price && item.quantity) ? (item.price * item.quantity).toLocaleString('vi-VN') : '0'}</td>
+                            </tr>
+                        `;
                         tbody.append(row);
                     });
                 }
 
-                // Mở modal chi tiết đơn hàng
                 $('#orderDetailModal').modal('show');
             },
             error: function (xhr) {
@@ -330,6 +354,4 @@ $(document).ready(function () {
             }
         });
     });
-
-
 });
