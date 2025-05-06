@@ -2,6 +2,8 @@ package com.example.BnThuocOnline2025.controller;
 
 import com.example.BnThuocOnline2025.dto.CartItemDTO;
 import com.example.BnThuocOnline2025.model.*;
+import com.example.BnThuocOnline2025.repository.CartItemRepository;
+import com.example.BnThuocOnline2025.repository.CartRepository;
 import com.example.BnThuocOnline2025.repository.DonViTinhRepository;
 import com.example.BnThuocOnline2025.repository.UserRepository;
 import com.example.BnThuocOnline2025.service.GioHangService;
@@ -43,6 +45,9 @@ public class GioHangController {
     @Autowired
     private DonViTinhRepository donViTinhRepository;
 
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
 
 
     @PostMapping("/add")
@@ -57,6 +62,9 @@ public class GioHangController {
         Map<String, Object> response = new HashMap<>();
         try {
             Cart cart = gioHangService.addToCart(user, session, productId, donViTinhId, quantity);
+            // Làm mới danh sách CartItem để đảm bảo dữ liệu mới nhất
+            List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+            cart.setCartItems(cartItems);
             int cartItemCount = gioHangService.getCartItemCount(cart);
             response.put("success", true);
             response.put("cartItemCount", cartItemCount);
@@ -68,6 +76,8 @@ public class GioHangController {
         }
     }
 
+
+
     @GetMapping("/items")
     @ResponseBody
     public ResponseEntity<List<CartItemDTO>> getCartItems(
@@ -76,8 +86,19 @@ public class GioHangController {
         User user = getUserFromDetails(userDetails);
         try {
             List<CartItem> cartItems = gioHangService.getCartItems(user, session);
+            // Đảm bảo dữ liệu mới nhất từ database
+            Cart cart = gioHangService.getOrCreateCart(user, session);
+            cartItems = cartItemRepository.findByCart(cart);
             List<CartItemDTO> cartItemDTOs = cartItems.stream()
-                    .map(CartItemDTO::new)
+                    .map(item -> {
+                        CartItemDTO dto = new CartItemDTO();
+                        dto.setId(item.getId());
+                        dto.setProductName(item.getProduct().getTenSanPham());
+                        dto.setPrice(item.getPrice());
+                        dto.setQuantity(item.getQuantity());
+                        dto.setDonViTinh(item.getDonViTinh().getDonViTinh());
+                        return dto;
+                    })
                     .collect(Collectors.toList());
             return ResponseEntity.ok(cartItemDTOs);
         } catch (Exception e) {

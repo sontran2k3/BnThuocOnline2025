@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script> <!-- Thêm SweetAlert2 -->
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" href="" th:href="@{/css/trangchu.css}">
@@ -494,17 +496,18 @@
             },
             success: function(response) {
                 if (response && response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Thành công',
-                        text: 'Sản phẩm đã được thêm vào giỏ hàng!',
-                        confirmButtonText: 'OK',
-                        timer: 2000,
-                        timerProgressBar: true
-                    }).then(() => {
-                        // Reload trang sau khi thêm sản phẩm thành công
-                        location.reload();
-                    });
+                    Toastify({
+                        text: "Sản phẩm đã được thêm vào giỏ hàng!",
+                        duration: 2000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                        stopOnFocus: true
+                    }).showToast();
+                    // Cập nhật số lượng và dropdown
+                    updateCartCount(response.cartItemCount);
+                    refreshCartDropdown();
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -525,10 +528,6 @@
         });
     }
 
-
-
-
-
     function refreshCartDropdown() {
         $.ajax({
             url: '/cart/items',
@@ -536,9 +535,11 @@
             success: function(response) {
                 console.log('Cart items:', response);
                 var cartItemsHtml = '';
-                response.forEach(item => {
-                    cartItemsHtml += `
+                if (response && response.length > 0) {
+                    response.forEach(item => {
+                        cartItemsHtml += `
                     <li class="cart-item d-flex align-items-start">
+                        <img src="${item.product.mainImageUrl || '/images/placeholder.png'}" alt="Product Image" class="cart-item-img">
                         <div class="cart-item-details flex-grow-1">
                             <strong>${item.productName}</strong>
                             <div class="cart-item-info d-flex justify-content-between align-items-center">
@@ -550,25 +551,29 @@
                             <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#trash"></use></svg>
                         </a>
                     </li>`;
-                });
-                if (cartItemsHtml === '') {
+                    });
+                } else {
                     cartItemsHtml = '<li>Giỏ hàng trống</li>';
                 }
                 $('.cart-dropdown .cart-items').html(cartItemsHtml);
-                // Không gọi updateCartCount ở đây để tránh ghi đè số lượng từ response của addToCart
             },
             error: function(xhr, status, error) {
                 console.error('Error refreshing cart:', error);
+                $('.cart-dropdown .cart-items').html('<li>Giỏ hàng trống</li>');
             }
         });
     }
 
     function updateCartCount(count) {
         var cartCountElement = $('.cart-count');
-        if (cartCountElement.length) {
-            cartCountElement.text(count); // Cập nhật số lượng giỏ hàng trên biểu tượng
+        if (cartCountElement.length && count !== undefined) {
+            cartCountElement.text(count);
+        } else {
+            console.error('Cart count element not found or count is undefined');
         }
     }
+
+
 
     $(document).ready(function() {
         var firstButton = document.querySelector('.category-btn.active');

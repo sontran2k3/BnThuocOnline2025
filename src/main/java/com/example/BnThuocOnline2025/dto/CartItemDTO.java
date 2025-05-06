@@ -59,4 +59,7 @@ public class CartItemDTO {
         this.quantity = cartItem.getQuantity();
         this.donViTinh = cartItem.getDonViTinh().getDonViTinh();
     }
+
+    public CartItemDTO() {
+    }
 }
