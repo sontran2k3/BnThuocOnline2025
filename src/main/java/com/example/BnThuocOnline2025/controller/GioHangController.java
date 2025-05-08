@@ -90,15 +90,7 @@ public class GioHangController {
             Cart cart = gioHangService.getOrCreateCart(user, session);
             cartItems = cartItemRepository.findByCart(cart);
             List<CartItemDTO> cartItemDTOs = cartItems.stream()
-                    .map(item -> {
-                        CartItemDTO dto = new CartItemDTO();
-                        dto.setId(item.getId());
-                        dto.setProductName(item.getProduct().getTenSanPham());
-                        dto.setPrice(item.getPrice());
-                        dto.setQuantity(item.getQuantity());
-                        dto.setDonViTinh(item.getDonViTinh().getDonViTinh());
-                        return dto;
-                    })
+                    .map(CartItemDTO::new) // Sử dụng constructor của CartItemDTO
                     .collect(Collectors.toList());
             return ResponseEntity.ok(cartItemDTOs);
         } catch (Exception e) {
@@ -106,6 +98,8 @@ public class GioHangController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+
 
     @GetMapping("/count")
     @ResponseBody

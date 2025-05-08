@@ -10,18 +10,21 @@ public class CartItemDTO {
     private BigDecimal price;
     private int quantity;
     private String donViTinh;
+    private String mainImageUrl;
 
-    public String getMainImageUrl() {
-        return mainImageUrl;
+    public CartItemDTO() {
     }
 
-    public void setMainImageUrl(String mainImageUrl) {
-        this.mainImageUrl = mainImageUrl;
+    public CartItemDTO(CartItem cartItem) {
+        this.id = cartItem.getId();
+        this.productName = cartItem.getProduct().getTenSanPham();
+        this.price = cartItem.getPrice();
+        this.quantity = cartItem.getQuantity();
+        this.donViTinh = cartItem.getDonViTinh().getDonViTinh();
+        this.mainImageUrl = cartItem.getProduct().getMainImageUrl();
     }
 
-    private String mainImageUrl; // Thêm trường mainImageUrl
-
-
+    // Getters và Setters
     public int getId() {
         return id;
     }
@@ -62,15 +65,11 @@ public class CartItemDTO {
         this.donViTinh = donViTinh;
     }
 
-    // Constructor, getters, setters
-    public CartItemDTO(CartItem cartItem) {
-        this.id = cartItem.getId();
-        this.productName = cartItem.getProduct().getTenSanPham();
-        this.price = cartItem.getPrice();
-        this.quantity = cartItem.getQuantity();
-        this.donViTinh = cartItem.getDonViTinh().getDonViTinh();
+    public String getMainImageUrl() {
+        return mainImageUrl;
     }
 
-    public CartItemDTO() {
+    public void setMainImageUrl(String mainImageUrl) {
+        this.mainImageUrl = mainImageUrl;
     }
 }

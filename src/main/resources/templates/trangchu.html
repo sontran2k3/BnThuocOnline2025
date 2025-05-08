@@ -27,10 +27,6 @@
     </div>
 
 
-    <h2>pa2</h2>
-
-    <h3>ps3</h3>
-
     <div class="container mt-4">
         <div class="product-scroll-container">
             <div th:each="row, rowStat : ${#numbers.sequence(0, (products.size() - 1) / 6)}">
@@ -470,116 +466,6 @@
         formatPricesDoiTuong();
     }
 
-    function addToCart(productId) {
-        var activeUnitBtn = document.querySelector(`[id^='unit-btn-${productId}-'].active`) ||
-            document.querySelector(`[id^='doituong-unit-btn-${productId}-'].active`);
-        var donViTinhId = activeUnitBtn ? activeUnitBtn.id.split('-').pop() : null;
-
-        if (!donViTinhId) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Cảnh báo',
-                text: 'Vui lòng chọn đơn vị tính trước khi thêm vào giỏ hàng!',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-
-        var token = $("meta[name='_csrf']").attr("content");
-        var header = $("meta[name='_csrf_header']").attr("content");
-
-        $.ajax({
-            url: '/cart/add',
-            type: 'POST',
-            data: {
-                productId: parseInt(productId),
-                donViTinhId: parseInt(donViTinhId),
-                quantity: 1
-            },
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader(header, token);
-            },
-            success: function(response) {
-                if (response && response.success) {
-                    Toastify({
-                        text: "Sản phẩm đã được thêm vào giỏ hàng!",
-                        duration: 2000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#28a745",
-                        stopOnFocus: true
-                    }).showToast();
-                    // Cập nhật số lượng và dropdown
-                    updateCartCount(response.cartItemCount);
-                    refreshCartDropdown();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi',
-                        text: 'Không thể thêm sản phẩm: ' + (response.message || 'Lỗi không xác định'),
-                        confirmButtonText: 'OK'
-                    });
-                }
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Lỗi',
-                    text: 'Đã xảy ra lỗi: ' + (xhr.responseJSON?.message || 'Lỗi server'),
-                    confirmButtonText: 'OK'
-                });
-            }
-        });
-    }
-
-    function refreshCartDropdown() {
-        $.ajax({
-            url: '/cart/items',
-            type: 'GET',
-            success: function(response) {
-                console.log('Cart items:', response);
-                var cartItemsHtml = '';
-                if (response && response.length > 0) {
-                    response.forEach(item => {
-                        cartItemsHtml += `
-                    <li class="cart-item d-flex align-items-start">
-                        <img src="${item.product.mainImageUrl || '/images/placeholder.png'}" alt="Product Image" class="cart-item-img">
-                        <div class="cart-item-details flex-grow-1">
-                            <strong>${item.productName}</strong>
-                            <div class="cart-item-info d-flex justify-content-between align-items-center">
-                                <p class="cart-item-price mb-0">${Number(item.price).toLocaleString('vi-VN')}đ</p>
-                                <span class="cart-item-quantity">x${item.quantity} ${item.donViTinh}</span>
-                            </div>
-                        </div>
-                        <a href="#" class="delete-item align-self-center" onclick="removeFromCart(${item.id}); return false;">
-                            <svg width="16" height="16" viewBox="0 0 24 24"><use xlink:href="#trash"></use></svg>
-                        </a>
-                    </li>`;
-                    });
-                } else {
-                    cartItemsHtml = '<li>Giỏ hàng trống</li>';
-                }
-                $('.cart-dropdown .cart-items').html(cartItemsHtml);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error refreshing cart:', error);
-                $('.cart-dropdown .cart-items').html('<li>Giỏ hàng trống</li>');
-            }
-        });
-    }
-
-    function updateCartCount(count) {
-        var cartCountElement = $('.cart-count');
-        if (cartCountElement.length && count !== undefined) {
-            cartCountElement.text(count);
-        } else {
-            console.error('Cart count element not found or count is undefined');
-        }
-    }
-
-
-
     $(document).ready(function() {
         var firstButton = document.querySelector('.category-btn.active');
         if (firstButton) {
@@ -590,7 +476,6 @@
         formatPricesDoiTuong();
     });
 </script>
-
 
 </body>
 </html>
