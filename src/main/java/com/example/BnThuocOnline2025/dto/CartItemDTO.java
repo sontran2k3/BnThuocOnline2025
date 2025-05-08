@@ -11,6 +11,17 @@ public class CartItemDTO {
     private int quantity;
     private String donViTinh;
 
+    public String getMainImageUrl() {
+        return mainImageUrl;
+    }
+
+    public void setMainImageUrl(String mainImageUrl) {
+        this.mainImageUrl = mainImageUrl;
+    }
+
+    private String mainImageUrl; // Thêm trường mainImageUrl
+
+
     public int getId() {
         return id;
     }

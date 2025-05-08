@@ -39,15 +39,16 @@ public class GioHangService {
         Cart cart;
 
         if (user != null && user.getId() != null) {
-            logger.info("Finding or creating cart for user: {}", user.getId());
+//            logger.info("Finding or creating cart for user: {}", user.getId());
             List<Cart> userCarts = cartRepository.findAllByUser(user);
             if (userCarts.isEmpty()) {
                 cart = new Cart();
                 cart.setUser(user);
                 cart.setCartItems(new ArrayList<>());
+            } else if (userCarts.size() == 1) {
+                cart = userCarts.get(0);
             } else {
                 cart = userCarts.get(0);
-                // Gộp các giỏ hàng trùng lặp
                 for (int i = 1; i < userCarts.size(); i++) {
                     Cart duplicateCart = userCarts.get(i);
                     if (duplicateCart.getCartItems() != null) {
@@ -55,7 +56,6 @@ public class GioHangService {
                             item.setCart(cart);
                             if (!cart.getCartItems().contains(item)) {
                                 cart.getCartItems().add(item);
-                                cartItemRepository.save(item); // Lưu lại từng CartItem
                             }
                         }
                     }
@@ -63,7 +63,6 @@ public class GioHangService {
                 }
             }
 
-            // Đồng bộ giỏ hàng từ session
             String sessionId = (String) session.getAttribute("cartSessionId");
             if (sessionId != null) {
                 Optional<Cart> sessionCart = cartRepository.findBySessionId(sessionId);
@@ -74,12 +73,14 @@ public class GioHangService {
                             item.setCart(cart);
                             if (!cart.getCartItems().contains(item)) {
                                 cart.getCartItems().add(item);
-                                cartItemRepository.save(item); // Lưu lại CartItem
                             }
                         }
                     }
-                    cartRepository.delete(existingCart); // Xóa giỏ hàng session
+                    existingCart.setUser(user);
+                    existingCart.setSessionId(null);
+                    cartRepository.save(existingCart);
                     session.removeAttribute("cartSessionId");
+                    return existingCart;
                 }
             }
         } else {
@@ -88,6 +89,7 @@ public class GioHangService {
                 sessionId = UUID.randomUUID().toString();
                 session.setAttribute("cartSessionId", sessionId);
             }
+//            logger.info("Finding or creating cart for sessionId: {}", sessionId);
             String finalSessionId = sessionId;
             cart = cartRepository.findBySessionId(sessionId).orElseGet(() -> {
                 Cart newCart = new Cart();
