@@ -167,4 +167,17 @@ public class ProductService {
         }
         return ratingCounts;
     }
+
+    public List<Product> getProductsByDanhMucId(int danhMucId) {
+        List<Product> products = productRepository.findByDanhMucId(danhMucId);
+        products.forEach(this::loadProductDetails);
+        return products;
+    }
+
+
+    public List<Product> searchProductsByName(String query) {
+        List<Product> products = productRepository.findByTenSanPhamContainingIgnoreCase(query);
+        products.forEach(this::loadProductDetails);
+        return products;
+    }
 }

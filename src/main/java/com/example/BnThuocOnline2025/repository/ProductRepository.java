@@ -17,5 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findAllWithDetails();
 
 
+    List<Product> findByTenSanPhamContainingIgnoreCase(String tenSanPham);
+
 
 }

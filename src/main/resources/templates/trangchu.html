@@ -214,6 +214,56 @@
         </div>
     </div>
 
+    <!-- Thêm vào phần <main> của trangchu.html, ngay sau container của sản phẩm theo đối tượng -->
+    <div class="container mt-4">
+        <h5 class="fw-bold"><i class="bi bi-list" style="font-size: 33px"></i> Sản phẩm theo danh mục</h5>
+        <div id="product-by-danhmuc-container" class="row">
+            <div th:fragment="product-by-danhmuc-fragment" class="product-list active">
+                <div class="card border rounded shadow-sm product-card" th:each="product : ${products}">
+                <span class="badge bg-danger position-absolute discount-badge"
+                      th:id="'danhmuc-discount-badge-' + ${product.id}"
+                      th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                      th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
+                    <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
+                         class="card-img-top" th:alt="${product.tenSanPham}">
+                    <div class="card-body text-center d-flex flex-column">
+                        <a th:href="@{/sanpham(id=${product.id})}" class="card-title text-decoration-none">
+                            <h6 th:text="${product.tenSanPham}"></h6>
+                        </a>
+                        <div class="price-section">
+                            <div th:if="${not #lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
+                                <button th:each="dvt : ${product.donViTinhList}"
+                                        th:id="'danhmuc-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
+                                        th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
+                                        th:onclick="'updatePriceDanhMuc(' + ${product.id} + ',' + ${dvt.id} + ')'"
+                                        th:text="${dvt.donViTinh}"></button>
+                            </div>
+                            <div th:if="${#lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
+                                <span>Không có đơn vị tính</span>
+                            </div>
+                            <div th:id="'danhmuc-discounted-price-' + ${product.id}" class="discounted-price"
+                                 th:data-price="${product.discountedPrice}"
+                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                 th:text="${#numbers.formatDecimal(product.discountedPrice, 0, 0)} + 'đ'"></div>
+                            <div th:id="'danhmuc-original-price-' + ${product.id}" class="original-price"
+                                 th:style="${product.hasDiscount()} ? '' : 'display: none;'"
+                                 th:data-price="${product.getDefaultDonViTinh().gia}"
+                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
+                                 th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></div>
+                            <div class="unit-info" th:text="${product.quyCach}"></div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-auto"
+                                th:onclick="'addToCart(' + ${product.id} + ')'">
+                            Chọn mua
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
     <div class="container mt-4">
         <div class="d-flex align-items-center" style="margin: 10px">
             <h3 class="fw-bold">
@@ -272,6 +322,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    // Hàm tải sản phẩm theo đối tượng
     function loadProductsByDoiTuong(element) {
         document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
         element.classList.add('active');
@@ -302,6 +353,7 @@
         });
     }
 
+    // Hàm cập nhật giá cho sản phẩm trong danh sách chính
     function updatePrice(productId, donViTinhId) {
         var productCard = document.querySelector('#unit-btn-' + productId + '-' + donViTinhId)?.closest('.product-card');
         if (!productCard) return;
@@ -340,6 +392,7 @@
         });
     }
 
+    // Hàm cập nhật giá cho sản phẩm theo đối tượng
     function updatePriceDoiTuong(productId, donViTinhId) {
         var productCard = document.querySelector('#doituong-unit-btn-' + productId + '-' + donViTinhId)?.closest('.product-card');
         if (!productCard) return;
@@ -378,6 +431,46 @@
         });
     }
 
+    // Hàm cập nhật giá cho sản phẩm theo danh mục
+    function updatePriceDanhMuc(productId, donViTinhId) {
+        var productCard = document.querySelector('#danhmuc-unit-btn-' + productId + '-' + donViTinhId)?.closest('.product-card');
+        if (!productCard) return;
+
+        productCard.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
+        var selectedBtn = document.querySelector('#danhmuc-unit-btn-' + productId + '-' + donViTinhId);
+        if (selectedBtn) selectedBtn.classList.add('active');
+
+        $.ajax({
+            url: '/update-price',
+            type: 'GET',
+            data: { productId: productId, donViTinhId: donViTinhId },
+            success: function(response) {
+                var discountedPrice = Number(response.discountedPrice).toLocaleString('vi-VN');
+                var gia = Number(response.gia).toLocaleString('vi-VN');
+                var discountPercent = response.discount ? Number(response.discount) : 0;
+                var unit = response.donViTinh;
+
+                $('#danhmuc-discounted-price-' + productId).text(discountedPrice + 'đ/' + unit);
+                if (response.hasDiscount) {
+                    $('#danhmuc-original-price-' + productId).text(gia + 'đ/' + unit).show();
+                    $('#danhmuc-discount-badge-' + productId).text('-' + discountPercent + '%').show();
+                } else {
+                    $('#danhmuc-original-price-' + productId).hide();
+                    $('#danhmuc-discount-badge-' + productId).hide();
+                }
+
+                var unitInfo = productCard.querySelector('.unit-info');
+                if (unitInfo) {
+                    unitInfo.textContent = response.quyCach;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi cập nhật giá:', error);
+            }
+        });
+    }
+
+    // Hàm định dạng giá cho danh sách sản phẩm chính
     function formatPrices() {
         $('.product-scroll-container .product-card').each(function() {
             var discountedPriceElement = $(this).find('.discounted-price');
@@ -396,6 +489,7 @@
         });
     }
 
+    // Hàm định dạng giá cho sản phẩm theo đối tượng
     function formatPricesDoiTuong() {
         $('#product-by-doituong-container .product-card').each(function() {
             var discountedPriceElement = $(this).find('.discounted-price');
@@ -414,6 +508,26 @@
         });
     }
 
+    // Hàm định dạng giá cho sản phẩm theo danh mục
+    function formatPricesDanhMuc() {
+        $('#product-by-danhmuc-container .product-card').each(function() {
+            var discountedPriceElement = $(this).find('.discounted-price');
+            var originalPriceElement = $(this).find('.original-price');
+            var activeUnit = $(this).find('.unit-btn.active').text() || $(this).find('.unit-btn').first().text() || $(this).find('.discounted-price').data('unit');
+
+            var discountedPrice = discountedPriceElement.data('price');
+            var originalPrice = originalPriceElement.data('price');
+
+            if (discountedPrice !== undefined) {
+                discountedPriceElement.text(Number(discountedPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+            if (originalPrice !== undefined) {
+                originalPriceElement.text(Number(originalPrice).toLocaleString('vi-VN') + 'đ/' + activeUnit);
+            }
+        });
+    }
+
+    // Hàm khởi tạo nút đơn vị tính cho danh sách sản phẩm chính
     function initializeUnitButtons() {
         $('.product-scroll-container .product-card').each(function() {
             var activeButton = $(this).find('.unit-btn.active');
@@ -440,6 +554,7 @@
         formatPrices();
     }
 
+    // Hàm khởi tạo nút đơn vị tính cho sản phẩm theo đối tượng
     function initializeUnitButtonsDoiTuong() {
         $('#product-by-doituong-container .product-card').each(function() {
             var activeButton = $(this).find('.unit-btn.active');
@@ -466,6 +581,33 @@
         formatPricesDoiTuong();
     }
 
+    // Hàm khởi tạo nút đơn vị tính cho sản phẩm theo danh mục
+    function initializeUnitButtonsDanhMuc() {
+        $('#product-by-danhmuc-container .product-card').each(function() {
+            var activeButton = $(this).find('.unit-btn.active');
+            if (activeButton.length > 0) {
+                var ids = activeButton.attr('id').split('-');
+                var productId = ids[2];
+                var donViTinhId = ids[3];
+                if (productId && donViTinhId) {
+                    updatePriceDanhMuc(productId, donViTinhId);
+                }
+            } else {
+                var firstButton = $(this).find('.unit-btn').first();
+                if (firstButton.length > 0) {
+                    var ids = firstButton.attr('id').split('-');
+                    var productId = ids[2];
+                    var donViTinhId = ids[3];
+                    if (productId && donViTinhId) {
+                        firstButton.addClass('active');
+                        updatePriceDanhMuc(productId, donViTinhId);
+                    }
+                }
+            }
+        });
+        formatPricesDanhMuc();
+    }
+
     $(document).ready(function() {
         var firstButton = document.querySelector('.category-btn.active');
         if (firstButton) {
@@ -473,9 +615,11 @@
         }
 
         initializeUnitButtons();
-        formatPricesDoiTuong();
+        initializeUnitButtonsDoiTuong();
+        initializeUnitButtonsDanhMuc();
     });
 </script>
+
 
 </body>
 </html>

@@ -22,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -298,6 +299,52 @@ public class GioHangController {
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+
+    // Proxy endpoint cho danh sách tỉnh/thành phố
+    @GetMapping("/proxy/provinces")
+    @ResponseBody
+    public ResponseEntity<?> getProvinces() {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "https://provinces.open-api.vn/api/p/";
+            Object response = restTemplate.getForObject(url, Object.class);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching provinces: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi lấy danh sách tỉnh/thành phố");
+        }
+    }
+
+    // Proxy endpoint cho danh sách quận/huyện
+    @GetMapping("/proxy/districts/{provinceCode}")
+    @ResponseBody
+    public ResponseEntity<?> getDistricts(@PathVariable String provinceCode) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "https://provinces.open-api.vn/api/p/" + provinceCode + "?depth=2";
+            Object response = restTemplate.getForObject(url, Object.class);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching districts: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi lấy danh sách quận/huyện");
+        }
+    }
+
+    // Proxy endpoint cho danh sách xã/phường
+    @GetMapping("/proxy/wards/{districtCode}")
+    @ResponseBody
+    public ResponseEntity<?> getWards(@PathVariable String districtCode) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "https://provinces.open-api.vn/api/d/" + districtCode + "?depth=2";
+            Object response = restTemplate.getForObject(url, Object.class);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching wards: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi lấy danh sách xã/phường");
         }
     }
 }
