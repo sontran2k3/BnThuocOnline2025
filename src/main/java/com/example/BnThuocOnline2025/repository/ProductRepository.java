@@ -1,3 +1,4 @@
+
 package com.example.BnThuocOnline2025.repository;
 
 import com.example.BnThuocOnline2025.model.Product;
@@ -16,6 +17,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "LEFT JOIN FETCH p.donViTinhList")
     List<Product> findAllWithDetails();
 
+
+    List<Product> findByTenSanPhamContainingIgnoreCase(String tenSanPham);
 
 
 }

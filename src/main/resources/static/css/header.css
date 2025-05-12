@@ -1,5 +1,5 @@
 
-    /* Reset và typography cơ bản */
+/* Reset và typography cơ bản */
 * {
     margin: 0;
     padding: 0;
@@ -41,8 +41,9 @@ body {
     color: #6b7280;
 }
 
-/* Thanh tìm kiếm */
 .search-barhome {
+    position: relative;
+    z-index: 100;
     background: #ffffff;
     border-radius: 50px;
     padding: 8px 15px;
@@ -55,6 +56,8 @@ body {
     margin: 0 auto;
     justify-content: space-between;
 }
+
+
 .search-barhome:hover {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
@@ -222,8 +225,7 @@ body {
     margin: 1.75rem auto;
 }
 #loginModal .modal-content {
-    background: url('/logonewT.png') no-repeat center center;
-    background-size: 60%;
+    background: url('../logonewT.png') no-repeat center center;    background-size: 70%;
     background-color: rgba(245, 247, 250, 0.95);
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
@@ -511,7 +513,7 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     padding: 15px;
     display: none;
-    z-index: 1000;
+    z-index: 100;
     margin-top: 5px;
 }
 
@@ -586,6 +588,79 @@ body {
 
 .delete-item:hover {
     opacity: 1;
+}
+
+/* Container cho gợi ý tìm kiếm */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    margin-top: 5px;
+    padding: 5px 0;
+}
+
+/* Khi dropdown hiển thị */
+.search-suggestions.show {
+    display: block;
+}
+
+/* Mỗi mục gợi ý */
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: #f5f7fa;
+}
+
+/* Hình ảnh sản phẩm trong gợi ý */
+.suggestion-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+/* Tên sản phẩm */
+.suggestion-item .product-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1a3c34;
+    line-height: 1.2;
+}
+
+/* Giá sản phẩm */
+.suggestion-item .product-price {
+    font-size: 0.85rem;
+    color: #2d6a4f;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .search-suggestions {
+        width: 100%;
+        left: 0;
+        right: 0;
+    }
 }
 
 .cart-dropdown .btn-primary {

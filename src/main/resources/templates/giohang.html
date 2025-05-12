@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="" th:href="@{/css/giohang.css}">
     <link rel="icon" type="image/png" th:href="@{/logonewT.png}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://provinces.open-api.vn/api/province.js"></script>
 
 </head>
 <body>
@@ -239,6 +238,8 @@
 <div th:replace="~{part/footer :: footer}"></div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script th:inline="javascript">
     // Hàm định dạng giá tiền
     function formatPrice(price) {
@@ -285,7 +286,6 @@
         let directDiscount = 0;
         let voucherDiscount = parseFloat($('#voucher-discount').text().replace(/[^0-9]/g, '')) || 0;
 
-        console.log('Updating cart summary...');
         $('input[id^="item-checkbox-"]').each(function() {
             if ($(this).is(':checked')) {
                 let productId = $(this).data('product-id');
@@ -298,7 +298,6 @@
                     async: false,
                     data: { productId: productId, donViTinhId: unitId },
                     success: function(response) {
-                        console.log('Unit price response:', response);
                         let originalUnitPrice = parseFloat(response.originalPrice);
                         let discountedUnitPrice = parseFloat(response.discountedPrice);
                         let itemOriginalTotalPrice = originalUnitPrice * quantity;
@@ -324,7 +323,6 @@
         $('#final-total').text(formatPrice(finalTotal));
     }
 
-
     function updateCheckoutModal() {
         let originalTotal = 0;
         let itemsHtml = '';
@@ -338,7 +336,6 @@
                 let unitName = $('#unit-' + productId + '-' + unitId + ' option:selected').text();
                 let productImage = $(this).closest('.cart-item').find('img').attr('src');
 
-                // Lấy giá gốc từ server
                 $.ajax({
                     url: '/cart/get-unit-price',
                     type: 'GET',
@@ -353,15 +350,15 @@
                         originalTotal += itemOriginalTotalPrice;
 
                         itemsHtml += `
-                        <div class="order-item">
-                            <img src="${productImage}" alt="${productName}">
-                            <div class="order-item-details">
-                                <p><strong>${productName}</strong></p>
-                                <p>Số lượng: ${quantity} | Đơn vị: ${unitName} | Giá: ${formatPrice(originalUnitPrice)}</p>
+                            <div class="order-item">
+                                <img src="${productImage}" alt="${productName}">
+                                <div class="order-item-details">
+                                    <p><strong>${productName}</strong></p>
+                                    <p>Số lượng: ${quantity} | Đơn vị: ${unitName} | Giá: ${formatPrice(originalUnitPrice)}</p>
+                                </div>
+                                <div class="order-item-price">${formatPrice(itemOriginalTotalPrice)}</div>
                             </div>
-                            <div class="order-item-price">${formatPrice(itemOriginalTotalPrice)}</div>
-                        </div>
-                    `;
+                        `;
                     },
                     error: function(xhr) {
                         console.error('Error fetching unit price:', xhr);
@@ -382,7 +379,6 @@
         $('#modal-total-savings').text(formatPrice(totalSavings));
         $('#modal-final-total').text(formatPrice(finalTotal));
     }
-
 
     function increaseQuantity(productId, donViTinhId) {
         let input = $('#quantity-' + productId + '-' + donViTinhId);
@@ -487,42 +483,68 @@
         });
 
         $('#checkoutModal').on('show.bs.modal', function() {
-            // Kiểm tra trạng thái đăng nhập
             $.ajax({
                 url: '/check-auth',
                 type: 'GET',
                 success: function(response) {
                     if (!response.authenticated) {
-                        alert('Vui lòng đăng nhập để đặt hàng!');
-                        $('#checkoutModal').modal('hide'); // Đóng modal
-                        window.location.href = '/login'; // Chuyển hướng đến trang đăng nhập
+                        $('#checkoutModal').modal('hide');
+                        Swal.fire({
+                            title: 'Đăng nhập để nhận thêm ưu đãi',
+                            text: 'Vui lòng đăng nhập để nhận các ưu đãi độc quyền và hoàn tất thanh toán nhanh chóng!',
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonText: 'Đăng nhập',
+                            cancelButtonText: 'Tiếp tục thanh toán',
+                            buttonsStyling: false,
+                            customClass: {
+                                confirmButton: 'btn btn-primary me-2',
+                                cancelButton: 'btn btn-secondary'
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#loginModal').modal('show');
+                            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                $('#checkoutModal').modal('show');
+                                updateCheckoutModal();
+                                resetFormAndLoadProvinces();
+                            }
+                        });
                     } else {
                         updateCheckoutModal();
-                        // Kiểm tra nếu không có sản phẩm nào được chọn
-                        let selectedItems = $('input[id^="item-checkbox-"]:checked').length;
+                        let selectedItems = $('input[id^="item-checkbox-"]:checked').旭length;
                         if (selectedItems === 0) {
-                            alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng.');
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Chưa chọn sản phẩm',
+                                text: 'Vui lòng chọn ít nhất một sản phẩm để mua hàng.',
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                }
+                            });
                             $('#checkoutModal').modal('hide');
                             return;
                         }
-                        // Reset trạng thái form
-                        $('.form-group').removeClass('invalid');
-                        $('#customer-name, #customer-phone, #customer-address-detail').val('');
-                        $('#province').val('');
-                        $('#district').val('').prop('disabled', true);
-                        $('#ward').val('').prop('disabled', true);
-                        loadProvinces();
+                        resetFormAndLoadProvinces();
                     }
                 },
                 error: function(xhr) {
                     console.error('Error checking auth:', xhr);
-                    alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    });
                     $('#checkoutModal').modal('hide');
                 }
             });
         });
 
-        // Xử lý sự kiện chọn Tỉnh/Thành phố
         $('#province').on('change', function() {
             let provinceCode = $(this).val();
             if (provinceCode) {
@@ -533,7 +555,6 @@
             }
         });
 
-        // Xử lý sự kiện chọn Quận/Huyện
         $('#district').on('change', function() {
             let districtCode = $(this).val();
             if (districtCode) {
@@ -543,7 +564,6 @@
             }
         });
 
-        // Xử lý xác nhận đơn hàng
         $('#confirm-order').on('click', function() {
             let customerName = $('#customer-name').val().trim();
             let customerPhone = $('#customer-phone').val().trim();
@@ -553,10 +573,8 @@
             let addressDetail = $('#customer-address-detail').val().trim();
             let paymentMethod = $('#payment-method').val();
 
-            // Reset trạng thái lỗi
             $('.form-group').removeClass('invalid');
 
-            // Kiểm tra thông tin khách hàng
             let isValid = true;
             if (!customerName) {
                 $('#customer-name').closest('.form-group').addClass('invalid');
@@ -587,13 +605,11 @@
                 return;
             }
 
-            // Tạo chuỗi địa chỉ đầy đủ
             let provinceName = $('#province option:selected').data('name');
             let districtName = $('#district option:selected').data('name');
             let wardName = $('#ward option:selected').data('name');
             let customerAddress = `${addressDetail}, ${wardName}, ${districtName}, ${provinceName}`;
 
-            // Thu thập danh sách sản phẩm đã chọn
             let selectedItems = [];
             let totalAmount = 0;
             $('input[id^="item-checkbox-"]:checked').each(function() {
@@ -612,7 +628,6 @@
                 });
             });
 
-            // Chuẩn bị dữ liệu đơn hàng
             let orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
@@ -623,7 +638,6 @@
             };
 
             if (paymentMethod === 'payos') {
-                // Xử lý thanh toán qua PayOS
                 $.ajax({
                     url: '/thanhtoan/payos',
                     type: 'POST',
@@ -631,19 +645,38 @@
                     data: JSON.stringify(orderData),
                     success: function(response) {
                         if (response.success && response.checkoutUrl) {
-                            // Chuyển hướng đến URL thanh toán của PayOS
                             window.location.href = response.checkoutUrl;
                         } else {
-                            alert('Không thể tạo link thanh toán: ' + response.message);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi thanh toán',
+                                text: response.message || 'Không thể tạo link thanh toán. Vui lòng thử lại.',
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                }
+                            });
                         }
                     },
                     error: function(xhr) {
                         console.error('Error creating PayOS payment:', xhr);
-                        alert('Đã có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.');
+                        let errorMessage = 'Đã có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.status === 401 || xhr.status === 403) {
+                            errorMessage = 'Vui lòng đăng nhập để thực hiện thanh toán.';
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi thanh toán',
+                            text: errorMessage,
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
+                        });
                     }
-                });
-            } else {
-                // Xử lý các phương thức thanh toán khác (COD, bank)
+                });            } else {
                 $.ajax({
                     url: '/thanhtoan',
                     type: 'POST',
@@ -666,58 +699,136 @@
 
             $('#checkoutModal').modal('hide');
         });
+
+        // Hàm reset form và tải danh sách tỉnh/thành phố
+        function resetFormAndLoadProvinces() {
+            $('.form-group').removeClass('invalid');
+            $('#customer-name, #customer-phone, #customer-address-detail').val('');
+            $('#province').val('');
+            $('#district').val('').prop('disabled', true);
+            $('#ward').val('').prop('disabled', true);
+            loadProvinces();
+        }
+
+        // Hàm lấy danh sách Tỉnh/Thành phố
+        function loadProvinces() {
+            $.ajax({
+                url: '/cart/proxy/provinces',
+                method: 'GET',
+                success: function(data) {
+                    $('#province').empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(function(province) {
+                            $('#province').append(`<option value="${province.code}" data-name="${province.name}">${province.name}</option>`);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Cảnh báo',
+                            text: 'Danh sách tỉnh/thành phố trống. Vui lòng thử lại sau.',
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading provinces:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Không thể tải danh sách tỉnh/thành phố. Vui lòng kiểm tra kết nối và thử lại.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    });
+                }
+            });
+        }
+
+        // Hàm lấy danh sách Quận/Huyện
+        function loadDistricts(provinceCode) {
+            $.ajax({
+                url: `/cart/proxy/districts/${provinceCode}`,
+                method: 'GET',
+                success: function(data) {
+                    $('#district').empty().append('<option value="">Chọn Quận/Huyện</option>').prop('disabled', false);
+                    if (data && Array.isArray(data.districts) && data.districts.length > 0) {
+                        data.districts.forEach(function(district) {
+                            $('#district').append(`<option value="${district.code}" data-name="${district.name}">${district.name}</option>`);
+                        });
+                        $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
+                    } else {
+                        $('#district').prop('disabled', true);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Cảnh báo',
+                            text: 'Danh sách quận/huyện trống. Vui lòng chọn tỉnh/thành phố khác.',
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading districts:', xhr);
+                    $('#district').prop('disabled', true);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Không thể tải danh sách quận/huyện. Vui lòng thử lại.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    });
+                }
+            });
+        }
+
+        // Hàm lấy danh sách Xã/Phường
+        function loadWards(districtCode) {
+            $.ajax({
+                url: `/cart/proxy/wards/${districtCode}`,
+                method: 'GET',
+                success: function(data) {
+                    $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', false);
+                    if (data && Array.isArray(data.wards) && data.wards.length > 0) {
+                        data.wards.forEach(function(ward) {
+                            $('#ward').append(`<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`);
+                        });
+                    } else {
+                        $('#ward').prop('disabled', true);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Cảnh báo',
+                            text: 'Danh sách xã/phường trống. Vui lòng chọn quận/huyện khác.',
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading wards:', xhr);
+                    $('#ward').prop('disabled', true);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Không thể tải danh sách xã/phường. Vui lòng thử lại.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    });
+                }
+            });
+        }
     });
-    // Hàm lấy danh sách Tỉnh/Thành phố
-    function loadProvinces() {
-        $.ajax({
-            url: 'https://provinces.open-api.vn/api/p/',
-            method: 'GET',
-            success: function(data) {
-                $('#province').empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
-                data.forEach(function(province) {
-                    $('#province').append(`<option value="${province.code}" data-name="${province.name}">${province.name}</option>`);
-                });
-            },
-            error: function(xhr) {
-                console.error('Error loading provinces:', xhr);
-            }
-        });
-    }
-
-    // Hàm lấy danh sách Quận/Huyện
-    function loadDistricts(provinceCode) {
-        $.ajax({
-            url: `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
-            method: 'GET',
-            success: function(data) {
-                $('#district').empty().append('<option value="">Chọn Quận/Huyện</option>').prop('disabled', false);
-                data.districts.forEach(function(district) {
-                    $('#district').append(`<option value="${district.code}" data-name="${district.name}">${district.name}</option>`);
-                });
-                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', true);
-            },
-            error: function(xhr) {
-                console.error('Error loading districts:', xhr);
-            }
-        });
-    }
-
-    // Hàm lấy danh sách Xã/Phường
-    function loadWards(districtCode) {
-        $.ajax({
-            url: `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
-            method: 'GET',
-            success: function(data) {
-                $('#ward').empty().append('<option value="">Chọn Xã/Phường</option>').prop('disabled', false);
-                data.wards.forEach(function(ward) {
-                    $('#ward').append(`<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`);
-                });
-            },
-            error: function(xhr) {
-                console.error('Error loading wards:', xhr);
-            }
-        });
-    }
 </script>
 </body>
 </html>

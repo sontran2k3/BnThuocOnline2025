@@ -1,6 +1,8 @@
 package com.example.BnThuocOnline2025.controller;
 
+import com.example.BnThuocOnline2025.dto.ProductDTO;
 import com.example.BnThuocOnline2025.model.*;
+import com.example.BnThuocOnline2025.repository.DanhMucRepository;
 import com.example.BnThuocOnline2025.service.GioHangService;
 import com.example.BnThuocOnline2025.service.ProductService;
 import com.example.BnThuocOnline2025.service.UserService;
@@ -38,6 +40,9 @@ public class HomeController {
 
     @Autowired
     private GioHangService gioHangService;
+
+    @Autowired
+    private DanhMucRepository danhMucRepository;
 
     @GetMapping("/")
     public String home(Model model,
@@ -390,5 +395,31 @@ public class HomeController {
 
         response.put("error", "Người dùng chưa đăng nhập!");
         return ResponseEntity.status(401).body(response);
+    }
+
+    @GetMapping("/api/danhmuc")
+    public ResponseEntity<List<DanhMuc>> getAllDanhMuc() {
+        List<DanhMuc> danhMucList = danhMucRepository.findAll();
+        return ResponseEntity.ok(danhMucList);
+    }
+    @GetMapping("/products-by-danhmuc")
+    public String getProductsByDanhMuc(@RequestParam("danhMucId") int danhMucId, Model model) {
+        List<Product> products = productService.getProductsByDanhMucId(danhMucId);
+        model.addAttribute("products", products);
+        return "trangchu :: product-by-danhmuc-fragment"; // Trả về fragment mới
+    }
+
+    @GetMapping("/api/products/search")
+    @ResponseBody
+    public List<ProductDTO> searchProducts(@RequestParam("query") String query) {
+        List<Product> products = productService.searchProductsByName(query);
+        return products.stream().map(product -> {
+            ProductDTO dto = new ProductDTO();
+            dto.setId(product.getId());
+            dto.setTenSanPham(product.getTenSanPham());
+            dto.setMainImageUrl(product.getMainImageUrl());
+            dto.setLowestPrice(product.getDiscountedPrice());
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

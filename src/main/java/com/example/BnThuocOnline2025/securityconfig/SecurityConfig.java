@@ -70,10 +70,16 @@ public class SecurityConfig {
                                 "/thanhtoan/success",
                                 "/thanhtoan/cancel",
                                 "/thanhtoan/payos/webhook",
+                                "/thanhtoan/payos",
                                 "/submit-review",
                                 "/get-reviews",
                                 "/check-auth",
-                                "/logout"
+                                "/logout",
+                                "/cart/proxy/**",
+                                "/api/danhmuc",
+                                "/thanhtoan/**)",
+                                "/products-by-danhmuc",
+                                "/api/products/search"
                         ).permitAll()
                         .requestMatchers("/thanhtoan/payos", "/api/user").authenticated()
                         .anyRequest().authenticated()
@@ -90,6 +96,8 @@ public class SecurityConfig {
                                 "/submit-review",
                                 "/get-reviews",
                                 "/check-auth",
+                                "/cart/proxy/**",
+                                "/thanhtoan/**)",
                                 "/logout"
                         )
                 )

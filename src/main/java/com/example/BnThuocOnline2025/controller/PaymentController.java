@@ -64,16 +64,44 @@ public class PaymentController {
             HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // Lấy thông tin từ orderData
+            // Log dữ liệu nhận được
+            logger.info("Received orderData: {}", orderData);
+
+            // Kiểm tra dữ liệu đầu vào
             String customerName = (String) orderData.get("customerName");
             String customerPhone = (String) orderData.get("customerPhone");
             String customerAddress = (String) orderData.get("customerAddress");
-            int totalAmount = ((Number) orderData.get("totalAmount")).intValue();
+            Number totalAmountNumber = (Number) orderData.get("totalAmount");
             List<Map<String, Object>> items = (List<Map<String, Object>>) orderData.get("items");
 
-            // Tạo mã đơn hàng
-            String currentTimeString = String.valueOf(new Date().getTime());
-            long orderCode = Long.parseLong(currentTimeString.substring(currentTimeString.length() - 6));
+            if (customerName == null || customerPhone == null || customerAddress == null ||
+                    totalAmountNumber == null || items == null || items.isEmpty()) {
+                throw new IllegalArgumentException("Dữ liệu đơn hàng không đầy đủ: " +
+                        "customerName=" + customerName + ", customerPhone=" + customerPhone +
+                        ", customerAddress=" + customerAddress + ", totalAmount=" + totalAmountNumber +
+                        ", items=" + (items == null ? "null" : items.size()));
+            }
+
+            int totalAmount = totalAmountNumber.intValue();
+            if (totalAmount <= 0) {
+                throw new IllegalArgumentException("Tổng tiền phải lớn hơn 0");
+            }
+
+            // Kiểm tra tổng tiền
+            int calculatedTotal = items.stream()
+                    .mapToInt(item -> {
+                        Number quantity = (Number) item.get("quantity");
+                        Number price = (Number) item.get("price");
+                        if (quantity == null || price == null) {
+                            throw new IllegalArgumentException("Thông tin sản phẩm không hợp lệ: quantity=" + quantity + ", price=" + price);
+                        }
+                        return quantity.intValue() * price.intValue();
+                    })
+                    .sum();
+            if (calculatedTotal != totalAmount) {
+                throw new IllegalArgumentException("Tổng tiền không khớp với danh sách sản phẩm: " +
+                        "calculatedTotal=" + calculatedTotal + ", totalAmount=" + totalAmount);
+            }
 
             // Lấy thông tin người dùng
             User user = null;
@@ -91,7 +119,7 @@ public class PaymentController {
                 }
                 logger.info("Principal name: {}, user: {}", emailOrPhone, user != null ? user.getId() : "null");
             } else {
-                logger.warn("No authenticated user found. Proceeding as guest.");
+                logger.info("No authenticated user found. Proceeding as guest.");
             }
 
             // Tạo đơn hàng
@@ -104,31 +132,54 @@ public class PaymentController {
             order.setCustomerAddress(customerAddress);
             order.setPaymentMethod("payos");
 
-            // Gán user_id nếu người dùng tồn tại
+            // Gán user_id hoặc để null cho khách vãng lai
             if (user != null) {
                 order.setUserId(user.getId());
                 order.setUser(user);
-                logger.info("Assigned user ID {} to order {}", user.getId(), orderCode);
+                logger.info("Assigned user ID {} to order", user.getId());
             } else {
-                logger.info("Order {} created without user_id (guest)", orderCode);
-                // Nếu cột user_id không cho phép null, cần xử lý tại đây
-                order.setUserId(null); // Hoặc tạo một UUID mặc định nếu cần
+                order.setUserId(null); // Khách vãng lai
+                logger.info("Guest order created without user_id");
             }
 
             // Lưu đơn hàng
-            order = ordersRepository.save(order);
-            logger.info("Order saved with ID: {}, user_id: {}", order.getId(), order.getUserId());
+            try {
+                order = ordersRepository.save(order);
+                logger.info("Order saved with ID: {}, user_id: {}", order.getId(), order.getUserId());
+            } catch (Exception e) {
+                logger.error("Error saving order: {}", e.getMessage(), e);
+                throw new IllegalStateException("Không thể lưu đơn hàng: " + e.getMessage());
+            }
 
             // Lưu chi tiết đơn hàng
             for (Map<String, Object> item : items) {
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
-                orderItem.setProduct(productRepository.findById(((Number) item.get("productId")).intValue()).orElse(null));
-                orderItem.setDonViTinh(donViTinhRepository.findById(((Number) item.get("donViTinhId")).intValue()).orElse(null));
-                orderItem.setQuantity(((Number) item.get("quantity")).intValue());
-                orderItem.setPrice(new BigDecimal(((Number) item.get("price")).doubleValue()));
+                Number productIdObj = (Number) item.get("productId");
+                Number donViTinhIdObj = (Number) item.get("donViTinhId");
+                if (productIdObj == null || donViTinhIdObj == null) {
+                    throw new IllegalArgumentException("Thông tin sản phẩm không hợp lệ: productId=" + productIdObj + ", donViTinhId=" + donViTinhIdObj);
+                }
+                int productId = productIdObj.intValue();
+                int donViTinhId = donViTinhIdObj.intValue();
+                orderItem.setProduct(productRepository.findById(productId)
+                        .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại: " + productId)));
+                orderItem.setDonViTinh(donViTinhRepository.findById(donViTinhId)
+                        .orElseThrow(() -> new IllegalArgumentException("Đơn vị tính không tồn tại: " + donViTinhId)));
+                Number quantityObj = (Number) item.get("quantity");
+                Number priceObj = (Number) item.get("price");
+                if (quantityObj == null || priceObj == null) {
+                    throw new IllegalArgumentException("Thông tin sản phẩm không hợp lệ: quantity=" + quantityObj + ", price=" + priceObj);
+                }
+                orderItem.setQuantity(quantityObj.intValue());
+                orderItem.setPrice(new BigDecimal(priceObj.doubleValue()));
                 orderItem.setAddedAt(LocalDateTime.now());
-                orderItemRepository.save(orderItem);
+                try {
+                    orderItemRepository.save(orderItem);
+                } catch (Exception e) {
+                    logger.error("Error saving order item: {}", e.getMessage(), e);
+                    throw new IllegalStateException("Không thể lưu chi tiết đơn hàng: " + e.getMessage());
+                }
             }
 
             // Chuẩn bị dữ liệu thanh toán PayOS
@@ -138,9 +189,16 @@ public class PaymentController {
 
             List<ItemData> itemList = new ArrayList<>();
             for (Map<String, Object> item : items) {
-                String productName = "Sản phẩm ID: " + item.get("productId");
-                int quantity = ((Number) item.get("quantity")).intValue();
-                int price = ((Number) item.get("price")).intValue();
+                Number productIdObj = (Number) item.get("productId");
+                Number quantityObj = (Number) item.get("quantity");
+                Number priceObj = (Number) item.get("price");
+                if (productIdObj == null || quantityObj == null || priceObj == null) {
+                    throw new IllegalArgumentException("Thông tin sản phẩm không hợp lệ: productId=" + productIdObj +
+                            ", quantity=" + quantityObj + ", price=" + priceObj);
+                }
+                String productName = "Sản phẩm ID: " + productIdObj.intValue();
+                int quantity = quantityObj.intValue();
+                int price = priceObj.intValue();
                 itemList.add(ItemData.builder()
                         .name(productName)
                         .quantity(quantity)
@@ -153,8 +211,11 @@ public class PaymentController {
                 description = description.substring(0, 25);
             }
 
+            // Tạo orderCode duy nhất
+            long orderCode = Long.parseLong(String.valueOf(order.getId()) + new Random().nextInt(1000));
+
             PaymentData paymentData = PaymentData.builder()
-                    .orderCode((long) order.getId())
+                    .orderCode(orderCode)
                     .amount(totalAmount)
                     .description(description)
                     .returnUrl(returnUrl)
@@ -162,8 +223,18 @@ public class PaymentController {
                     .items(itemList)
                     .build();
 
+            // Log dữ liệu PayOS
+            logger.info("PayOS payment data: {}", paymentData);
+
             // Tạo link thanh toán
-            CheckoutResponseData data = payOS.createPaymentLink(paymentData);
+            CheckoutResponseData data;
+            try {
+                data = payOS.createPaymentLink(paymentData);
+                logger.info("PayOS response: {}", data);
+            } catch (Exception e) {
+                logger.error("Error creating PayOS payment link: {}", e.getMessage(), e);
+                throw new IllegalStateException("Lỗi từ PayOS: " + e.getMessage());
+            }
 
             response.put("success", true);
             response.put("checkoutUrl", data.getCheckoutUrl());
@@ -171,7 +242,8 @@ public class PaymentController {
         } catch (Exception e) {
             logger.error("Error creating payment link: {}", e.getMessage(), e);
             response.put("success", false);
-            response.put("message", "Không thể tạo link thanh toán: " + e.getMessage());
+            response.put("message", "Không thể tạo link thanh toán: " +
+                    (e.getMessage() != null ? e.getMessage() : "Lỗi không xác định"));
         }
         return response;
     }
