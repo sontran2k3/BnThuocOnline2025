@@ -117,7 +117,7 @@ public class ProductService {
                 .orElse(null);
     }
 
-     public void loadProductDetails(Product product) {
+    public void loadProductDetails(Product product) {
         Optional<ProductImage> mainImage = productImageRepository.findByProductIdAndIsMainTrue(product.getId());
         mainImage.ifPresent(image -> product.setMainImageUrl(image.getImageUrl()));
 
