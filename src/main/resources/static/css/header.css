@@ -684,3 +684,27 @@ body {
         right: -50px;
     }
 }
+
+/* Định vị biểu tượng con mắt trong input */
+.position-relative {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+    color: #1a3c34;
+}
+
+/* Đảm bảo input có đủ không gian cho biểu tượng */
+.form-control {
+    padding-right: 40px; /* Thêm khoảng cách bên phải để không che biểu tượng */
+}

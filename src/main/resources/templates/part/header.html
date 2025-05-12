@@ -134,7 +134,10 @@
                                     </div>
                                     <div class="mb-3 text-start">
                                         <label for="loginPassword" class="form-label">Mật khẩu</label>
-                                        <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                        <div class="position-relative">
+                                            <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                            <i class="bi bi-eye toggle-password" data-target="loginPassword" style="cursor: pointer;"></i>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <div id="loginRecaptcha" class="g-recaptcha"></div>
@@ -160,11 +163,17 @@
                                     </div>
                                     <div class="mb-3 text-start">
                                         <label for="registerPassword" class="form-label">Mật khẩu</label>
-                                        <input type="password" class="form-control" id="registerPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                        <div class="position-relative">
+                                            <input type="password" class="form-control" id="registerPassword" name="password" placeholder="Nhập mật khẩu" required>
+                                            <i class="bi bi-eye toggle-password" data-target="registerPassword" style="cursor: pointer;"></i>
+                                        </div>
                                     </div>
                                     <div class="mb-3 text-start">
                                         <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
-                                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+                                        <div class="position-relative">
+                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+                                            <i class="bi bi-eye toggle-password" data-target="confirmPassword" style="cursor: pointer;"></i>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <div id="registerRecaptcha" class="g-recaptcha"></div>
@@ -848,6 +857,21 @@
                     window.location.href = `/products?query=${encodeURIComponent(query)}`;
                 }
             });
+        });
+
+        // Xử lý sự kiện click vào biểu tượng toggle-password
+        $(document).on('click', '.toggle-password', function() {
+            const targetId = $(this).data('target');
+            const input = $(`#${targetId}`);
+            const icon = $(this);
+
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('bi-eye').addClass('bi-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('bi-eye-slash').addClass('bi-eye');
+            }
         });
     </script>
 </div>
