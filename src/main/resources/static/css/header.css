@@ -43,7 +43,7 @@ body {
 
 .search-barhome {
     position: relative;
-    z-index: 100;
+    z-index: 1500; /* Đảm bảo container của thanh tìm kiếm có z-index cao */
     background: #ffffff;
     border-radius: 50px;
     padding: 8px 15px;
@@ -513,7 +513,7 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     padding: 15px;
     display: none;
-    z-index: 100;
+    z-index: 1000;
     margin-top: 5px;
 }
 
@@ -601,7 +601,7 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     max-height: 300px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: 2000; /* Tăng z-index để vượt qua dropdown menu */
     display: none;
     margin-top: 5px;
     padding: 5px 0;

@@ -38,17 +38,18 @@
         }
 
         /* Dropdown menu */
+        /* Dropdown menu */
         .navbar-nav .nav-item .dropdown-menu {
             display: none;
             position: absolute;
             top: 100%;
             left: 0;
-            z-index: 50;
-            width: 900px; /* Giảm kích thước để gọn hơn */
+            z-index: 900; /* Giảm z-index để thấp hơn search-suggestions */
+            width: 900px;
             padding: 20px;
-            background: #ffffff; /* Màu trắng đơn giản */
+            background: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Bóng nhẹ */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             border: 1px solid #f0f0f0;
             flex-direction: row;
             opacity: 0;
