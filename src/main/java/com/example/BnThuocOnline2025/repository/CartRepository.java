@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
-    Optional<Cart> findByUser(User user); // Giữ lại để tương thích với mã cũ nếu cần
+    List<Cart> findByUser(User user); // Đổi từ Optional<Cart> sang List<Cart>
     Optional<Cart> findBySessionId(String sessionId);
     List<Cart> findAllByUser(User user); // Thêm để lấy tất cả giỏ hàng của user
 

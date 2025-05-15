@@ -147,9 +147,9 @@ public class UserController {
             List<OrderDTO> orders = userService.getOrdersByUserId(currentUser.getId());
             model.addAttribute("orders", orders);
 
-            Cart cart = gioHangService.getOrCreateCart(currentUser, session);
-            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-            model.addAttribute("cartItems", gioHangService.getCartItems(currentUser, session));
+//            Cart cart = gioHangService.getOrCreateCart(currentUser, session);
+//            model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+//            model.addAttribute("cartItems", gioHangService.getCartItems(currentUser, session));
 
             return "thongtincanhan";
         }
@@ -192,15 +192,15 @@ public class UserController {
 
             session.setAttribute("token", token);
 
-            Cart cart = gioHangService.getOrCreateCart(user, session);
-            int cartItemCount = gioHangService.getCartItemCount(cart);
+//            Cart cart = gioHangService.getOrCreateCart(user, session);
+//            int cartItemCount = gioHangService.getCartItemCount(cart);
 
             responseMap.put("token", token);
             responseMap.put("role", user.getRole());
             responseMap.put("phoneNumber", user.getPhoneNumber());
             responseMap.put("name", user.getName() != null ? user.getName() : "Người dùng");
             responseMap.put("picture", user.getPicture() != null ? user.getPicture() : "/image/profile.png");
-            responseMap.put("cartItemCount", cartItemCount);
+//            responseMap.put("cartItemCount", cartItemCount);
             responseMap.put("redirectUrl", "/");
 
             return ResponseEntity.ok(responseMap);

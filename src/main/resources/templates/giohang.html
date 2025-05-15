@@ -80,29 +80,28 @@
                     </div>
 
                     <!-- Tổng cộng (bên phải) -->
-                    <!-- Tổng cộng (bên phải) -->
                     <div class="col-lg-4 col-md-12">
                         <div class="cart-summary">
                             <h5>Tổng cộng</h5>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="total-label">Tổng tiền gốc:</span>
-                                <span class="total" id="cart-total" th:text="${originalCartTotal}"></span>
+                                <span class="total" id="cart-total" th:text="${#numbers.formatDecimal(originalCartTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="total-label">Giảm giá trực tiếp:</span>
-                                <span class="total" id="direct-discount" style="color: #f7941d;" th:text="${directDiscount}"></span>
+                                <span class="total" id="direct-discount" style="color: #f7941d;" th:text="'-' + ${#numbers.formatDecimal(directDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="total-label">Giảm giá voucher:</span>
-                                <span class="total" id="voucher-discount" style="color: #f7941d;" th:text="${voucherDiscount}"></span>
+                                <span class="total" id="voucher-discount" style="color: #f7941d;" th:text="'-' + ${#numbers.formatDecimal(voucherDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="total-label">Tiết kiệm được:</span>
-                                <span class="total" id="total-savings" style="color: #f7941d;" th:text="${totalSavings}"></span>
+                                <span class="total" id="total-savings" style="color: #f7941d;" th:text="${#numbers.formatDecimal(totalSavings, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="total-label">Thanh toán:</span>
-                                <span class="total" id="final-total" th:text="${finalTotal}"></span>
+                                <span class="total" id="final-total" th:text="${#numbers.formatDecimal(finalTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div>
                                 <button class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">Mua hàng</button>
@@ -114,6 +113,7 @@
                             </p>
                         </div>
                     </div>
+
 
                 </div>
             </div>
@@ -139,7 +139,6 @@
                         <div class="modal-body">
                             <div class="row">
                                 <!-- Bên trái: Thông tin đơn hàng -->
-                                <!-- Bên trái: Thông tin đơn hàng -->
                                 <div class="col-md-6">
                                     <div class="modal-section">
                                         <h6><i class="bi bi-box-seam"></i> Thông tin đơn hàng</h6>
@@ -149,23 +148,23 @@
                                         <hr class="order-summary-divider">
                                         <div class="summary-row">
                                             <span>Tổng tiền gốc:</span>
-                                            <span id="modal-cart-total"></span>
+                                            <span id="modal-cart-total" th:text="${#numbers.formatDecimal(originalCartTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                                         </div>
                                         <div class="summary-row">
                                             <span>Giảm giá trực tiếp:</span>
-                                            <span id="modal-direct-discount" style="color: #f7941d;"></span>
+                                            <span id="modal-direct-discount" style="color: #f7941d;" th:text="'-' + ${#numbers.formatDecimal(directDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                                         </div>
                                         <div class="summary-row">
                                             <span>Giảm giá voucher:</span>
-                                            <span id="modal-voucher-discount" style="color: #f7941d;"></span>
+                                            <span id="modal-voucher-discount" style="color: #f7941d;" th:text="'-' + ${#numbers.formatDecimal(voucherDiscount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                                         </div>
                                         <div class="summary-row">
                                             <span>Tiết kiệm được:</span>
-                                            <span id="modal-total-savings" style="color: #f7941d;"></span>
+                                            <span id="modal-total-savings" style="color: #f7941d;" th:text="${#numbers.formatDecimal(totalSavings, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                                         </div>
                                         <div class="summary-row total">
                                             <span>Thanh toán:</span>
-                                            <span id="modal-final-total"></span>
+                                            <span id="modal-final-total" th:text="${#numbers.formatDecimal(finalTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -282,39 +281,11 @@
     }
 
     function updateCartSummary() {
-        let originalTotal = 0;
-        let directDiscount = 0;
-        let voucherDiscount = parseFloat($('#voucher-discount').text().replace(/[^0-9]/g, '')) || 0;
-
-        $('input[id^="item-checkbox-"]').each(function() {
-            if ($(this).is(':checked')) {
-                let productId = $(this).data('product-id');
-                let unitId = $(this).data('unit-id');
-                let quantity = parseInt($('#quantity-' + productId + '-' + unitId).val());
-
-                $.ajax({
-                    url: '/cart/get-unit-price',
-                    type: 'GET',
-                    async: false,
-                    data: { productId: productId, donViTinhId: unitId },
-                    success: function(response) {
-                        let originalUnitPrice = parseFloat(response.originalPrice);
-                        let discountedUnitPrice = parseFloat(response.discountedPrice);
-                        let itemOriginalTotalPrice = originalUnitPrice * quantity;
-                        let itemTotalPrice = discountedUnitPrice * quantity;
-
-                        originalTotal += itemOriginalTotalPrice;
-                        directDiscount += (originalUnitPrice - discountedUnitPrice) * quantity;
-                    },
-                    error: function(xhr) {
-                        console.error('Error fetching unit price:', xhr);
-                    }
-                });
-            }
-        });
-
-        let totalSavings = directDiscount + voucherDiscount;
-        let finalTotal = originalTotal - totalSavings;
+        let originalTotal = parseFloat(/*[[${originalCartTotal}]]*/ 0);
+        let directDiscount = parseFloat(/*[[${directDiscount}]]*/ 0);
+        let voucherDiscount = parseFloat(/*[[${voucherDiscount}]]*/ 0);
+        let totalSavings = parseFloat(/*[[${totalSavings}]]*/ 0);
+        let finalTotal = parseFloat(/*[[${finalTotal}]]*/ 0);
 
         $('#cart-total').text(formatPrice(originalTotal));
         $('#direct-discount').text('-' + formatPrice(directDiscount));
@@ -323,54 +294,36 @@
         $('#final-total').text(formatPrice(finalTotal));
     }
 
+
     function updateCheckoutModal() {
-        let originalTotal = 0;
+        let originalTotal = parseFloat(/*[[${originalCartTotal}]]*/ 0);
+        let directDiscount = parseFloat(/*[[${directDiscount}]]*/ 0);
+        let voucherDiscount = parseFloat(/*[[${voucherDiscount}]]*/ 0);
+        let totalSavings = parseFloat(/*[[${totalSavings}]]*/ 0);
+        let finalTotal = parseFloat(/*[[${finalTotal}]]*/ 0);
+
         let itemsHtml = '';
+        $('input[id^="item-checkbox-"]:checked').each(function() {
+            let productId = $(this).data('product-id');
+            let unitId = $(this).data('unit-id');
+            let quantity = parseInt($('#quantity-' + productId + '-' + unitId).val());
+            let productName = $(this).closest('.cart-item').find('h6').text();
+            let unitName = $('#unit-' + productId + '-' + unitId + ' option:selected').text();
+            let productImage = $(this).closest('.cart-item').find('img').attr('src');
+            let unitPrice = parseFloat($('#unit-price-' + productId + '-' + unitId).text().replace(/[^0-9]/g, ''));
+            let itemTotalPrice = unitPrice * quantity;
 
-        $('input[id^="item-checkbox-"]').each(function() {
-            if ($(this).is(':checked')) {
-                let productId = $(this).data('product-id');
-                let unitId = $(this).data('unit-id');
-                let quantity = parseInt($('#quantity-' + productId + '-' + unitId).val());
-                let productName = $(this).closest('.cart-item').find('h6').text();
-                let unitName = $('#unit-' + productId + '-' + unitId + ' option:selected').text();
-                let productImage = $(this).closest('.cart-item').find('img').attr('src');
-
-                $.ajax({
-                    url: '/cart/get-unit-price',
-                    type: 'GET',
-                    async: false,
-                    data: { productId: productId, donViTinhId: unitId },
-                    success: function(response) {
-                        let originalUnitPrice = parseFloat(response.originalPrice);
-                        let discountedUnitPrice = parseFloat(response.discountedPrice);
-                        let itemOriginalTotalPrice = originalUnitPrice * quantity;
-                        let itemTotalPrice = discountedUnitPrice * quantity;
-
-                        originalTotal += itemOriginalTotalPrice;
-
-                        itemsHtml += `
-                            <div class="order-item">
-                                <img src="${productImage}" alt="${productName}">
-                                <div class="order-item-details">
-                                    <p><strong>${productName}</strong></p>
-                                    <p>Số lượng: ${quantity} | Đơn vị: ${unitName} | Giá: ${formatPrice(originalUnitPrice)}</p>
-                                </div>
-                                <div class="order-item-price">${formatPrice(itemOriginalTotalPrice)}</div>
-                            </div>
-                        `;
-                    },
-                    error: function(xhr) {
-                        console.error('Error fetching unit price:', xhr);
-                    }
-                });
-            }
+            itemsHtml += `
+            <div class="order-item">
+                <img src="${productImage}" alt="${productName}">
+                <div class="order-item-details">
+                    <p><strong>${productName}</strong></p>
+                    <p>Số lượng: ${quantity} | Đơn vị: ${unitName} | Giá: ${formatPrice(unitPrice)}</p>
+                </div>
+                <div class="order-item-price">${formatPrice(itemTotalPrice)}</div>
+            </div>
+        `;
         });
-
-        let directDiscount = parseFloat($('#direct-discount').text().replace(/[^0-9]/g, '')) || 0;
-        let voucherDiscount = parseFloat($('#voucher-discount').text().replace(/[^0-9]/g, '')) || 0;
-        let totalSavings = directDiscount + voucherDiscount;
-        let finalTotal = originalTotal - totalSavings;
 
         $('#modal-order-items').html(itemsHtml);
         $('#modal-cart-total').text(formatPrice(originalTotal));
@@ -379,6 +332,7 @@
         $('#modal-total-savings').text(formatPrice(totalSavings));
         $('#modal-final-total').text(formatPrice(finalTotal));
     }
+
 
     function increaseQuantity(productId, donViTinhId) {
         let input = $('#quantity-' + productId + '-' + donViTinhId);

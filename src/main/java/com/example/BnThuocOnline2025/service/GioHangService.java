@@ -1,5 +1,6 @@
 package com.example.BnThuocOnline2025.service;
 
+import com.example.BnThuocOnline2025.dto.CartItemDTO;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.repository.*;
 import jakarta.servlet.http.HttpSession;
@@ -9,7 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,176 +35,186 @@ public class GioHangService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private ProductService productService;
 
     @Transactional
     public Cart getOrCreateCart(User user, HttpSession session) {
         Cart cart;
-
-        if (user != null && user.getId() != null) {
-//            logger.info("Finding or creating cart for user: {}", user.getId());
-            List<Cart> userCarts = cartRepository.findAllByUser(user);
-            if (userCarts.isEmpty()) {
+        if (user != null) {
+            // Xử lý cho người dùng đã đăng nhập
+            List<Cart> carts = cartRepository.findByUser(user);
+            if (!carts.isEmpty()) {
+                if (carts.size() > 1) {
+                    // Có nhiều giỏ hàng, hợp nhất hoặc giữ giỏ hàng mới nhất
+                    cart = mergeCarts(carts, user, session);
+                } else {
+                    cart = carts.get(0);
+                }
+            } else {
+                // Không có giỏ hàng, tạo mới
                 cart = new Cart();
                 cart.setUser(user);
-                cart.setCartItems(new ArrayList<>());
-            } else if (userCarts.size() == 1) {
-                cart = userCarts.get(0);
-            } else {
-                cart = userCarts.get(0);
-                for (int i = 1; i < userCarts.size(); i++) {
-                    Cart duplicateCart = userCarts.get(i);
-                    if (duplicateCart.getCartItems() != null) {
-                        for (CartItem item : duplicateCart.getCartItems()) {
-                            item.setCart(cart);
-                            if (!cart.getCartItems().contains(item)) {
-                                cart.getCartItems().add(item);
-                            }
-                        }
-                    }
-                    cartRepository.delete(duplicateCart);
-                }
-            }
-
-            String sessionId = (String) session.getAttribute("cartSessionId");
-            if (sessionId != null) {
-                Optional<Cart> sessionCart = cartRepository.findBySessionId(sessionId);
-                if (sessionCart.isPresent() && sessionCart.get().getUser() == null) {
-                    Cart existingCart = sessionCart.get();
-                    if (existingCart.getCartItems() != null) {
-                        for (CartItem item : existingCart.getCartItems()) {
-                            item.setCart(cart);
-                            if (!cart.getCartItems().contains(item)) {
-                                cart.getCartItems().add(item);
-                            }
-                        }
-                    }
-                    existingCart.setUser(user);
-                    existingCart.setSessionId(null);
-                    cartRepository.save(existingCart);
-                    session.removeAttribute("cartSessionId");
-                    return existingCart;
-                }
+                cart.setSessionId(session.getId());
+                cart = cartRepository.save(cart);
             }
         } else {
-            String sessionId = (String) session.getAttribute("cartSessionId");
-            if (sessionId == null) {
-                sessionId = UUID.randomUUID().toString();
-                session.setAttribute("cartSessionId", sessionId);
-            }
-//            logger.info("Finding or creating cart for sessionId: {}", sessionId);
-            String finalSessionId = sessionId;
-            cart = cartRepository.findBySessionId(sessionId).orElseGet(() -> {
-                Cart newCart = new Cart();
-                newCart.setSessionId(finalSessionId);
-                newCart.setCartItems(new ArrayList<>());
-                return newCart;
-            });
-        }
-
-        return cartRepository.save(cart);
-    }
-
-    @Transactional
-    public Cart addToCart(User user, HttpSession session, int productId, int donViTinhId, int quantity) {
-        Cart cart = getOrCreateCart(user, session);
-
-        Optional<Product> productOpt = productRepository.findById(productId);
-        if (productOpt.isEmpty()) {
-            throw new IllegalArgumentException("Sản phẩm không tồn tại với ID: " + productId);
-        }
-        Product product = productOpt.get();
-
-        Optional<DonViTinh> donViTinhOpt = donViTinhRepository.findById(donViTinhId);
-        if (donViTinhOpt.isEmpty()) {
-            throw new IllegalArgumentException("Đơn vị tính không tồn tại với ID: " + donViTinhId);
-        }
-        DonViTinh donViTinh = donViTinhOpt.get();
-
-        if (!product.getDonViTinhList().contains(donViTinh)) {
-            throw new IllegalArgumentException("Đơn vị tính ID " + donViTinhId + " không thuộc sản phẩm ID " + productId);
-        }
-
-        Optional<CartItem> existingItem = cartItemRepository.findByCartAndProductAndDonViTinh(cart, product, donViTinh);
-        CartItem item;
-        if (existingItem.isPresent()) {
-            item = existingItem.get();
-            int newQuantity = item.getQuantity() + quantity;
-            if (newQuantity <= 0) {
-                cartItemRepository.delete(item); // Xóa nếu số lượng <= 0
-                cart.getCartItems().remove(item);
+            // Xử lý cho khách vãng lai
+            String sessionId = session.getId();
+            Optional<Cart> cartOptional = cartRepository.findBySessionId(sessionId);
+            if (cartOptional.isPresent()) {
+                cart = cartOptional.get();
             } else {
-                item.setQuantity(newQuantity);
-                item.setPrice(donViTinh.getDiscountedPrice());
-                cartItemRepository.save(item);
+                cart = new Cart();
+                cart.setSessionId(sessionId);
+                cart = cartRepository.save(cart);
             }
-        } else if (quantity > 0) {
-            item = new CartItem();
-            item.setCart(cart);
-            item.setProduct(product);
-            item.setDonViTinh(donViTinh);
-            item.setQuantity(quantity);
-            item.setPrice(donViTinh.getDiscountedPrice());
-            if (cart.getCartItems() == null) {
-                cart.setCartItems(new ArrayList<>());
-            }
-            cart.getCartItems().add(item);
-            cartItemRepository.save(item);
         }
-
-        return cartRepository.save(cart);
+        return cart;
     }
 
+    // Phương thức hợp nhất các giỏ hàng
+    private Cart mergeCarts(List<Cart> carts, User user, HttpSession session) {
+        // Lấy giỏ hàng mới nhất (hoặc theo tiêu chí khác, ví dụ: created_at)
+        Cart primaryCart = carts.stream()
+                .max(Comparator.comparing(Cart::getId))
+                .orElseThrow(() -> new IllegalStateException("No carts found"));
+
+        // Hợp nhất các CartItem từ các giỏ hàng khác
+        for (Cart otherCart : carts) {
+            if (otherCart.getId() != primaryCart.getId()) {
+                List<CartItem> items = cartItemRepository.findByCart(otherCart);
+                for (CartItem item : items) {
+                    // Kiểm tra xem sản phẩm đã tồn tại trong primaryCart chưa
+                    Optional<CartItem> existingItem = cartItemRepository.findByCartAndProductAndDonViTinh(
+                            primaryCart, item.getProduct(), item.getDonViTinh());
+                    if (existingItem.isPresent()) {
+                        // Cộng dồn số lượng
+                        CartItem existing = existingItem.get();
+                        existing.setQuantity(existing.getQuantity() + item.getQuantity());
+                        cartItemRepository.save(existing);
+                    } else {
+                        // Chuyển CartItem sang primaryCart
+                        item.setCart(primaryCart);
+                        cartItemRepository.save(item);
+                    }
+                }
+                // Xóa giỏ hàng cũ
+                cartRepository.delete(otherCart);
+            }
+        }
+
+        return primaryCart;
+    }
+
+
     @Transactional
-    public void removeFromCart(int cartItemId) {
-        cartItemRepository.deleteById(cartItemId);
+    public boolean addToCart(int productId, int donViTinhId, int quantity, User user, HttpSession session) {
+        try {
+            Cart cart = getOrCreateCart(user, session);
+            Optional<Product> productOptional = productRepository.findById(productId);
+            Optional<DonViTinh> donViTinhOptional = donViTinhRepository.findById(donViTinhId);
+
+            if (productOptional.isEmpty() || donViTinhOptional.isEmpty()) {
+                logger.error("Sản phẩm hoặc đơn vị tính không tồn tại: productId={}, donViTinhId={}", productId, donViTinhId);
+                return false;
+            }
+
+            Product product = productOptional.get();
+            DonViTinh donViTinh = donViTinhOptional.get();
+
+            Optional<CartItem> existingItemOptional = cartItemRepository.findByCartAndProductAndDonViTinh(cart, product, donViTinh);
+
+            CartItem cartItem;
+            if (existingItemOptional.isPresent()) {
+                cartItem = existingItemOptional.get();
+                cartItem.setQuantity(cartItem.getQuantity() + quantity);
+            } else {
+                cartItem = new CartItem();
+                cartItem.setCart(cart);
+                cartItem.setProduct(product);
+                cartItem.setDonViTinh(donViTinh);
+                cartItem.setQuantity(quantity);
+                BigDecimal discountedPrice = productService.calculateDiscountedPrice(donViTinh.getGia(), donViTinh.getDiscount());
+                cartItem.setPrice(discountedPrice);
+            }
+
+            cartItemRepository.save(cartItem);
+            return true;
+        } catch (Exception e) {
+            logger.error("Lỗi khi thêm sản phẩm vào giỏ hàng: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     public int getCartItemCount(Cart cart) {
-        List<CartItem> cartItems = cartItemRepository.findByCart(cart); // Lấy trực tiếp từ DB để đảm bảo dữ liệu mới nhất
-        Map<String, CartItem> uniqueItems = new HashMap<>();
-        for (CartItem item : cartItems) {
-            if (item.getDonViTinh() == null) {
-                logger.warn("CartItem {} (productId={}) has null DonViTinh, skipping count", item.getId(), item.getProduct().getId());
-                continue;
-            }
-            String key = item.getProduct().getId() + "-" + item.getDonViTinh().getId();
-            uniqueItems.put(key, item);
-        }
-        return uniqueItems.size();
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        return cartItems.size(); // Đếm số lượng CartItem (mục riêng biệt)
     }
 
-
-    public List<CartItem> getCartItems(User user, HttpSession session) {
+    public List<CartItemDTO> getCartItems(User user, HttpSession session) {
         Cart cart = getOrCreateCart(user, session);
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
-
-        // Tải chi tiết sản phẩm cho từng CartItem
-        for (CartItem item : cartItems) {
-            if (item.getProduct() != null) {
-                productService.loadProductDetails(item.getProduct());
-            }
-        }
-
-        // Gộp các CartItem trùng lặp dựa trên productId và donViTinhId
-        Map<String, CartItem> mergedItems = new HashMap<>();
-        for (CartItem item : cartItems) {
-            if (item.getDonViTinh() == null) {
-                logger.warn("CartItem {} has null DonViTinh, skipping merge", item.getId());
-                continue;
-            }
-            String key = item.getProduct().getId() + "-" + item.getDonViTinh().getId();
-            if (mergedItems.containsKey(key)) {
-                CartItem existingItem = mergedItems.get(key);
-                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
-                cartItemRepository.delete(item); // Xóa mục trùng lặp trong DB
-            } else {
-                mergedItems.put(key, item);
-            }
-        }
-
-        return new ArrayList<>(mergedItems.values());
+        return cartItems.stream().map(CartItemDTO::new).collect(Collectors.toList());
     }
+
+    @Transactional
+    public boolean removeFromCart(int cartItemId, User user, HttpSession session) {
+        try {
+            Cart cart = getOrCreateCart(user, session);
+            Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
+            if (cartItemOptional.isPresent() && cartItemOptional.get().getCart().getId() == cart.getId()) { // Sử dụng == để so sánh int
+                cartItemRepository.delete(cartItemOptional.get());
+                return true;
+            }
+            logger.warn("Không tìm thấy CartItem hoặc không thuộc Cart: cartItemId={}, cartId={}", cartItemId, cart.getId());
+            return false;
+        } catch (Exception e) {
+            logger.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng: {}", e.getMessage(), e);
+            throw new RuntimeException("Lỗi server khi xóa sản phẩm", e);
+        }
+    }
+
+
+    @Transactional
+    public boolean updateCartItemQuantity(int cartItemId, int quantity, User user, HttpSession session) {
+        try {
+            Cart cart = getOrCreateCart(user, session);
+            Optional<CartItem> cartItemOptional = cartItemRepository.findById(cartItemId);
+            if (cartItemOptional.isPresent() && cartItemOptional.get().getCart().getId() == cart.getId()) { // Sử dụng == thay vì equals()
+                CartItem cartItem = cartItemOptional.get();
+                if (quantity <= 0) {
+                    cartItemRepository.delete(cartItem); // Xóa nếu số lượng <= 0
+                } else {
+                    cartItem.setQuantity(quantity);
+                    BigDecimal discountedPrice = productService.calculateDiscountedPrice(
+                            cartItem.getDonViTinh().getGia(), cartItem.getDonViTinh().getDiscount());
+                    cartItem.setPrice(discountedPrice);
+                    cartItemRepository.save(cartItem);
+                }
+                return true;
+            }
+            logger.warn("Không tìm thấy CartItem hoặc không thuộc Cart: cartItemId={}, cartId={}", cartItemId, cart.getId());
+            return false;
+        } catch (Exception e) {
+            logger.error("Lỗi khi cập nhật số lượng CartItem: {}", e.getMessage(), e);
+            throw new RuntimeException("Lỗi server khi cập nhật số lượng", e);
+        }
+    }
+
+    // Trong GioHangService.java
+    public int getTotalCartItemQuantity(Cart cart) {
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        return cartItems.stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum(); // Tổng số lượng sản phẩm
+    }
+
+    public List<CartItem> getCartItemEntities(User user, HttpSession session) {
+        Cart cart = getOrCreateCart(user, session);
+        return cartItemRepository.findByCart(cart);
+    }
+
 
 }

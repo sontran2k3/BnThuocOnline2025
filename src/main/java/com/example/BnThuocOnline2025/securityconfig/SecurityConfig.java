@@ -136,10 +136,6 @@ public class SecurityConfig {
                             tokenCookie.setMaxAge(10 * 60 * 60);
                             response.addCookie(tokenCookie);
 
-                            Cart cart = gioHangService.getOrCreateCart(user, request.getSession());
-                            int cartItemCount = gioHangService.getCartItemCount(cart);
-                            response.addHeader("X-Cart-Item-Count", String.valueOf(cartItemCount));
-
                             if (!userService.isProfileComplete(user)) {
                                 response.sendRedirect("/register?providerId=" + providerId + "&provider=" + provider);
                             } else {

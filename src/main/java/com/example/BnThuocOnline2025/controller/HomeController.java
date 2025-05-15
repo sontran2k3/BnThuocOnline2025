@@ -88,10 +88,10 @@ public class HomeController {
         model.addAttribute("currentPage", page);
         model.addAttribute("doiTuongList", doiTuongList);
 
-        // Logic giỏ hàng
-        Cart cart = gioHangService.getOrCreateCart(loggedInUser, session);
-        model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-        model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
+//        // Logic giỏ hàng
+//        Cart cart = gioHangService.getOrCreateCart(loggedInUser, session);
+//        model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+//        model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
 
         return "trangchu"; // USER hoặc không đăng nhập vào trang chủ
     }
@@ -120,9 +120,9 @@ public class HomeController {
                 model.addAttribute("currentPage", page);
                 model.addAttribute("doiTuongList", doiTuongList);
 
-                Cart cart = gioHangService.getOrCreateCart(user, session);
-                model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-                model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
+//                Cart cart = gioHangService.getOrCreateCart(user, session);
+//                model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+//                model.addAttribute("cartItems", gioHangService.getCartItems(user, session));
 
                 return "quanly";
             } else {
@@ -181,9 +181,9 @@ public class HomeController {
         }
 
         // Thêm thông tin giỏ hàng
-        Cart cart = gioHangService.getOrCreateCart(loggedInUser, session);
-        model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
-        model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
+//        Cart cart = gioHangService.getOrCreateCart(loggedInUser, session);
+//        model.addAttribute("cartItemCount", gioHangService.getCartItemCount(cart));
+//        model.addAttribute("cartItems", gioHangService.getCartItems(loggedInUser, session));
 
         // Thêm thông tin sản phẩm
         model.addAttribute("product", product);
