@@ -14,14 +14,14 @@
         <h4 class="payment-title">Thanh toán thành công!</h4>
         <p class="success-message">Cảm ơn bạn đã mua hàng tại BnThuocOnline2025. Đơn hàng của bạn đã được xử lý thành công.</p>
         <p class="support-info">Nếu có thắc mắc, vui lòng liên hệ qua email: <a href="mailto:support@bnthoconline.vn">support@bnthoconline.vn</a></p>
-        <a href="/cart" id="return-page-btn">Quay lại giỏ hàng</a>
+        <a href="/" id="return-page-btn">Tiếp tục mua hàng</a>
     </div>
 
     <!-- Trang Cancel -->
     <div th:if="${page == 'cancel'}">
         <h4 class="payment-title">Thanh toán thất bại</h4>
         <p>Nếu có bất kỳ câu hỏi nào, hãy gửi email tới <a href="mailto:support@bnthoconline.vn">support@bnthoconline.vn</a></p>
-        <a href="/cart" id="return-page-btn1">Quay lại giỏ hàng</a>
+        <a href="/" id="return-page-btn1">Tiếp tục mua hàng</a>
     </div>
 </div>
 <script th:if="${page != 'index'}" src="/script.js"></script>

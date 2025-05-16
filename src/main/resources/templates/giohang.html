@@ -104,7 +104,7 @@
                                 <span class="total" id="final-total" th:text="${#numbers.formatDecimal(finalTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></span>
                             </div>
                             <div>
-                                <button class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">Mua hàng</button>
+                                <button class="btn btn-checkout" id="checkout-button">Mua hàng</button>
                             </div>
                             <p class="text-muted mt-2 small">
                                 Bằng việc tiến hành đặt mua hàng, bạn đồng ý với
@@ -436,13 +436,27 @@
             updateCheckoutModal();
         });
 
-        $('#checkoutModal').on('show.bs.modal', function() {
+// Xử lý sự kiện click cho nút "Mua hàng"
+        $('#checkout-button').on('click', function() {
+            let selectedItems = $('input[id^="item-checkbox-"]:checked').length;
+            if (selectedItems === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Chưa chọn sản phẩm',
+                    text: 'Vui lòng chọn ít nhất một sản phẩm để mua hàng.',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    }
+                });
+                return;
+            }
+
             $.ajax({
                 url: '/check-auth',
                 type: 'GET',
                 success: function(response) {
                     if (!response.authenticated) {
-                        $('#checkoutModal').modal('hide');
                         Swal.fire({
                             title: 'Đăng nhập để nhận thêm ưu đãi',
                             text: 'Vui lòng đăng nhập để nhận các ưu đãi độc quyền và hoàn tất thanh toán nhanh chóng!',
@@ -459,27 +473,16 @@
                             if (result.isConfirmed) {
                                 $('#loginModal').modal('show');
                             } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                // Hiển thị modal xác nhận đơn hàng khi chọn "Tiếp tục thanh toán"
                                 $('#checkoutModal').modal('show');
                                 updateCheckoutModal();
                                 resetFormAndLoadProvinces();
                             }
                         });
                     } else {
+                        // Người dùng đã đăng nhập, hiển thị modal xác nhận đơn hàng ngay
+                        $('#checkoutModal').modal('show');
                         updateCheckoutModal();
-                        let selectedItems = $('input[id^="item-checkbox-"]:checked').旭length;
-                        if (selectedItems === 0) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Chưa chọn sản phẩm',
-                                text: 'Vui lòng chọn ít nhất một sản phẩm để mua hàng.',
-                                confirmButtonText: 'OK',
-                                customClass: {
-                                    confirmButton: 'btn btn-primary'
-                                }
-                            });
-                            $('#checkoutModal').modal('hide');
-                            return;
-                        }
                         resetFormAndLoadProvinces();
                     }
                 },
@@ -494,10 +497,11 @@
                             confirmButton: 'btn btn-primary'
                         }
                     });
-                    $('#checkoutModal').modal('hide');
                 }
             });
         });
+
+
 
         $('#province').on('change', function() {
             let provinceCode = $(this).val();
