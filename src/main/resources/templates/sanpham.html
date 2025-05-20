@@ -335,27 +335,26 @@
                                       th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')} + ' - Trả lời'">2 ngày trước - Trả lời</span>
                                 <button class="comment-btn">Bình luận</button>
                             </div>
-                            <div class="star mt-1" th:text="${#strings.repeat('★', review.rating.intValue())}">★★★★★
-                            </div>
+                            <div class="star mt-1" th:text="${#strings.repeat('★', review.rating.intValue())}">★★★★★</div>
                             <div class="review-content"
-                                 th:text="${review.reviewContent ?: 'Không có nội dung đánh giá'}">Không có nội dung
-                                đánh giá
-                            </div>
-                            <div class="staff-reply" th:if="${review.reviewContent != null}">
+                                 th:text="${review.reviewContent ?: 'Không có nội dung đánh giá'}">Không có nội dung đánh giá</div>
+                            <div class="staff-reply">
                                 <div class="staff-reply-header">
-                                    <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo"
-                                         style="height: 32px">
+                                    <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo" style="height: 32px">
                                     <div class="staff-name">Tư vấn 24/7</div>
                                 </div>
                                 <div class="staff-reply-content">
-                                    Chào bạn <span th:text="${review.user.name ?: 'Khách'}">Khách</span>,<br/>
-                                    Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928.
-                                    Thân mến!
+                                    <th:block th:if="${review.reply != null}">
+                                        <span th:utext="${review.reply}"></span>
+                                    </th:block>
+                                    <th:block th:unless="${review.reply != null}">
+                                        Chào bạn <span th:text="${review.user.name ?: 'Khách'}">Khách</span>,<br/>
+                                        Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
+                                    </th:block>
                                 </div>
                             </div>
                         </div>
                     </div>
-
 
                     <div th:if="${#lists.isEmpty(reviews)}" class="text-center text-muted mt-4">
                         Hiện tại chưa có đánh giá nào cho sản phẩm này.
@@ -714,33 +713,30 @@
                         reviewHtml = '<div class="text-center text-muted mt-4">Hiện tại chưa có đánh giá nào cho sản phẩm này.</div>';
                     } else {
                         response.reviews.forEach(review => {
-                            // Trong hàm updateReviewSection
                             reviewHtml += `
-    <div class="review-item mt-4">
-        <div class="avatar">${review.userName ? review.userName.substring(0, 2).toUpperCase() : 'NN'}</div>
-        <div class="connector-vertical"></div>
-        <div class="connector-horizontal"></div>
-        <div>
-            <div class="d-flex align-items-center">
-                <span class="review-author">${review.userName || 'Người dùng ẩn danh'}</span>
-                <span class="review-meta">${review.createdAt} - Trả lời</span>
-                <button class="comment-btn">Bình luận</button>
-            </div>
-            <div class="star mt-1">${'★'.repeat(Math.round(review.rating))}</div>
-            <div class="review-content">${review.reviewContent || 'Không có nội dung đánh giá'}</div>
-            ${review.reviewContent ? `
-                <div class="staff-reply">
-                    <div class="staff-reply-header">
-                        <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo" style="height: 32px">
-                        <div class="staff-name">Tư vấn 24/7</div>
-                    </div>
-                    <div class="staff-reply-content">
-                        Chào bạn ${review.userName || 'Khách'},<br/>
-                        Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!
-                    </div>
-                </div>` : ''}
-        </div>
-    </div>`;
+                        <div class="review-item mt-4">
+                            <div class="avatar">${review.userName ? review.userName.substring(0, 2).toUpperCase() : 'NN'}</div>
+                            <div class="connector-vertical"></div>
+                            <div class="connector-horizontal"></div>
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <span class="review-author">${review.userName || 'Người dùng ẩn danh'}</span>
+                                    <span class="review-meta">${review.createdAt} - Trả lời</span>
+                                    <button class="comment-btn">Bình luận</button>
+                                </div>
+                                <div class="star mt-1">${'★'.repeat(Math.round(review.rating))}</div>
+                                <div class="review-content">${review.reviewContent || 'Không có nội dung đánh giá'}</div>
+                                <div class="staff-reply">
+                                    <div class="staff-reply-header">
+                                        <img src="/logonewT.png" alt="Medical Care Logo" class="staff-logo" style="height: 32px">
+                                        <div class="staff-name">Tư vấn 24/7</div>
+                                    </div>
+                                    <div class="staff-reply-content">
+                                        ${review.reply ? review.reply : `Chào bạn ${review.userName || 'Khách'},<br/>Cảm ơn bạn đã để lại đánh giá. Nếu cần hỗ trợ, vui lòng liên hệ tổng đài 18006928. Thân mến!`}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
                         });
                     }
                     $('.rating-container').find('.review-item, .text-center.text-muted').remove();
@@ -754,13 +750,13 @@
                     for (var i = 5; i >= 1; i--) {
                         var percentage = response.reviewCount > 0 ? (response.ratingCounts[i] / response.reviewCount * 100) : 0;
                         ratingSummaryHtml += `
-                            <div class="d-flex">
-                                <div class="star rating-summary">${'★'.repeat(i) + '☆'.repeat(5 - i)}</div>
-                                <div class="rating-bar">
-                                    <div class="rating-fill" style="width: ${percentage}%;"></div>
-                                </div>
-                                <div>${response.ratingCounts[i]}</div>
-                            </div>`;
+                    <div class="d-flex">
+                        <div class="star rating-summary">${'★'.repeat(i) + '☆'.repeat(5 - i)}</div>
+                        <div class="rating-bar">
+                            <div class="rating-fill" style="width: ${percentage}%;"></div>
+                        </div>
+                        <div>${response.ratingCounts[i]}</div>
+                    </div>`;
                     }
                     $('#ratingSummary').html(ratingSummaryHtml);
                 },

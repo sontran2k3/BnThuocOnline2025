@@ -271,7 +271,7 @@ public class HomeController {
             return response;
         }
 
-        // Sử dụng biến final để lưu loggedInUser
+        // Kiểm tra đánh giá trùng lặp
         final User finalLoggedInUser = loggedInUser;
         List<ProductReview> existingReviews = productService.getProductReviews(productId);
         if (existingReviews.stream().anyMatch(review -> review.getUser().getId().equals(finalLoggedInUser.getId()))) {
@@ -300,11 +300,12 @@ public class HomeController {
         review.setUser(loggedInUser);
         review.setRating(rating);
         review.setReviewContent(reviewContent.isEmpty() ? null : reviewContent);
+        review.setApproved(true); // Đảm bảo approved luôn là true
 
         productService.saveProductReview(review);
 
         response.put("success", true);
-        response.put("message", "Cảm ơn đánh giá của bạn!"); // Cập nhật thông báo (tùy chọn)
+        response.put("message", "Cảm ơn đánh giá của bạn!");
         return response;
     }
 
@@ -330,6 +331,7 @@ public class HomeController {
             reviewData.put("rating", review.getRating());
             reviewData.put("reviewContent", review.getReviewContent());
             reviewData.put("createdAt", review.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            reviewData.put("reply", review.getReply()); // Thêm trường reply
             return reviewData;
         }).collect(Collectors.toList()));
         response.put("averageRating", averageRating);

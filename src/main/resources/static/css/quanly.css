@@ -320,3 +320,90 @@ h6 {
         margin-bottom: 10px;
     }
 }
+/* Định dạng chat container */
+.chat-container {
+    position: relative;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    height: 400px;
+    overflow-y: auto;
+}
+
+/* Bong bóng chat chung */
+.chat-message {
+    margin-bottom: 15px;
+    max-width: 80%;
+    padding: 12px;
+    border-radius: 16px; /* Tăng vòng bo nhẹ */
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Thêm bóng nhẹ */
+}
+
+/* Bong bóng chat của người dùng */
+.chat-message.user {
+    margin-left: 10px;
+    background-color: #d9eaff; /* Màu xanh nhạt hơn */
+    border: 1px solid #a3c7ff; /* Viền xanh nhạt */
+    align-self: flex-start;
+}
+
+/* Bong bóng chat của admin */
+.chat-message.admin {
+    margin-left: auto;
+    margin-right: 10px;
+    background-color: #e8ecef; /* Màu xám nhạt hơn */
+    border: 1px solid #d1d5db; /* Viền xám nhạt */
+    align-self: flex-end;
+}
+
+/* Nội dung bong bóng */
+.chat-message .message-content {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+/* Tên người dùng hoặc admin */
+.chat-message .message-user {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 5px;
+}
+
+/* Thời gian */
+.chat-message .message-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 3px;
+}
+
+/* Hiệu ứng chuyển đổi */
+#reviews-table, #reply-interface {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Hiệu ứng fade-out */
+#reviews-table.fade-out, #reply-interface.fade-out {
+    opacity: 0;
+}
+
+/* Hiệu ứng fade-in */
+#reviews-table.fade-in, #reply-interface.fade-in {
+    opacity: 1;
+}
+
+/* Đảm bảo bảng thu gọn hiển thị đẹp */
+#reviews-table-compact td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+}
+
+#reviews-table-compact th:nth-child(4),
+#reviews-table-compact td:nth-child(4) {
+    white-space: normal;
+}

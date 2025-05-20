@@ -12,7 +12,6 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ProductReview {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -36,6 +35,12 @@ public class ProductReview {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "approved")
+    private boolean approved = true;
+
+    @Column(name = "reply", columnDefinition = "TEXT")
+    private String reply;
 
     @PrePersist
     protected void onCreate() {

@@ -4,6 +4,7 @@ import com.example.BnThuocOnline2025.dto.*;
 import com.example.BnThuocOnline2025.model.*;
 import com.example.BnThuocOnline2025.service.QuanLyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -300,6 +301,68 @@ public class QuanLyController {
             return ResponseEntity.ok(transactions);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
+        }
+    }
+
+
+
+
+    @GetMapping("/reviews")
+    public ResponseEntity<?> getAllReviews(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "") String search) {
+        try {
+            Page<ProductReview> reviewPage = quanLyService.getAllReviews(page, 10, search);
+            List<ReviewDTO> reviewDTOs = reviewPage.getContent().stream().map(review -> {
+                ReviewDTO dto = new ReviewDTO();
+                dto.setId(review.getId());
+                dto.setCreated_at(review.getCreatedAt());
+                dto.setRating(review.getRating());
+                dto.setReview_content(review.getReviewContent());
+                dto.setUpdated_at(review.getUpdatedAt());
+                dto.setProduct_id(review.getProduct() != null ? review.getProduct().getId() : 0);
+                dto.setProduct_name(review.getProduct() != null ? review.getProduct().getTenSanPham() : "Không xác định");
+                dto.setUser_id(review.getUser() != null ? review.getUser().getId() : null);
+                dto.setUsername(review.getUser() != null ? review.getUser().getName() : "Không xác định");
+                dto.setApproved(review.isApproved());
+                dto.setReply(review.getReply());
+                return dto;
+            }).collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("reviews", reviewDTOs);
+            response.put("totalPages", reviewPage.getTotalPages());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/reviews/{reviewId}/approve")
+    public ResponseEntity<String> approveReview(@PathVariable int reviewId) {
+        try {
+            quanLyService.approveReview(reviewId);
+            return ResponseEntity.ok("Duyệt đánh giá thành công!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/reviews/{reviewId}/reply")
+    public ResponseEntity<String> replyToReview(@PathVariable int reviewId, @RequestBody Map<String, String> request) {
+        try {
+            String replyContent = request.get("replyContent");
+            if (replyContent == null || replyContent.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Nội dung phản hồi không được để trống!");
+            }
+            quanLyService.replyToReview(reviewId, replyContent);
+            return ResponseEntity.ok("Gửi phản hồi thành công!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
         }
     }
 }

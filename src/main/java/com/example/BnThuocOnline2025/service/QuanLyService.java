@@ -57,7 +57,7 @@ public class QuanLyService {
     private OrdersRepository ordersRepository;
 
     @Autowired
-    private DanhGiaRepository danhGiaRepository;
+    private ProductReviewRepository productReviewRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -476,7 +476,7 @@ public class QuanLyService {
     // Số lượng đánh giá mới (trong 7 ngày gần nhất)
     public long getNewReviews() {
         java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
-        return danhGiaRepository.countByCreatedAtAfter(sevenDaysAgo);
+        return productReviewRepository.countByCreatedAtAfter(sevenDaysAgo);
     }
 
     // Thống kê đơn hàng theo trạng thái
@@ -847,6 +847,37 @@ public class QuanLyService {
         return inventories.stream()
                 .map(this::mapToInventoryResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Lấy danh sách đánh giá
+    public Page<ProductReview> getAllReviews(int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        if (search != null && !search.isEmpty()) {
+            return productReviewRepository.findByReviewContentContainingIgnoreCase(search, pageable);
+        }
+        return productReviewRepository.findAll(pageable);
+    }
+
+    // Duyệt đánh giá
+    @Transactional
+    public void approveReview(int reviewId) {
+        ProductReview review = productReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại!"));
+        if (review.isApproved()) {
+            throw new RuntimeException("Đánh giá đã được duyệt!");
+        }
+        review.setApproved(true);
+        productReviewRepository.save(review);
+    }
+
+    // Gửi phản hồi
+    @Transactional
+    public void replyToReview(int reviewId, String replyContent) {
+        ProductReview review = productReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại!"));
+        review.setReply(replyContent);
+        review.setUpdatedAt(LocalDateTime.now());
+        productReviewRepository.save(review);
     }
 
 }
