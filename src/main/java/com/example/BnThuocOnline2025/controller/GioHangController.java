@@ -308,4 +308,41 @@ public class GioHangController {
 
         return "giohang";
     }
+
+    @GetMapping("/default-address")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDefaultAddress(
+            @AuthenticationPrincipal OAuth2User oAuth2User,
+            HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = getAuthenticatedUser(oAuth2User);
+
+        if (user != null) {
+            UserAddress defaultAddress = gioHangService.getDefaultAddress(user);
+            if (defaultAddress != null) {
+                logger.info("Default address found: city={}, district={}, ward={}",
+                        defaultAddress.getCity(), defaultAddress.getDistrict(), defaultAddress.getWard());
+                response.put("success", true);
+                response.put("fullName", defaultAddress.getFullName());
+                response.put("phoneNumber", defaultAddress.getPhoneNumber());
+                response.put("city", defaultAddress.getCity());
+                response.put("district", defaultAddress.getDistrict());
+                response.put("ward", defaultAddress.getWard());
+                response.put("addressDetail", defaultAddress.getAddressDetail());
+                return ResponseEntity.ok(response);
+            } else {
+                logger.warn("No default address found for user: {}", user.getId());
+                response.put("success", false);
+                response.put("message", "Không tìm thấy địa chỉ mặc định!");
+                return ResponseEntity.ok(response);
+            }
+        } else {
+            logger.warn("User not authenticated");
+            response.put("success", false);
+            response.put("message", "Người dùng chưa đăng nhập!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+
 }

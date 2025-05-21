@@ -25,6 +25,9 @@ public class GioHangService {
     private CartRepository cartRepository;
 
     @Autowired
+    private UserAddressRepository userAddressRepository;
+
+    @Autowired
     private CartItemRepository cartItemRepository;
 
     @Autowired
@@ -289,5 +292,15 @@ public class GioHangService {
     public List<CartItem> getCartItemEntities(User user, HttpSession session) {
         Cart cart = getOrCreateCart(user, session);
         return cartItemRepository.findByCart(cart);
+    }
+
+
+
+    @Transactional
+    public UserAddress getDefaultAddress(User user) {
+        if (user == null) {
+            return null;
+        }
+        return userAddressRepository.findByUserAndIsDefault(user, true).orElse(null);
     }
 }

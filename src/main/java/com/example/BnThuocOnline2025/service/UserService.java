@@ -97,7 +97,7 @@ public class UserService {
 
     public UserAddress saveAddress(UserAddress address) {
         if (address.getIsDefault()) {
-            List<UserAddress> defaultAddresses = userAddressRepository.findByUserAndIsDefault(address.getUser(), true);
+            List<UserAddress> defaultAddresses = userAddressRepository.findAllByUserAndIsDefault(address.getUser(), true);
             for (UserAddress defaultAddress : defaultAddresses) {
                 defaultAddress.setIsDefault(false);
                 userAddressRepository.save(defaultAddress);
@@ -166,4 +166,6 @@ public class UserService {
         itemDTO.setPrice(item.getPrice());
         return itemDTO;
     }
+
+
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface UserAddressRepository extends JpaRepository<UserAddress, Long> {
     List<UserAddress> findByUser(User user);
-    List<UserAddress> findByUserAndIsDefault(User user, Boolean isDefault);
+    List<UserAddress> findAllByUserAndIsDefault(User user, Boolean isDefault); // Đổi tên
     Optional<UserAddress> findByUserIdAndIsDefaultTrue(UUID userId);
-
+    Optional<UserAddress> findByUserAndIsDefault(User user, Boolean isDefault);
 }
