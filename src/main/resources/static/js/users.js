@@ -3,19 +3,19 @@ $(document).ready(function () {
     const pageSize = 10;
     let stompClient = null;
 
-    // Kết nối WebSocket
-    function connectWebSocket() {
-        const socket = new SockJS('/ws');
-        stompClient = Stomp.over(socket);
-        stompClient.connect({}, function (frame) {
-            console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/orders', function (notification) {
-                const data = JSON.parse(notification.body);
-                updateOrderStatus(data.orderId, data.status);
-                showToast(data.message);
-            });
-        });
-    }
+    // // Kết nối WebSocket
+    // function connectWebSocket() {
+    //     const socket = new SockJS('/ws');
+    //     stompClient = Stomp.over(socket);
+    //     stompClient.connect({}, function (frame) {
+    //         console.log('Connected: ' + frame);
+    //         stompClient.subscribe('/topic/orders', function (notification) {
+    //             const data = JSON.parse(notification.body);
+    //             updateOrderStatus(data.orderId, data.status);
+    //             showToast(data.message);
+    //         });
+    //     });
+    // }
 
     // Hiển thị toast
     function showToast(message) {
@@ -60,7 +60,7 @@ $(document).ready(function () {
     loadUsers(currentPage, '');
 
     // Kết nối WebSocket khi trang được tải
-    connectWebSocket();
+    // connectWebSocket();
 
     // Xử lý tìm kiếm
     $('#search-users').on('input', function () {
@@ -155,17 +155,28 @@ $(document).ready(function () {
     // Xử lý khi nhấn nút "Chi tiết"
     $('#users-table').on('click', 'button[data-bs-target="#userDetailModal"]', function () {
         const userId = $(this).data('user-id');
+        console.log('Click event triggered for userId:', userId); // Kiểm tra sự kiện
+        if (!userId) {
+            console.error('Invalid userId');
+            Utils.showAlert('error', 'Lỗi', 'ID người dùng không hợp lệ!');
+            return;
+        }
+
         $.ajax({
             url: `/api/quanly/users/${userId}`,
             method: 'GET',
+            headers: {
+                [$('meta[name="_csrf_header"]').attr('content')]: $('meta[name="_csrf"]').attr('content')
+            },
             success: function (user) {
-                $('#detail_user_id').val(user.id);
-                $('#detail_user_name').val(user.name || '');
-                $('#detail_user_email').val(user.email || '');
-                $('#detail_user_phone').val(user.phoneNumber || '');
-                $('#detail_user_address').val(user.address || '');
+                console.log('User data received:', user);
+                $('#detail_user_id').val(user.id || '');
+                $('#detail_user_name').val(user.name || 'N/A');
+                $('#detail_user_email').val(user.email || 'N/A');
+                $('#detail_user_phone').val(user.phoneNumber || 'N/A');
+                $('#detail_user_address').val(user.address || 'N/A');
                 $('#detail_user_dob').val(user.dateOfBirth || '');
-                $('#detail_user_role').val(user.role || '');
+                $('#detail_user_role').val(user.role || 'N/A');
                 if (user.picture) {
                     $('#detail_user_picture').attr('src', user.picture).show();
                 } else {
@@ -173,10 +184,11 @@ $(document).ready(function () {
                 }
 
                 loadUserOrders(user.id);
+                $('#userDetailModal').modal('show');
             },
             error: function (xhr) {
-                console.error('Lỗi tải thông tin người dùng:', xhr);
-                Utils.showAlert('error', 'Lỗi', 'Không thể tải thông tin người dùng: ' + (xhr.responseText || 'Unknown error'));
+                console.error('Error fetching user details:', xhr.responseText, xhr.status);
+                Utils.showAlert('error', 'Lỗi', `Không thể tải thông tin người dùng: ${xhr.responseText || 'Lỗi không xác định'}`);
             }
         });
     });
