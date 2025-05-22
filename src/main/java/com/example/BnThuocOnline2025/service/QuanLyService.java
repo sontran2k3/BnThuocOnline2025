@@ -880,4 +880,20 @@ public class QuanLyService {
         productReviewRepository.save(review);
     }
 
+
+    // Doanh thu theo ngày
+    public List<Map<String, Object>> getDailyRevenue() {
+        return ordersRepository.findDailyRevenue();
+    }
+
+    // Doanh thu theo tuần
+    public List<Map<String, Object>> getWeeklyRevenue() {
+        return ordersRepository.findWeeklyRevenue();
+    }
+
+    // Doanh thu theo tháng
+    public List<Map<String, Object>> getMonthlyRevenue() {
+        return ordersRepository.findMonthlyRevenue();
+    }
+
 }

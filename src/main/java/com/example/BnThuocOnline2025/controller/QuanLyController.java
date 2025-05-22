@@ -365,4 +365,34 @@ public class QuanLyController {
             return ResponseEntity.status(500).body("Lỗi hệ thống: " + e.getMessage());
         }
     }
+
+    @GetMapping("/dashboard/daily-revenue")
+    public ResponseEntity<List<Map<String, Object>>> getDailyRevenue() {
+        try {
+            List<Map<String, Object>> dailyRevenue = quanLyService.getDailyRevenue();
+            return ResponseEntity.ok(dailyRevenue);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @GetMapping("/dashboard/weekly-revenue")
+    public ResponseEntity<List<Map<String, Object>>> getWeeklyRevenue() {
+        try {
+            List<Map<String, Object>> weeklyRevenue = quanLyService.getWeeklyRevenue();
+            return ResponseEntity.ok(weeklyRevenue);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @GetMapping("/dashboard/monthly-revenue")
+    public ResponseEntity<List<Map<String, Object>>> getMonthlyRevenue() {
+        try {
+            List<Map<String, Object>> monthlyRevenue = quanLyService.getMonthlyRevenue();
+            return ResponseEntity.ok(monthlyRevenue);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }

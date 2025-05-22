@@ -140,6 +140,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-12">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Thống kê doanh thu
+                    <div class="float-end">
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadRevenueChart('daily')">Theo ngày</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadRevenueChart('weekly')">Theo tuần</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadRevenueChart('monthly')">Theo tháng</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <!-- Quản lý sản phẩm -->
     <div class="container-fluid content-section" id="products" style="display: none;">

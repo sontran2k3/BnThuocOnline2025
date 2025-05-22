@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,4 +32,34 @@ public interface OrdersRepository extends JpaRepository<Orders, Integer> {
     // Tìm kiếm và lọc theo trạng thái
     @Query("SELECT o FROM Orders o WHERE CAST(o.id AS string) LIKE %:search% AND o.status = :status")
     Page<Orders> findByIdContainingAndStatus(@Param("search") String search, @Param("status") String status, Pageable pageable);
+
+    @Query(value = "SELECT DATE(o.order_date) AS ngay, " +
+            "COALESCE(SUM(oi.price * oi.quantity), 0) AS doanh_thu " +
+            "FROM orders o " +
+            "JOIN order_items oi ON o.id = oi.order_id " +
+            "WHERE o.status = 'completed' " +
+            "GROUP BY DATE(o.order_date) " +
+            "ORDER BY DATE(o.order_date) DESC", nativeQuery = true)
+    List<Map<String, Object>> findDailyRevenue();
+
+    @Query(value = "SELECT YEAR(o.order_date) AS nam, " +
+            "WEEK(o.order_date, 1) AS tuan, " +
+            "MIN(DATE(o.order_date)) AS bat_dau_tuan, " +
+            "COALESCE(SUM(o.total_price), 0) AS doanh_thu " +
+            "FROM orders o " +
+            "WHERE o.status = 'completed' " +
+            "GROUP BY YEAR(o.order_date), WEEK(o.order_date, 1) " +
+            "ORDER BY YEAR(o.order_date) DESC, WEEK(o.order_date, 1) DESC", nativeQuery = true)
+    List<Map<String, Object>> findWeeklyRevenue();
+
+    @Query(value = "SELECT YEAR(o.order_date) AS nam, " +
+            "MONTH(o.order_date) AS thang, " +
+            "CONCAT(YEAR(o.order_date), '-', LPAD(MONTH(o.order_date), 2, '0')) AS thang_nam, " +
+            "COALESCE(SUM(o.total_price), 0) AS doanh_thu " +
+            "FROM orders o " +
+            "WHERE o.status = 'completed' " +
+            "GROUP BY YEAR(o.order_date), MONTH(o.order_date), CONCAT(YEAR(o.order_date), '-', LPAD(MONTH(o.order_date), 2, '0')) " +
+            "ORDER BY YEAR(o.order_date) DESC, MONTH(o.order_date) DESC", nativeQuery = true)
+    List<Map<String, Object>> findMonthlyRevenue();
+
 }
