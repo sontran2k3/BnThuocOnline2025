@@ -967,3 +967,16 @@ body {
     margin-top: 8px;
     margin-bottom: 0;
 }
+
+.default-address-box {
+    max-width: 200px;
+    text-align: left;
+}
+
+.default-address-text {
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

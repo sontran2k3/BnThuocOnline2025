@@ -141,7 +141,6 @@ public class GioHangController {
         return user;
     }
 
-    // Proxy endpoints for provinces, districts, wards (giữ nguyên từ mã của bạn)
     @GetMapping("/proxy/provinces")
     @ResponseBody
     public ResponseEntity<?> getProvinces() {
@@ -211,7 +210,6 @@ public class GioHangController {
         }
     }
 
-    // Trong GioHangController.java
     @GetMapping("/total-quantity")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getTotalCartItemQuantity(
@@ -337,7 +335,6 @@ public class GioHangController {
                 return ResponseEntity.ok(response);
             }
         } else {
-            logger.warn("User not authenticated");
             response.put("success", false);
             response.put("message", "Người dùng chưa đăng nhập!");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);

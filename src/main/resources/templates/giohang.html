@@ -855,18 +855,7 @@
                     $('#customer-name, #customer-phone, #customer-address-detail').val('').prop('readonly', true);
                     $('#province, #district, #ward').val('').prop('disabled', true);
                     loadProvinces();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi',
-                        text: 'Không thể tải địa chỉ mặc định. Vui lòng nhập thông tin địa chỉ.',
-                        confirmButtonText: 'OK',
-                        customClass: {
-                            confirmButton: 'btn btn-primary'
-                        }
-                    }).then(() => {
-                        // Tự động kích hoạt chế độ chỉnh sửa
-                        $('#edit-customer-info').trigger('click');
-                    });
+                    $('#edit-customer-info').trigger('click');
                 }
             });
         }
