@@ -216,53 +216,52 @@
         </div>
     </div>
 
-    <!-- Thêm vào phần <main> của trangchu.html, ngay sau container của sản phẩm theo đối tượng -->
-    <div class="container mt-4">
-        <h5 class="fw-bold"><i class="bi bi-list" style="font-size: 33px"></i> Sản phẩm theo danh mục</h5>
-        <div id="product-by-danhmuc-container" class="row">
-            <div th:fragment="product-by-danhmuc-fragment" class="product-list active">
-                <div class="card border rounded shadow-sm product-card" th:each="product : ${products}">
-                <span class="badge bg-danger position-absolute discount-badge"
-                      th:id="'danhmuc-discount-badge-' + ${product.id}"
-                      th:style="${product.hasDiscount()} ? '' : 'display: none;'"
-                      th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>
-                    <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"
-                         class="card-img-top" th:alt="${product.tenSanPham}">
-                    <div class="card-body text-center d-flex flex-column">
-                        <a th:href="@{/sanpham(id=${product.id})}" class="card-title text-decoration-none">
-                            <h6 th:text="${product.tenSanPham}"></h6>
-                        </a>
-                        <div class="price-section">
-                            <div th:if="${not #lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
-                                <button th:each="dvt : ${product.donViTinhList}"
-                                        th:id="'danhmuc-unit-btn-' + ${product.id} + '-' + ${dvt.id}"
-                                        th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"
-                                        th:onclick="'updatePriceDanhMuc(' + ${product.id} + ',' + ${dvt.id} + ')'"
-                                        th:text="${dvt.donViTinh}"></button>
-                            </div>
-                            <div th:if="${#lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">
-                                <span>Không có đơn vị tính</span>
-                            </div>
-                            <div th:id="'danhmuc-discounted-price-' + ${product.id}" class="discounted-price"
-                                 th:data-price="${product.discountedPrice}"
-                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
-                                 th:text="${#numbers.formatDecimal(product.discountedPrice, 0, 0)} + 'đ'"></div>
-                            <div th:id="'danhmuc-original-price-' + ${product.id}" class="original-price"
-                                 th:style="${product.hasDiscount()} ? '' : 'display: none;'"
-                                 th:data-price="${product.getDefaultDonViTinh().gia}"
-                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"
-                                 th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></div>
-                            <div class="unit-info" th:text="${product.quyCach}"></div>
-                        </div>
-                        <button class="btn btn-primary w-100 mt-auto"
-                                th:onclick="'addToCart(' + ${product.id} + ')'">
-                            Chọn mua
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!--    <div class="container mt-4">-->
+<!--        <h5 class="fw-bold"><i class="bi bi-list" style="font-size: 33px"></i> Sản phẩm theo danh mục</h5>-->
+<!--        <div id="product-by-danhmuc-container" class="row">-->
+<!--            <div th:fragment="product-by-danhmuc-fragment" class="product-list active">-->
+<!--                <div class="card border rounded shadow-sm product-card" th:each="product : ${products}">-->
+<!--                <span class="badge bg-danger position-absolute discount-badge"-->
+<!--                      th:id="'danhmuc-discount-badge-' + ${product.id}"-->
+<!--                      th:style="${product.hasDiscount()} ? '' : 'display: none;'"-->
+<!--                      th:text="'-' + ${#numbers.formatDecimal(product.getDefaultDonViTinh().discount, 0, 0)} + '%'"></span>-->
+<!--                    <img th:src="${product.mainImageUrl ?: '/images/placeholder.png'}"-->
+<!--                         class="card-img-top" th:alt="${product.tenSanPham}">-->
+<!--                    <div class="card-body text-center d-flex flex-column">-->
+<!--                        <a th:href="@{/sanpham(id=${product.id})}" class="card-title text-decoration-none">-->
+<!--                            <h6 th:text="${product.tenSanPham}"></h6>-->
+<!--                        </a>-->
+<!--                        <div class="price-section">-->
+<!--                            <div th:if="${not #lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">-->
+<!--                                <button th:each="dvt : ${product.donViTinhList}"-->
+<!--                                        th:id="'danhmuc-unit-btn-' + ${product.id} + '-' + ${dvt.id}"-->
+<!--                                        th:classappend="${dvt.id == product.defaultDonViTinh.id ? 'unit-btn active' : 'unit-btn'}"-->
+<!--                                        th:onclick="'updatePriceDanhMuc(' + ${product.id} + ',' + ${dvt.id} + ')'"-->
+<!--                                        th:text="${dvt.donViTinh}"></button>-->
+<!--                            </div>-->
+<!--                            <div th:if="${#lists.isEmpty(product.donViTinhList)}" class="unit-btn-group">-->
+<!--                                <span>Không có đơn vị tính</span>-->
+<!--                            </div>-->
+<!--                            <div th:id="'danhmuc-discounted-price-' + ${product.id}" class="discounted-price"-->
+<!--                                 th:data-price="${product.discountedPrice}"-->
+<!--                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"-->
+<!--                                 th:text="${#numbers.formatDecimal(product.discountedPrice, 0, 0)} + 'đ'"></div>-->
+<!--                            <div th:id="'danhmuc-original-price-' + ${product.id}" class="original-price"-->
+<!--                                 th:style="${product.hasDiscount()} ? '' : 'display: none;'"-->
+<!--                                 th:data-price="${product.getDefaultDonViTinh().gia}"-->
+<!--                                 th:data-unit="${product.getDefaultDonViTinh().donViTinh}"-->
+<!--                                 th:text="${#numbers.formatDecimal(product.getDefaultDonViTinh().gia, 0, 0)} + 'đ'"></div>-->
+<!--                            <div class="unit-info" th:text="${product.quyCach}"></div>-->
+<!--                        </div>-->
+<!--                        <button class="btn btn-primary w-100 mt-auto"-->
+<!--                                th:onclick="'addToCart(' + ${product.id} + ')'">-->
+<!--                            Chọn mua-->
+<!--                        </button>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
 
 
 
